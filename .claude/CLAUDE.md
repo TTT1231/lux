@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Project context for Claude Code.
 
 ## Project Overview
 
@@ -11,6 +11,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 pnpm build          # Build with tsup (ESM, outputs to dist/)
 pnpm dev            # Watch mode build
+pnpm test           # Run all tests (vitest, builds first via pretest)
+pnpm test:watch     # Run tests in watch mode
 pnpm lint           # ESLint check
 pnpm lint:fix       # ESLint auto-fix
 pnpm format         # Prettier write
@@ -20,9 +22,21 @@ pnpm type:check     # TypeScript type check (tsc --noEmit)
 pnpm code:check     # lint + format:check
 pnpm code:fix       # lint:fix + format
 pnpm code:check:all # lint + format:check + cspell
+pnpm code:fix:all   # lint:fix + format
+pnpm bump:deps      # Sync dependency versions across presets
 ```
 
-No test framework is configured yet.
+## Testing
+
+Uses **vitest** with two project tiers (see `vitest.config.ts`):
+- **Unit**: `tests/**/*.test.ts` — parallel, fast timeout
+- **Acceptance**: `tests/**/*.spec.ts` — serial, fork pool, 30s timeout (real filesystem + process)
+
+| Type | Pattern | Location |
+|------|---------|----------|
+| Unit tests | `*.test.ts` | `tests/**/*.test.ts` |
+| Acceptance tests | `*.spec.ts` | `tests/**/*.spec.ts` |
+| Test helpers | `*.ts` (no suffix) | `tests/helpers/` |
 
 ## Architecture
 
