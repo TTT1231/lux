@@ -22,7 +22,10 @@
     "code:check": "pnpm run lint && pnpm run format:check",
     "code:fix": "pnpm run lint:fix && pnpm run format",
     "code:check:all": "pnpm run lint && pnpm run format:check && pnpm run cspell",
-    "code:fix:all": "pnpm run lint:fix && pnpm run format"
+    "code:fix:all": "pnpm run lint:fix && pnpm run format",
+    "pretest": "pnpm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +38,7 @@
   "devDependencies": {
     "@types/node": "^25.5.2",
     "tsup": "^8.5.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.3"
   }
 }
