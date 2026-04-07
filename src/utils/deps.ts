@@ -1,53 +1,56 @@
-import { fileExists } from './fs'
-import { logger } from './logger'
-import { resolveVersions } from '../presets/versions'
-import { execFileNoThrow } from './execFileNoThrow'
+import { fileExists } from './fs';
+import { logger } from './logger';
+import { resolveVersions } from '../presets/versions';
+import { execFileNoThrow } from './execFileNoThrow';
 
-export type PackageManager = 'pnpm' | 'yarn' | 'npm'
+export type PackageManager = 'pnpm' | 'yarn' | 'npm';
 
 /** Detect package manager from lockfile in the given directory */
 export function detectPackageManager(cwd: string): PackageManager {
-  if (fileExists(`${cwd}/pnpm-lock.yaml`)) return 'pnpm'
-  if (fileExists(`${cwd}/yarn.lock`)) return 'yarn'
-  return 'npm'
+   if (fileExists(`${cwd}/pnpm-lock.yaml`)) return 'pnpm';
+   if (fileExists(`${cwd}/yarn.lock`)) return 'yarn';
+   return 'npm';
 }
 
 /** Get the run command prefix for the detected package manager */
 export function getRunPrefix(pm: PackageManager): string {
-  switch (pm) {
-    case 'pnpm': return 'pnpm run'
-    case 'yarn': return 'yarn run'
-    case 'npm': return 'npm run'
-  }
+   switch (pm) {
+      case 'pnpm':
+         return 'pnpm run';
+      case 'yarn':
+         return 'yarn run';
+      case 'npm':
+         return 'npm run';
+   }
 }
 
 /** Maps package managers to their install command parts */
 const INSTALL_CMDS: Record<PackageManager, [string, string]> = {
-  pnpm: ['pnpm', 'add'],
-  yarn: ['yarn', 'add'],
-  npm: ['npm', 'install'],
-}
+   pnpm: ['pnpm', 'add'],
+   yarn: ['yarn', 'add'],
+   npm: ['npm', 'install'],
+};
 
 /** Install devDependencies using the detected package manager */
 export async function installDevDeps(
-  packages: string[],
-  cwd: string,
-  pm?: PackageManager,
+   packages: string[],
+   cwd: string,
+   pm?: PackageManager,
 ): Promise<void> {
-  const manager = pm ?? detectPackageManager(cwd)
-  const resolvedPackages = resolveVersions(packages)
+   const manager = pm ?? detectPackageManager(cwd);
+   const resolvedPackages = resolveVersions(packages);
 
-  logger.info(`Installing ${resolvedPackages.length} devDependencies via ${manager}...`)
+   logger.info(`Installing ${resolvedPackages.length} devDependencies via ${manager}...`);
 
-  const [command, subcommand] = INSTALL_CMDS[manager]
-  const args = [subcommand, '-D', ...resolvedPackages]
+   const [command, subcommand] = INSTALL_CMDS[manager];
+   const args = [subcommand, '-D', ...resolvedPackages];
 
-  const { stderr, exitCode } = await execFileNoThrow(command, args, { cwd })
+   const { stderr, exitCode } = await execFileNoThrow(command, args, { cwd });
 
-  if (exitCode !== 0) {
-    logger.error(`Failed to install dependencies: ${stderr}`)
-    throw new Error(`Dependency installation failed (exit code ${exitCode})`)
-  }
+   if (exitCode !== 0) {
+      logger.error(`Failed to install dependencies: ${stderr}`);
+      throw new Error(`Dependency installation failed (exit code ${exitCode})`);
+   }
 
-  logger.success(`Installed ${resolvedPackages.length} packages`)
+   logger.success(`Installed ${resolvedPackages.length} packages`);
 }

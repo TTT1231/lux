@@ -1,10 +1,10 @@
-import type { FmtPreset } from '../types'
+import type { FmtPreset } from '../types';
 
 export const webFmt: FmtPreset = {
-  name: 'web',
-  description: 'Vue 3 Web frontend (Vite + Vue + TypeScript)',
+   name: 'web',
+   description: 'Vue 3 Web frontend (Vite + Vue + TypeScript)',
 
-  eslint: () => `import withVue from '@vue/eslint-config-typescript'
+   eslint: () => `import withVue from '@vue/eslint-config-typescript'
 import withPrettier from '@vue/eslint-config-prettier/skip-formatting'
 import pluginVue from 'eslint-plugin-vue'
 
@@ -22,16 +22,21 @@ export default [
 ]
 `,
 
-  prettier: () => JSON.stringify({
-    semi: false,
-    singleQuote: true,
-    tabWidth: 2,
-    trailingComma: 'all',
-    printWidth: 100,
-    endOfLine: 'lf',
-  }, null, 2) + '\n',
+   prettier: () =>
+      JSON.stringify(
+         {
+            semi: false,
+            singleQuote: true,
+            tabWidth: 2,
+            trailingComma: 'all',
+            printWidth: 100,
+            endOfLine: 'lf',
+         },
+         null,
+         2,
+      ) + '\n',
 
-  prettierIgnore: () => `# Dependencies
+   prettierIgnore: () => `# Dependencies
 node_modules/
 pnpm-lock.yaml
 package-lock.json
@@ -71,7 +76,7 @@ coverage/
 *.eot
 `,
 
-  stylelint: () => `export default {
+   stylelint: () => `export default {
   plugins: ['stylelint-order', '@stylistic/stylelint-plugin'],
   extends: [
     'stylelint-config-standard-scss',
@@ -93,7 +98,7 @@ coverage/
 }
 `,
 
-  stylelintIgnore: () => `# Dependencies
+   stylelintIgnore: () => `# Dependencies
 node_modules/
 pnpm-lock.yaml
 
@@ -120,32 +125,32 @@ coverage/
 *.ico
 `,
 
-  cspell: () => JSON.stringify({
-    $schema: 'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
-    version: '0.2',
-    language: 'en,en-US',
-    allowCompoundWords: true,
-    words: [
-      'vite',
-      'pinia',
-      'vueuse',
-      'unplugin',
-      'trw',
-    ],
-    ignorePaths: [
-      '/node_modules/',
-      '/dist/',
-      'pnpm-lock.yaml',
-      '*.log',
-      '*.test.ts',
-      '*.spec.ts',
-      '/coverage/',
-      '*.svg',
-      '*.png',
-    ],
-  }, null, 2) + '\n',
+   cspell: () =>
+      JSON.stringify(
+         {
+            $schema:
+               'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
+            version: '0.2',
+            language: 'en,en-US',
+            allowCompoundWords: true,
+            words: ['vite', 'pinia', 'vueuse', 'unplugin', 'trw'],
+            ignorePaths: [
+               '/node_modules/',
+               '/dist/',
+               'pnpm-lock.yaml',
+               '*.log',
+               '*.test.ts',
+               '*.spec.ts',
+               '/coverage/',
+               '*.svg',
+               '*.png',
+            ],
+         },
+         null,
+         2,
+      ) + '\n',
 
-  editorconfig: () => `root = true
+   editorconfig: () => `root = true
 
 [*]
 charset = utf-8
@@ -159,36 +164,36 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 `,
 
-  dependencies: {
-    dev: [
-      'eslint',
-      '@vue/eslint-config-typescript',
-      '@vue/eslint-config-prettier',
-      'eslint-plugin-vue',
-      'prettier',
-      'stylelint',
-      'stylelint-config-standard-scss',
-      'stylelint-order',
-      'stylelint-scss',
-      '@stylistic/stylelint-plugin',
-      'postcss-html',
-      'postcss-scss',
-      'cspell',
-    ],
-  },
+   dependencies: {
+      dev: [
+         'eslint',
+         '@vue/eslint-config-typescript',
+         '@vue/eslint-config-prettier',
+         'eslint-plugin-vue',
+         'prettier',
+         'stylelint',
+         'stylelint-config-standard-scss',
+         'stylelint-order',
+         'stylelint-scss',
+         '@stylistic/stylelint-plugin',
+         'postcss-html',
+         'postcss-scss',
+         'cspell',
+      ],
+   },
 
-  scripts: {
-    'lint': 'eslint .',
-    'lint:fix': 'eslint "src/**/*.{js,ts,vue}" --fix',
-    'format': 'prettier --write "src/**/*.{ts,js,json,vue,css,scss}"',
-    'format:check': 'prettier --check "src/**/*.{ts,js,json,vue,css,scss}"',
-    'stylelint': 'stylelint "src/**/*.{css,scss,vue}"',
-    'stylelint:fix': 'stylelint "src/**/*.{css,scss,vue}" --fix',
-    'cspell': 'cspell "src/**/*.{ts,js,vue}"',
-    'type:check': 'vue-tsc --noEmit',
-    'code:check': '<pm> lint && <pm> format:check',
-    'code:fix': '<pm> lint:fix && <pm> format',
-    'code:check:all': '<pm> lint && <pm> format:check && <pm> stylelint && <pm> cspell',
-    'code:fix:all': '<pm> lint:fix && <pm> format && <pm> stylelint:fix',
-  },
-}
+   scripts: {
+      lint: 'eslint .',
+      'lint:fix': 'eslint "src/**/*.{js,ts,vue}" --fix',
+      format: 'prettier --write "src/**/*.{ts,js,json,vue,css,scss}"',
+      'format:check': 'prettier --check "src/**/*.{ts,js,json,vue,css,scss}"',
+      stylelint: 'stylelint "src/**/*.{css,scss,vue}"',
+      'stylelint:fix': 'stylelint "src/**/*.{css,scss,vue}" --fix',
+      cspell: 'cspell "src/**/*.{ts,js,vue}"',
+      'type:check': 'vue-tsc --noEmit',
+      'code:check': '<pm> lint && <pm> format:check',
+      'code:fix': '<pm> lint:fix && <pm> format',
+      'code:check:all': '<pm> lint && <pm> format:check && <pm> stylelint && <pm> cspell',
+      'code:fix:all': '<pm> lint:fix && <pm> format && <pm> stylelint:fix',
+   },
+};
