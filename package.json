@@ -1,0 +1,40 @@
+{
+  "name": "trw-cli",
+  "version": "1.0.0",
+  "description": "One-click project formatting & VSCode config CLI",
+  "type": "module",
+  "bin": {
+    "trw1": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "pnpm run build",
+    "lint": "eslint .",
+    "lint:fix": "eslint \"src/**/*.{js,ts}\" --fix",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "cspell": "cspell \"src/**/*.{ts,js}\"",
+    "type:check": "tsc --noEmit",
+    "code:check": "pnpm run lint && pnpm run format:check",
+    "code:fix": "pnpm run lint:fix && pnpm run format",
+    "code:check:all": "pnpm run lint && pnpm run format:check && pnpm run cspell",
+    "code:fix:all": "pnpm run lint:fix && pnpm run format"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.32.1",
+  "dependencies": {
+    "chalk": "5",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2"
+  }
+}
