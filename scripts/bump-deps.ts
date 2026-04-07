@@ -21,10 +21,10 @@ interface VersionMap {
 function readCurrentVersions(): VersionMap {
   const content = fs.readFileSync(VERSIONS_PATH, 'utf-8')
   const versions: VersionMap = {}
-  const regex = /'([^']+)':\s*'([^']+)'/g
+  const regex = /^\s*(?:["']([^"']+)["']|([a-zA-Z@][\w@/.-]*))\s*:\s*["']([^"']+)["']/gm
   let match: RegExpExecArray | null
   while ((match = regex.exec(content)) !== null) {
-    versions[match[1]] = match[2]
+    versions[match[1] ?? match[2]] = match[3]
   }
   return versions
 }
@@ -43,7 +43,10 @@ async function getLatestVersion(pkg: string): Promise<string | null> {
 /** 生成 versions.ts 文件内容 */
 function generateFile(versions: VersionMap): string {
   const entries = Object.entries(versions)
-    .map(([pkg, version]) => `  '${pkg}': '${version}',`)
+    .map(([pkg, version]) => {
+      const key = /^[\w$]+$/.test(pkg) ? pkg : `"${pkg}"`
+      return `  ${key}: "${version}",`
+    })
     .join('\n')
 
   return `/** Managed dependency versions for reproducible installs */
