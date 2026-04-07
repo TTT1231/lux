@@ -8,6 +8,16 @@ Project context for Claude Code.
 
 ## Commands
 
+### Local Development
+
+```bash
+bun link                  # Register `lux` globally for local testing
+lux fmt init web          # Test CLI against any project
+bun unlink                # Clean up global link
+```
+
+### Build & Quality
+
 ```bash
 bun build          # Build with tsup (ESM, outputs to dist/)
 bun dev            # Watch mode build
@@ -45,6 +55,7 @@ src/
 ├── index.ts                  # CLI entry (commander)
 ├── commands/                 # CLI command handlers
 │   ├── fmt.ts                # lux fmt init <preset> / lux fmt list
+│   ├── vpn.ts                # lux vpn cmd/pw — copy proxy env-vars to clipboard
 │   └── vscode.ts             # lux vscode init <preset> / lux vscode list
 ├── generators/               # File generation logic
 │   ├── fmt.ts                # Writes eslint/prettier/stylelint/cspell/editorconfig files
@@ -76,6 +87,7 @@ src/
 
 ### Key Design Decisions
 
+- **Runtime**: Node.js 18+ (ESM-only, tsup target `node18`)
 - **ESM-only** (`"type": "module"`, tsup outputs ESM, target Node 18+)
 - **Lazy preset content**: all config content is generated via functions (`eslint: () => string`) not raw strings, so unused presets don't allocate memory
 - **`<pm>` placeholder in scripts**: scripts use `<pm>` which gets replaced at inject time with `bun run`/`pnpm run`/`yarn run`/`npm run` based on detected lockfile
