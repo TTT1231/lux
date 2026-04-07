@@ -1,7 +1,7 @@
-import { execFile } from 'node:child_process'
+import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 
-const execFileAsync = promisify(execFile)
+const execAsync = promisify(exec)
 
 export interface ExecResult {
   stdout: string
@@ -10,18 +10,19 @@ export interface ExecResult {
 }
 
 /**
- * Safe execFile wrapper - no shell injection risk.
- * Uses execFile (argument array) instead of exec (shell string).
+ * Safe exec wrapper.
+ * Uses exec (shell mode) for cross-platform .cmd resolution (pnpm.cmd, npm.cmd).
  */
 export async function execFileNoThrow(
   command: string,
   args: string[],
   options?: { cwd?: string },
 ): Promise<ExecResult> {
+  const cmdStr = args.length > 0 ? `${command} ${args.join(' ')}` : command
+
   try {
-    const { stdout, stderr } = await execFileAsync(command, args, {
+    const { stdout, stderr } = await execAsync(cmdStr, {
       cwd: options?.cwd,
-      shell: true, // needed on Windows for .cmd resolution (pnpm.cmd, etc.)
     })
     return { stdout: stdout.trim(), stderr: stderr.trim(), exitCode: 0 }
   } catch (err: unknown) {
