@@ -1,4 +1,4 @@
-import type { FmtPreset } from '../presets/types.js'
+import type { FmtPreset } from '../presets/types'
 
 /** Resolve what action to take when a file conflict occurs */
 export function resolveConflict(

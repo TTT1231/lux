@@ -1,8 +1,8 @@
 import path from 'node:path'
-import type { FmtPreset } from '../presets/types.js'
-import { resolveConflict } from '../core/conflict-resolver.js'
-import { writeFile, fileExists } from '../utils/fs.js'
-import { logger } from '../utils/logger.js'
+import type { FmtPreset } from '../presets/types'
+import { resolveConflict } from '../core/conflict-resolver'
+import { writeFile, fileExists } from '../utils/fs'
+import { logger } from '../utils/logger'
 
 export interface GenerateOptions {
   cwd: string

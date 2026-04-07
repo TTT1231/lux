@@ -1,6 +1,6 @@
 import { program } from 'commander'
-import { registerFmtCommand } from './commands/fmt.js'
-import { registerVscodeCommand } from './commands/vscode.js'
+import { registerFmtCommand } from './commands/fmt'
+import { registerVscodeCommand } from './commands/vscode'
 
 program
   .name('trw1')

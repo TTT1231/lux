@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { logger } from './logger.js'
+import { logger } from './logger'
 
 /** Check if a file exists */
 export function fileExists(filePath: string): boolean {

@@ -1,4 +1,4 @@
-import type { VscodePreset } from '../types.js'
+import type { VscodePreset } from '../types'
 
 export const goVscode: VscodePreset = {
   name: 'go',

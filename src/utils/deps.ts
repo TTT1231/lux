@@ -1,7 +1,7 @@
-import { fileExists } from './fs.js'
-import { logger } from './logger.js'
-import { resolveVersions } from '../presets/versions.js'
-import { execFileNoThrow } from './execFileNoThrow.js'
+import { fileExists } from './fs'
+import { logger } from './logger'
+import { resolveVersions } from '../presets/versions'
+import { execFileNoThrow } from './execFileNoThrow'
 
 export type PackageManager = 'pnpm' | 'yarn' | 'npm'
 

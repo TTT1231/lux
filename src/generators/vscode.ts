@@ -1,7 +1,7 @@
-import type { VscodePreset } from '../presets/types.js'
-import { mergeVscodeSettings } from '../core/merge-settings.js'
-import { writeJson, readJson, fileExists, writeFile } from '../utils/fs.js'
-import { logger } from '../utils/logger.js'
+import type { VscodePreset } from '../presets/types'
+import { mergeVscodeSettings } from '../core/merge-settings'
+import { writeJson, readJson, fileExists, writeFile } from '../utils/fs'
+import { logger } from '../utils/logger'
 
 export interface GenerateOptions {
   cwd: string

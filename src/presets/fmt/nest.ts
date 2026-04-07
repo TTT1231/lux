@@ -1,4 +1,4 @@
-import type { FmtPreset } from '../types.js'
+import type { FmtPreset } from '../types'
 
 export const nestFmt: FmtPreset = {
   name: 'nest',
