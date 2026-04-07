@@ -276,17 +276,22 @@ describe('Acceptance: trw1 CLI', () => {
         // All generated files must be non-empty
         for (const file of ['cspell.json', '.editorconfig', '.prettierrc']) {
           if (ctx.fileExists(file)) {
-            const content = ctx.readFile(file)!
-            expect(content.length).toBeGreaterThan(0)
+            const content = ctx.readFile(file)
+            expect(content).not.toBeNull()
+            expect(content!.length).toBeGreaterThan(0)
           }
         }
 
         // JSON files must be parseable
         if (ctx.fileExists('.prettierrc')) {
-          expect(() => JSON.parse(ctx.readFile('.prettierrc')!)).not.toThrow()
+          const raw = ctx.readFile('.prettierrc')
+          expect(raw).not.toBeNull()
+          expect(() => JSON.parse(raw!)).not.toThrow()
         }
         if (ctx.fileExists('cspell.json')) {
-          expect(() => JSON.parse(ctx.readFile('cspell.json')!)).not.toThrow()
+          const raw = ctx.readFile('cspell.json')
+          expect(raw).not.toBeNull()
+          expect(() => JSON.parse(raw!)).not.toThrow()
         }
       })
     }
@@ -297,8 +302,12 @@ describe('Acceptance: trw1 CLI', () => {
         const result = ctx.run(['vscode', 'init', preset])
         expect(result.exitCode).toBe(0)
 
-        expect(() => JSON.parse(ctx.readFile('.vscode/settings.json')!)).not.toThrow()
-        expect(() => JSON.parse(ctx.readFile('.vscode/extensions.json')!)).not.toThrow()
+        const settingsRaw = ctx.readFile('.vscode/settings.json')
+        const extensionsRaw = ctx.readFile('.vscode/extensions.json')
+        expect(settingsRaw).not.toBeNull()
+        expect(extensionsRaw).not.toBeNull()
+        expect(() => JSON.parse(settingsRaw!)).not.toThrow()
+        expect(() => JSON.parse(extensionsRaw!)).not.toThrow()
 
         const ext = ctx.readJsonFile<{ recommendations: string[] }>('.vscode/extensions.json')!
         expect(ext.recommendations.length).toBeGreaterThan(0)
