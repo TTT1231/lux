@@ -9,21 +9,21 @@ Project context for Claude Code.
 ## Commands
 
 ```bash
-pnpm build          # Build with tsup (ESM, outputs to dist/)
-pnpm dev            # Watch mode build
-pnpm test           # Run all tests (vitest, builds first via pretest)
-pnpm test:watch     # Run tests in watch mode
-pnpm lint           # ESLint check
-pnpm lint:fix       # ESLint auto-fix
-pnpm format         # Prettier write
-pnpm format:check   # Prettier check
-pnpm cspell         # Spell check
-pnpm type:check     # TypeScript type check (tsc --noEmit)
-pnpm code:check     # lint + format:check
-pnpm code:fix       # lint:fix + format
-pnpm code:check:all # lint + format:check + cspell
-pnpm code:fix:all   # lint:fix + format
-pnpm bump:deps      # Sync dependency versions across presets
+bun build          # Build with tsup (ESM, outputs to dist/)
+bun dev            # Watch mode build
+bun test           # Run all tests (vitest, builds first via pretest)
+bun test:watch     # Run tests in watch mode
+bun lint           # ESLint check
+bun lint:fix       # ESLint auto-fix
+bun format         # Prettier write
+bun format:check   # Prettier check
+bun cspell         # Spell check
+bun type:check     # TypeScript type check (tsc --noEmit)
+bun code:check     # lint + format:check
+bun code:fix       # lint:fix + format
+bun code:check:all # lint + format:check + cspell
+bun code:fix:all   # lint:fix + format
+bun bump:deps      # Sync dependency versions across presets
 ```
 
 ## Testing
@@ -78,7 +78,7 @@ src/
 
 - **ESM-only** (`"type": "module"`, tsup outputs ESM, target Node 18+)
 - **Lazy preset content**: all config content is generated via functions (`eslint: () => string`) not raw strings, so unused presets don't allocate memory
-- **`<pm>` placeholder in scripts**: scripts use `<pm>` which gets replaced at inject time with `pnpm run`/`yarn run`/`npm run` based on detected lockfile
+- **`<pm>` placeholder in scripts**: scripts use `<pm>` which gets replaced at inject time with `bun run`/`pnpm run`/`yarn run`/`npm run` based on detected lockfile
 - **Version pinning**: all dependency versions are centralized in `presets/versions.ts`, not scattered across presets
 - **No runtime dependencies** beyond `chalk` and `commander` — everything else is devDependencies for the CLI's own linting
 

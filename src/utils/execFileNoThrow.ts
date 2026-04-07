@@ -11,7 +11,7 @@ export interface ExecResult {
 
 /**
  * Safe exec wrapper.
- * Uses exec (shell mode) for cross-platform .cmd resolution (pnpm.cmd, npm.cmd).
+ * Uses exec (shell mode) for cross-platform .cmd resolution (bun.cmd, pnpm.cmd, npm.cmd).
  */
 export async function execFileNoThrow(
    command: string,

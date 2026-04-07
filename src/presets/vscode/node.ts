@@ -67,14 +67,14 @@ export const nodeVscode: VscodePreset = {
          '**/.git': true,
          '**/tmp': true,
          node_modules: true,
-         '**/pnpm-lock.yaml': true,
+         '**/bun.lock': true,
       },
 
       // ===== 文件嵌套 =====
       'explorer.fileNesting.enabled': true,
       'explorer.fileNesting.expand': false,
       'explorer.fileNesting.patterns': {
-         'package.json': 'pnpm-lock.yaml, .gitignore, .npmrc, cspell.json',
+         'package.json': 'bun.lock, .gitignore, .npmrc, cspell.json',
          'eslint.config.mjs': '.prettierignore, .prettierrc.json, .editorconfig,.prettierrc',
          'tsconfig.json': 'tsconfig.*.json',
          '.env': '.env.*',
@@ -87,7 +87,7 @@ export const nodeVscode: VscodePreset = {
       'cSpell.language': 'en',
 
       // ===== 包管理器 =====
-      'npm.packageManager': 'pnpm',
+      'npm.packageManager': 'bun',
    }),
 
    extensions: () => [

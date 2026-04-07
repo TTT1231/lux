@@ -12,26 +12,25 @@
    "scripts": {
       "build": "tsup",
       "dev": "tsup --watch",
-      "prepublishOnly": "pnpm run build",
+      "prepublishOnly": "bun run build",
       "lint": "eslint .",
       "lint:fix": "eslint \"src/**/*.{js,ts}\" --fix",
       "format": "prettier --write \"src/**/*.{ts,js,json}\"",
       "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
       "cspell": "cspell --gitignore \"src/**/*\"",
       "type:check": "tsc --noEmit",
-      "code:check": "pnpm run lint && pnpm run format:check",
-      "code:fix": "pnpm run lint:fix && pnpm run format",
-      "code:check:all": "pnpm run lint && pnpm run format:check && pnpm run cspell",
-      "code:fix:all": "pnpm run lint:fix && pnpm run format",
-      "pretest": "pnpm run build",
+      "code:check": "bun run lint && bun run format:check",
+      "code:fix": "bun run lint:fix && bun run format",
+      "code:check:all": "bun run lint && bun run format:check && bun run cspell",
+      "code:fix:all": "bun run lint:fix && bun run format",
+      "pretest": "bun run build",
       "test": "vitest run",
       "test:watch": "vitest",
-      "bump:deps": "pnpm dlx tsx scripts/bump-deps.ts"
+      "bump:deps": "bunx tsx scripts/bump-deps.ts"
    },
    "keywords": [],
    "author": "",
    "license": "ISC",
-   "packageManager": "pnpm@10.32.1",
    "dependencies": {
       "chalk": "5",
       "commander": "^14.0.3"

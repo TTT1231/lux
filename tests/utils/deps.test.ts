@@ -6,6 +6,7 @@ import { detectPackageManager, getRunPrefix } from '../../src/utils/deps';
 
 describe('getRunPrefix', () => {
    it('returns correct prefix for each package manager', () => {
+      expect(getRunPrefix('bun')).toBe('bun run');
       expect(getRunPrefix('pnpm')).toBe('pnpm run');
       expect(getRunPrefix('yarn')).toBe('yarn run');
       expect(getRunPrefix('npm')).toBe('npm run');
@@ -17,6 +18,18 @@ describe('detectPackageManager', () => {
 
    afterEach(() => {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   it('detects bun from bun.lockb', () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-test-'));
+      fs.writeFileSync(path.join(tmpDir, 'bun.lockb'), '');
+      expect(detectPackageManager(tmpDir)).toBe('bun');
+   });
+
+   it('detects bun from bun.lock', () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-test-'));
+      fs.writeFileSync(path.join(tmpDir, 'bun.lock'), '');
+      expect(detectPackageManager(tmpDir)).toBe('bun');
    });
 
    it('detects pnpm from pnpm-lock.yaml', () => {
@@ -34,6 +47,14 @@ describe('detectPackageManager', () => {
    it('defaults to npm when no lockfile', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-test-'));
       expect(detectPackageManager(tmpDir)).toBe('npm');
+   });
+
+   it('bun takes priority over pnpm and yarn', () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-test-'));
+      fs.writeFileSync(path.join(tmpDir, 'bun.lockb'), '');
+      fs.writeFileSync(path.join(tmpDir, 'pnpm-lock.yaml'), '');
+      fs.writeFileSync(path.join(tmpDir, 'yarn.lock'), '');
+      expect(detectPackageManager(tmpDir)).toBe('bun');
    });
 
    it('pnpm takes priority over yarn', () => {

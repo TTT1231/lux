@@ -1,7 +1,7 @@
 /**
  * 从 npm registry 拉取最新版本，更新 src/presets/versions.ts
  *
- * 用法：pnpm bump:deps
+ * 用法：bun bump:deps
  */
 import { exec } from 'node:child_process';
 import fs from 'node:fs';

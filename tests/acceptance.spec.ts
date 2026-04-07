@@ -172,6 +172,21 @@ describe('Acceptance: trw1 CLI', () => {
    });
 
    // ─── Scenario 5: Package manager detection ───────────────────────
+   describe('Scenario: developer uses bun (lockfile detected)', () => {
+      it('resolves <pm> placeholder to bun run', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({ name: 'bun-project', scripts: {} }),
+               'bun.lockb': '',
+            },
+         });
+
+         ctx.run(['fmt', 'init', 'web', '--no-install']);
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['code:check']).toBe('bun run lint && bun run format:check');
+      });
+   });
+
    describe('Scenario: developer uses pnpm (lockfile detected)', () => {
       it('resolves <pm> placeholder to pnpm run', () => {
          ctx = createTestContext({

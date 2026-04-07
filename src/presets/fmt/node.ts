@@ -67,7 +67,7 @@ export default defineConfig(
 
    prettierIgnore: () => `# Dependencies
 node_modules/
-pnpm-lock.yaml
+bun.lock
 package-lock.json
 
 # Build outputs
@@ -114,7 +114,7 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: [],
-            ignorePaths: ['pnpm-lock.yaml', '*.svg', '*.png'],
+            ignorePaths: ['bun.lock', '*.svg', '*.png'],
          },
          null,
          2,
