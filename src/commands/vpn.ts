@@ -4,11 +4,7 @@ import { logger } from '../utils/logger';
 
 const DEFAULT_PROXY = 'http://127.0.0.1:9876';
 
-function buildCommands(
-   shell: 'cmd' | 'pw',
-   httpProxy: string,
-   socksProxy: string,
-): string {
+function buildCommands(shell: 'cmd' | 'pw', httpProxy: string, socksProxy: string): string {
    if (shell === 'cmd') {
       return [
          `set https_proxy=${httpProxy}`,
@@ -57,14 +53,12 @@ function handleCopy(shell: 'cmd' | 'pw', proxy: string): void {
 export function registerVpnCommand(program: Command): void {
    const vpn = program.command('vpn');
 
-   vpn
-      .command('cmd')
+   vpn.command('cmd')
       .description('Copy CMD proxy commands to clipboard')
       .option('--proxy <addr>', 'Proxy address', DEFAULT_PROXY)
       .action((options: { proxy: string }) => handleCopy('cmd', options.proxy));
 
-   vpn
-      .command('pw')
+   vpn.command('pw')
       .description('Copy PowerShell proxy commands to clipboard')
       .option('--proxy <addr>', 'Proxy address', DEFAULT_PROXY)
       .action((options: { proxy: string }) => handleCopy('pw', options.proxy));
