@@ -1,6 +1,7 @@
 import { program } from 'commander';
 import { registerFmtCommand } from './commands/fmt';
 import { registerVscodeCommand } from './commands/vscode';
+import { registerVpnCommand } from './commands/vpn';
 
 program
    .name('trw1')
@@ -9,5 +10,6 @@ program
 
 registerFmtCommand(program);
 registerVscodeCommand(program);
+registerVpnCommand(program);
 
 program.parse();
