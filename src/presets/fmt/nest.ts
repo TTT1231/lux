@@ -74,17 +74,7 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['nestjs', 'typeorm', 'dtos'],
-            ignorePaths: [
-               '/node_modules/',
-               '/dist/',
-               'pnpm-lock.yaml',
-               '*.log',
-               '*.test.ts',
-               '*.spec.ts',
-               '/__tests__/',
-               '*.svg',
-               '*.png',
-            ],
+            ignorePaths: ['pnpm-lock.yaml', '*.svg', '*.png'],
          },
          null,
          2,
@@ -110,7 +100,7 @@ trim_trailing_whitespace = false
 
    // NestJS: only append new scripts, don't conflict with existing ones
    scripts: {
-      cspell: 'cspell "src/**/*.{ts,js}"',
+      cspell: 'cspell --gitignore "src/**/*"',
       'type:check': 'tsc --noEmit',
       'code:check': '<pm> lint && <pm> format:check',
       'code:check:all': '<pm> lint && <pm> format:check && <pm> cspell',
