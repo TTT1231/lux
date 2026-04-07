@@ -1,28 +1,33 @@
 import path from 'node:path'
-import type { FmtPreset } from '../presets/types'
+import type { FmtPreset, GenerateOptions } from '../presets/types'
 import { resolveConflict } from '../core/conflict-resolver'
 import { writeFile, fileExists } from '../utils/fs'
 import { logger } from '../utils/logger'
 
-export interface GenerateOptions {
-  cwd: string
-  force: boolean
-  dryRun: boolean
-}
+/** Maps config filenames to their content getter on a FmtPreset */
+const CONFIG_FILES: ReadonlyArray<{
+  filename: string
+  getContent: (preset: FmtPreset) => string | undefined
+}> = [
+  { filename: 'eslint.config.mjs', getContent: (p) => p.eslint?.() },
+  { filename: '.prettierrc', getContent: (p) => p.prettier?.() },
+  { filename: '.prettierignore', getContent: (p) => p.prettierIgnore?.() },
+  { filename: 'stylelint.config.mjs', getContent: (p) => p.stylelint?.() },
+  { filename: '.stylelintignore', getContent: (p) => p.stylelintIgnore?.() },
+  { filename: 'cspell.json', getContent: (p) => p.cspell?.() },
+  { filename: '.editorconfig', getContent: (p) => p.editorconfig?.() },
+]
 
 /**
- * Generate a config file from a preset function.
+ * Generate a config file from a preset.
  * Handles conflict resolution, --force, --dry-run.
  */
 function generateConfigFile(
   preset: FmtPreset,
   filename: string,
-  getContent: () => string | undefined,
+  content: string,
   opts: GenerateOptions,
 ): boolean {
-  const content = getContent()
-  if (content === undefined) return false
-
   const filepath = path.join(opts.cwd, filename)
   const exists = fileExists(filepath)
   const action = resolveConflict(filename, exists, preset, opts.force)
@@ -46,41 +51,6 @@ function generateConfigFile(
   return true
 }
 
-/** Generate eslint.config.mjs */
-export function generateEslint(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, 'eslint.config.mjs', () => preset.eslint?.(), opts)
-}
-
-/** Generate .prettierrc */
-export function generatePrettier(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, '.prettierrc', () => preset.prettier?.(), opts)
-}
-
-/** Generate .prettierignore */
-export function generatePrettierIgnore(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, '.prettierignore', () => preset.prettierIgnore?.(), opts)
-}
-
-/** Generate stylelint.config.mjs */
-export function generateStylelint(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, 'stylelint.config.mjs', () => preset.stylelint?.(), opts)
-}
-
-/** Generate .stylelintignore */
-export function generateStylelintIgnore(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, '.stylelintignore', () => preset.stylelintIgnore?.(), opts)
-}
-
-/** Generate cspell.json */
-export function generateCspell(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, 'cspell.json', () => preset.cspell?.(), opts)
-}
-
-/** Generate .editorconfig */
-export function generateEditorconfig(preset: FmtPreset, opts: GenerateOptions) {
-  return generateConfigFile(preset, '.editorconfig', () => preset.editorconfig?.(), opts)
-}
-
 /**
  * Generate all fmt config files for a preset.
  * Returns list of generated filenames.
@@ -88,29 +58,12 @@ export function generateEditorconfig(preset: FmtPreset, opts: GenerateOptions) {
 export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): string[] {
   const generated: string[] = []
 
-  const generators = [
-    generateEslint,
-    generatePrettier,
-    generatePrettierIgnore,
-    generateStylelint,
-    generateStylelintIgnore,
-    generateCspell,
-    generateEditorconfig,
-  ] as Array<(p: FmtPreset, o: GenerateOptions) => boolean>
+  for (const { filename, getContent } of CONFIG_FILES) {
+    const content = getContent(preset)
+    if (content === undefined) continue
 
-  const filenames = [
-    'eslint.config.mjs',
-    '.prettierrc',
-    '.prettierignore',
-    'stylelint.config.mjs',
-    '.stylelintignore',
-    'cspell.json',
-    '.editorconfig',
-  ]
-
-  for (let i = 0; i < generators.length; i++) {
-    if (generators[i](preset, opts)) {
-      generated.push(filenames[i])
+    if (generateConfigFile(preset, filename, content, opts)) {
+      generated.push(filename)
     }
   }
 

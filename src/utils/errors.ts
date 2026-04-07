@@ -18,7 +18,7 @@ export class PresetNotFoundError extends CliError {
     const msg = suggestion
       ? `Preset '${name}' not found. Did you mean '${suggestion}'?`
       : `Preset '${name}' not found. Available: ${available.join(', ')}`
-    super(msg, 'PRESET_NOT_FOUND', suggestion)
+    super(msg, 'PRESET_NOT_FOUND', suggestion ?? undefined)
   }
 }
 

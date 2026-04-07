@@ -92,8 +92,6 @@ coverage/
 `,
 
   // No stylelint for node projects
-  stylelint: undefined,
-  stylelintIgnore: undefined,
 
   cspell: () => JSON.stringify({
     $schema: 'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',

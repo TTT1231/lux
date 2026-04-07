@@ -1,15 +1,16 @@
 import path from "node:path";
 import type { Command } from "commander";
+import type { GenerateOptions } from "../presets/types";
 import { FMT_PRESETS } from "../presets/fmt";
-import { logger } from "../utils/logger.js";
-import { resolvePreset } from "../utils/errors.js";
-import { generateAllFmt, type GenerateOptions } from "../generators/fmt.js";
+import { logger } from "../utils/logger";
+import { resolvePreset } from "../utils/errors";
+import { generateAllFmt } from "../generators/fmt";
 import {
   detectPackageManager,
   installDevDeps,
   getRunPrefix,
-} from "../utils/deps.js";
-import { readJson, writeJson, fileExists } from "../utils/fs.js";
+} from "../utils/deps";
+import { readJson, writeJson } from "../utils/fs";
 
 export function registerFmtCommand(program: Command) {
   const fmt = program.command("fmt");

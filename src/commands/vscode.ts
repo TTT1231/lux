@@ -1,11 +1,9 @@
 import type { Command } from "commander";
+import type { GenerateOptions } from "../presets/types";
 import { VSCODE_PRESETS } from "../presets/vscode";
-import { logger } from "../utils/logger.js";
-import { resolvePreset } from "../utils/errors.js";
-import {
-  generateAllVscode,
-  type GenerateOptions,
-} from "../generators/vscode.js";
+import { logger } from "../utils/logger";
+import { resolvePreset } from "../utils/errors";
+import { generateAllVscode } from "../generators/vscode";
 
 export function registerVscodeCommand(program: Command) {
   const vscode = program.command("vscode");

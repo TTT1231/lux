@@ -10,7 +10,6 @@ export const nestFmt: FmtPreset = {
   forceOverwrite: ['.prettierrc'],
 
   // No ESLint generation — Nest CLI manages its own eslint.config.mjs
-  eslint: undefined,
 
   prettier: () => JSON.stringify({
     semi: false,
@@ -61,8 +60,6 @@ coverage/
 `,
 
   // No stylelint for NestJS
-  stylelint: undefined,
-  stylelintIgnore: undefined,
 
   cspell: () => JSON.stringify({
     $schema: 'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',

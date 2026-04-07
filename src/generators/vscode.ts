@@ -1,13 +1,7 @@
-import type { VscodePreset } from '../presets/types'
+import type { VscodePreset, GenerateOptions } from '../presets/types'
 import { mergeVscodeSettings } from '../core/merge-settings'
 import { writeJson, readJson, fileExists, writeFile } from '../utils/fs'
 import { logger } from '../utils/logger'
-
-export interface GenerateOptions {
-  cwd: string
-  force: boolean
-  dryRun: boolean
-}
 
 /**
  * Generate .vscode/settings.json from a vscode preset.

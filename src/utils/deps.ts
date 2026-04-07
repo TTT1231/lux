@@ -21,6 +21,13 @@ export function getRunPrefix(pm: PackageManager): string {
   }
 }
 
+/** Maps package managers to their install command parts */
+const INSTALL_CMDS: Record<PackageManager, [string, string]> = {
+  pnpm: ['pnpm', 'add'],
+  yarn: ['yarn', 'add'],
+  npm: ['npm', 'install'],
+}
+
 /** Install devDependencies using the detected package manager */
 export async function installDevDeps(
   packages: string[],
@@ -32,13 +39,10 @@ export async function installDevDeps(
 
   logger.info(`Installing ${resolvedPackages.length} devDependencies via ${manager}...`)
 
-  const cmd = manager === 'pnpm'
-    ? ['pnpm', 'add', '-D', ...resolvedPackages]
-    : manager === 'yarn'
-      ? ['yarn', 'add', '-D', ...resolvedPackages]
-      : ['npm', 'install', '-D', ...resolvedPackages]
+  const [command, subcommand] = INSTALL_CMDS[manager]
+  const args = [subcommand, '-D', ...resolvedPackages]
 
-  const { stderr, exitCode } = await execFileNoThrow(cmd[0], cmd.slice(1), { cwd })
+  const { stderr, exitCode } = await execFileNoThrow(command, args, { cwd })
 
   if (exitCode !== 0) {
     logger.error(`Failed to install dependencies: ${stderr}`)

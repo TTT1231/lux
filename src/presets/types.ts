@@ -1,5 +1,9 @@
-/** Action when a file conflict occurs */
-export type ConflictAction = 'create' | 'overwrite' | 'skip' | 'merge'
+/** Options for file generation */
+export interface GenerateOptions {
+  cwd: string
+  force: boolean
+  dryRun: boolean
+}
 
 /** fmt preset — manages project-level formatting tools */
 export interface FmtPreset {
