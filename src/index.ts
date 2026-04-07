@@ -4,7 +4,7 @@ import { registerVscodeCommand } from './commands/vscode';
 import { registerVpnCommand } from './commands/vpn';
 
 program
-   .name('trw1')
+   .name('lux')
    .description('One-click project formatting & VSCode config CLI')
    .version('1.0.0');
 

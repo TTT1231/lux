@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createTestContext } from './helpers/cli-runner';
 
 /**
- * Acceptance Tests — trw1 CLI
+ * Acceptance Tests — lux CLI
  *
  * Tests verify complete user scenarios end-to-end:
  * spawn the real CLI binary against temp directories,
  * check final filesystem state matches expectations.
  */
-describe('Acceptance: trw1 CLI', () => {
+describe('Acceptance: lux CLI', () => {
    let ctx = createTestContext();
 
    afterEach(() => {

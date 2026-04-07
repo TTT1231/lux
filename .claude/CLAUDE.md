@@ -4,7 +4,7 @@ Project context for Claude Code.
 
 ## Project Overview
 
-**trw-cli** (binary name: `trw1`) — A CLI tool for one-click project formatting and VSCode configuration initialization. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig configs and VSCode settings from predefined presets, with smart merge and conflict resolution.
+**trw-cli** (binary name: `lux`) — A CLI tool for one-click project formatting and VSCode configuration initialization. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig configs and VSCode settings from predefined presets, with smart merge and conflict resolution.
 
 ## Commands
 
@@ -44,8 +44,8 @@ Uses **vitest** with two project tiers (see `vitest.config.ts`):
 src/
 ├── index.ts                  # CLI entry (commander)
 ├── commands/                 # CLI command handlers
-│   ├── fmt.ts                # trw1 fmt init <preset> / trw1 fmt list
-│   └── vscode.ts             # trw1 vscode init <preset> / trw1 vscode list
+│   ├── fmt.ts                # lux fmt init <preset> / lux fmt list
+│   └── vscode.ts             # lux vscode init <preset> / lux vscode list
 ├── generators/               # File generation logic
 │   ├── fmt.ts                # Writes eslint/prettier/stylelint/cspell/editorconfig files
 │   └── vscode.ts             # Writes .vscode/settings.json + extensions.json

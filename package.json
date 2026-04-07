@@ -4,7 +4,7 @@
    "description": "One-click project formatting & VSCode config CLI",
    "type": "module",
    "bin": {
-      "trw1": "./dist/index.js"
+      "lux": "./dist/index.js"
    },
    "files": [
       "dist"

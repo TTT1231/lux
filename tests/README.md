@@ -25,7 +25,7 @@ tests/
 
 | 方法 | 用途 |
 |------|------|
-| `run(args)` | 在临时目录中执行 `trw1` CLI，返回 stdout/stderr/exitCode |
+| `run(args)` | 在临时目录中执行 `lux` CLI，返回 stdout/stderr/exitCode |
 | `fileExists(path)` | 检查文件是否存在 |
 | `readFile(path)` | 读取文件内容 |
 | `readJsonFile(path)` | 读取并解析 JSON |
