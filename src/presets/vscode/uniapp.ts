@@ -29,13 +29,13 @@ export const uniappVscode: VscodePreset = {
     'editor.autoClosingOvertype': 'always',
 
     // ===== TypeScript 专项优化 =====
-    'typescript.inlayHints.enumMemberValues.enabled': true,
-    'typescript.preferences.preferTypeOnlyAutoImports': true,
-    'typescript.preferences.includePackageJsonAutoImports': 'on',
-    'typescript.preferences.importModuleSpecifier': 'relative',
-    'typescript.suggest.autoImports': true,
-    'typescript.tsserver.exclude': ['**/node_modules', '**/dist', '**/unpackage'],
-    'typescript.tsdk': 'node_modules/typescript/lib',
+    'js/ts.inlayHints.enumMemberValues.enabled': true,
+    'js/ts.preferences.preferTypeOnlyAutoImports': true,
+    'js/ts.preferences.includePackageJsonAutoImports': 'on',
+    'js/ts.preferences.importModuleSpecifier': 'relative',
+    'js/ts.suggest.autoImports': true,
+    'js/ts.tsserver.exclude': ['**/node_modules', '**/dist', '**/unpackage'],
+    'js/ts.tsdk.path': 'node_modules/typescript/lib',
 
     // ===== 语言特定格式化 =====
     '[html]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
