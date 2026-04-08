@@ -1,3 +1,4 @@
+// Structured CLI logger
 import chalk from 'chalk';
 
 export const logger = {
