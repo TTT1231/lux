@@ -7,7 +7,7 @@ export default defineConfig({
    outDir: 'dist',
    clean: true,
    splitting: false,
-   sourcemap: true,
+   sourcemap: process.env.NODE_ENV !== 'production',
    dts: false,
    banner: {
       js: '#!/usr/bin/env node',
