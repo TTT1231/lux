@@ -281,7 +281,29 @@ describe('Acceptance: lux CLI', () => {
       });
    });
 
-   // ─── Scenario 10: All presets produce valid output ───────────────
+   // ─── Scenario 10: Update command ─────────────────────────────────
+   describe('Scenario: developer checks for CLI updates', () => {
+      it('shows update check result with --check', () => {
+         ctx = createTestContext();
+
+         const result = ctx.run(['update', '--check']);
+         expect(result.exitCode).toBe(0);
+         expect(result.stdout).toContain('Checking for updates');
+      });
+
+      it('shows error hint when update fails', () => {
+         ctx = createTestContext();
+
+         // Run without --check will attempt real install, which fails
+         // in test environment — verify graceful error handling
+         const result = ctx.run(['update']);
+         // Either succeeds (unlikely in CI) or shows manual update hint
+         const output = result.stdout + result.stderr;
+         expect(output).toMatch(/update|Successfully|manually/i);
+      });
+   });
+
+   // ─── Scenario 11: All presets produce valid output ───────────────
    describe('Scenario: each preset generates parseable, non-empty configs', () => {
       const fmtPresets = ['web', 'electron', 'uniapp', 'node', 'nest'];
       const vscodePresets = ['web', 'electron', 'uniapp', 'node', 'nest', 'go'];

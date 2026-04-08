@@ -5,8 +5,9 @@
 ## 运行
 
 ```bash
-pnpm test        # 构建后运行全部测试
-pnpm test:watch  # 监听模式
+bun test           # 运行全部测试
+bun test:watch     # 监听模式
+bun test:coverage  # 运行并生成覆盖率报告
 ```
 
 ## 目录结构
@@ -15,7 +16,7 @@ pnpm test:watch  # 监听模式
 tests/
 ├── helpers/
 │   └── cli-runner.ts   # 测试基础设施：临时目录 + CLI 执行 + 文件断言
-├── acceptance.spec.ts   # 验收测试：10 个用户场景
+├── acceptance.spec.ts   # 验收测试：11 个用户场景
 └── README.md
 ```
 
@@ -46,7 +47,8 @@ tests/
 | 7 | 预设名打错 | 模糊匹配建议 + exitCode 1 |
 | 8 | list 命令 | 列出所有预设名称 |
 | 9 | 没有 package.json | 配置文件正常创建，脚本注入跳过并警告 |
-| 10 | 所有预设产出合法 | 每个 preset 的 JSON 可解析、内容非空 |
+| 10 | update 命令 | `--check` 检查版本；安装失败时提供手动更新提示 |
+| 11 | 所有预设产出合法 | 每个 preset 的 JSON 可解析、内容非空 |
 
 ## 编写新测试
 

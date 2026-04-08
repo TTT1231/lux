@@ -25,6 +25,7 @@
       "prepublishOnly": "NODE_ENV=production bun run build",
       "test": "vitest run",
       "test:watch": "vitest",
+      "test:coverage": "vitest run --coverage",
       "bump:deps": "bunx tsx scripts/bump-deps.ts"
    },
    "keywords": [],

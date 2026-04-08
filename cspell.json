@@ -13,7 +13,8 @@
       "mrmlnc",
       "usernamehw",
       "vueuse",
-      "yoavbls"
+      "yoavbls",
+      "bunx"
    ],
    "ignorePaths": [
       "/node_modules/",
