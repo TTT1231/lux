@@ -16,6 +16,6 @@ describe('getCurrentVersion', () => {
 
 describe('PACKAGE_NAME', () => {
    it('is the scoped package name', () => {
-      expect(PACKAGE_NAME).toBe('@lux/cli');
+      expect(PACKAGE_NAME).toBe('@luxkit/cli');
    });
 });

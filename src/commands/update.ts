@@ -51,7 +51,7 @@ async function performUpdate(pm: GlobalPm): Promise<void> {
 export function registerUpdateCommand(program: Command): void {
    program
       .command('update')
-      .description('Update @lux/cli to the latest version')
+      .description('Update @luxkit/cli to the latest version')
       .option('--check', 'Only check for updates without installing')
       .action(async (options: { check?: boolean }) => {
          try {

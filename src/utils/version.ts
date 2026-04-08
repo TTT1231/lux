@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const PACKAGE_NAME = '@lux/cli';
+export const PACKAGE_NAME = '@luxkit/cli';
 
 let cachedVersion: string | undefined;
 
