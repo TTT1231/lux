@@ -4,7 +4,7 @@ Project context for Claude Code.
 
 ## Project Overview
 
-**trw-cli** (binary name: `lux`) — A CLI tool for one-click project formatting and VSCode configuration initialization. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig configs and VSCode settings from predefined presets, with smart merge and conflict resolution.
+**lux** — A CLI tool for one-click project formatting and VSCode configuration initialization. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig configs and VSCode settings from predefined presets, with smart merge and conflict resolution.
 
 ## Commands
 
