@@ -11,7 +11,7 @@ export function registerVscodeCommand(program: Command) {
    vscode
       .command('init <preset>')
       .description('Initialize VSCode config with preset')
-      .option('--force', 'Force overwrite existing files')
+      .option('-F, --force', 'Force overwrite existing files')
       .option('--dry-run', 'Preview without writing files')
       .action(async (presetName: string, options: { force?: boolean; dryRun?: boolean }) => {
          const preset = resolvePreset(VSCODE_PRESETS, presetName);

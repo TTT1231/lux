@@ -13,7 +13,7 @@ export function registerFmtCommand(program: Command) {
 
    fmt.command('init <preset>')
       .description('Initialize formatting config with preset')
-      .option('--force', 'Force overwrite existing files')
+      .option('-F, --force', 'Force overwrite existing files')
       .option('--no-install', 'Skip dependency installation')
       .option('--dry-run', 'Preview without writing files')
       .action(
