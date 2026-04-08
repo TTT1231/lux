@@ -21,8 +21,9 @@ bun unlink                # Clean up global link
 ```bash
 bun build          # Build with tsup (ESM, outputs to dist/)
 bun dev            # Watch mode build
-bun test           # Run all tests (vitest, builds first via pretest)
+bun test           # Run all tests (vitest run)
 bun test:watch     # Run tests in watch mode
+bun test:coverage  # Run tests with v8 coverage report
 bun lint           # ESLint check
 bun lint:fix       # ESLint auto-fix
 bun format         # Prettier write
@@ -55,6 +56,7 @@ src/
 ├── index.ts                  # CLI entry (commander)
 ├── commands/                 # CLI command handlers
 │   ├── fmt.ts                # lux fmt init <preset> / lux fmt list
+│   ├── update.ts             # lux update [--check] — self-update via npm/bun
 │   ├── vpn.ts                # lux vpn cmd/pw — copy proxy env-vars to clipboard
 │   └── vscode.ts             # lux vscode init <preset> / lux vscode list
 ├── generators/               # File generation logic
@@ -73,7 +75,8 @@ src/
     ├── errors.ts             # CliError, fuzzy preset matching (Levenshtein)
     ├── execFileNoThrow.ts    # Shell exec wrapper (uses exec for .cmd resolution on Windows)
     ├── fs.ts                 # File read/write/JSON helpers
-    └── logger.ts             # Chalk-based structured logger
+    ├── logger.ts             # Chalk-based structured logger
+    └── version.ts            # PACKAGE_NAME constant + getCurrentVersion() (cached)
 ```
 
 ### Data Flow
