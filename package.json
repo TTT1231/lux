@@ -12,7 +12,6 @@
    "scripts": {
       "build": "tsup",
       "dev": "tsup --watch",
-      "prepublishOnly": "bun run build",
       "lint": "eslint .",
       "lint:fix": "eslint \"src/**/*.{js,ts}\" --fix",
       "format": "prettier --write \"src/**/*.{ts,js,json}\"",
@@ -23,7 +22,7 @@
       "code:fix": "bun run lint:fix && bun run format",
       "code:check:all": "bun run lint && bun run format:check && bun run cspell",
       "code:fix:all": "bun run lint:fix && bun run format",
-      "pretest": "bun run build",
+      "prepublishOnly": "NODE_ENV=production bun run build",
       "test": "vitest run",
       "test:watch": "vitest",
       "bump:deps": "bunx tsx scripts/bump-deps.ts"
