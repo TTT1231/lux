@@ -2,6 +2,13 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
    test: {
+      coverage: {
+         provider: 'v8',
+         reporter: ['text', 'lcov', 'html'],
+         reportsDirectory: './coverage',
+         include: ['src/**/*.ts'],
+         exclude: ['src/index.ts'],
+      },
       projects: [
          // 单元测试：并行、快速超时
          {
