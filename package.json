@@ -1,5 +1,5 @@
 {
-   "name": "trw-cli",
+   "name": "lux",
    "version": "1.0.0",
    "description": "One-click project formatting & VSCode config CLI",
    "type": "module",
