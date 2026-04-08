@@ -4,7 +4,7 @@ export default defineConfig({
    test: {
       coverage: {
          provider: 'v8',
-         reporter: ['text', 'lcov', 'html', 'json-summary'],
+         reporter: ['text', 'lcov', 'html', 'json-summary', 'json'],
          reportsDirectory: './coverage',
          include: ['src/**/*.ts'],
          exclude: ['src/index.ts'],
