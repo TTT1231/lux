@@ -4,7 +4,7 @@
 
 **One-click project formatting & VSCode config CLI**
 
-[![npm version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/TTT1231/lux)
+[![npm version](https://img.shields.io/npm/v/@luxkit/cli.svg)](https://www.npmjs.com/package/@luxkit/cli)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-green.svg)](https://nodejs.org/)
 [![License: ISC](https://img.shields.io/badge/license-ISC-purple.svg)](https://opensource.org/licenses/ISC)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6.svg)](https://www.typescriptlang.org/)
@@ -46,9 +46,9 @@
 
 ```bash
 # Install globally (pick your package manager)
-npm install -g lux
+npm install -g @luxkit/cli
 # or
-bun add -g lux
+bun add -g @luxkit/cli
 
 # Initialize formatting configs
 lux fmt init web          # Generate ESLint, Prettier, Stylelint, CSpell, EditorConfig
@@ -199,9 +199,9 @@ bun code:check:all        # lint + format + spell check
 
 ```bash
 # 全局安装（选择你的包管理器）
-npm install -g lux
+npm install -g @luxkit/cli
 # 或
-bun add -g lux
+bun add -g @luxkit/cli
 
 # 初始化格式化配置
 lux fmt init web          # 生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig
