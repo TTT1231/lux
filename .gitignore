@@ -2,5 +2,5 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
-.vscode/
+.vscode/extensions.json
 .claude/settings.local.json
