@@ -67,7 +67,7 @@ export function resolvePreset<T extends Named>(presets: T[], name: string): T | 
          name,
          presets.map(p => p.name),
       );
-      console.error(chalk.red('✖'), err.message);
+      console.error(chalk.red(err.message));
       process.exit(1);
    }
    return found;

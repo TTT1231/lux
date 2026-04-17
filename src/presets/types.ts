@@ -1,3 +1,10 @@
+/** Result of file generation */
+export interface GenerateResult {
+   created: string[];
+   overwritten: string[];
+   skipped: string[];
+}
+
 /** Options for file generation */
 export interface GenerateOptions {
    cwd: string;

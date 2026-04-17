@@ -55,27 +55,22 @@ export function registerUpdateCommand(program: Command): void {
       .option('--check', 'Only check for updates without installing')
       .action(async (options: { check?: boolean }) => {
          try {
-            logger.info('Checking for updates...');
-
             const current = getCurrentVersion();
             const latest = await fetchLatestVersion();
 
             if (current === latest) {
-               logger.success(`Already up to date (v${current})`);
+               logger.log(`Already up to date (v${current})`);
                return;
             }
 
             if (options.check) {
-               logger.info(`New version available: v${latest} (current: v${current})`);
-               logger.info(`Run \`lux update\` to update.`);
+               logger.log(`Update available: v${current} → v${latest}`);
                return;
             }
 
             const pm = detectGlobalPackageManager();
-            logger.info(`Updating via ${pm}...`);
-
             await performUpdate(pm);
-            logger.success(`Successfully updated to v${latest}`);
+            logger.log(`Updated to v${latest}`);
          } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             logger.error(message);

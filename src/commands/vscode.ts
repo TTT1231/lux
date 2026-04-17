@@ -24,28 +24,28 @@ export function registerVscodeCommand(program: Command) {
             dryRun: options.dryRun ?? false,
          };
 
-         logger.info(`Initializing vscode preset: ${preset.name}`);
-         logger.info(`Description: ${preset.description}`);
+         const result = generateAllVscode(preset, opts);
+         const files = [...result.created, ...result.overwritten];
 
-         // Generate vscode config files
-         const generated = generateAllVscode(preset, opts);
-
-         if (generated.length === 0) {
+         if (files.length === 0) {
             logger.warn('No files generated');
             return;
          }
 
-         logger.success(`Generated ${generated.length} config file(s)`);
-         logger.success('vscode init complete!');
+         if (opts.dryRun) {
+            logger.log(`[dry-run] Would create ${files.join(', ')}`);
+            return;
+         }
+
+         logger.log(`Created ${files.join(', ')}`);
       });
 
    vscode
       .command('list')
       .description('List available vscode presets')
       .action(() => {
-         logger.info('Available vscode presets:');
          for (const p of VSCODE_PRESETS) {
-            console.log(`  ${p.name.padEnd(12)} ${p.description}`);
+            console.log(`${p.name.padEnd(12)} ${p.description}`);
          }
       });
 }

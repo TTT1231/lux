@@ -1,5 +1,4 @@
 import { fileExists } from './fs';
-import { logger } from './logger';
 import { resolveVersions } from '../presets/versions';
 import { execFileNoThrow } from './execFileNoThrow';
 
@@ -44,17 +43,12 @@ export async function installDevDeps(
    const manager = pm ?? detectPackageManager(cwd);
    const resolvedPackages = resolveVersions(packages);
 
-   logger.info(`Installing ${resolvedPackages.length} devDependencies via ${manager}...`);
-
    const [command, subcommand] = INSTALL_CMDS[manager];
    const args = [...subcommand, '-D', ...resolvedPackages];
 
    const { stderr, exitCode } = await execFileNoThrow(command, args, { cwd });
 
    if (exitCode !== 0) {
-      logger.error(`Failed to install dependencies: ${stderr}`);
       throw new Error(`Dependency installation failed (exit code ${exitCode})`);
    }
-
-   logger.success(`Installed ${resolvedPackages.length} packages`);
 }

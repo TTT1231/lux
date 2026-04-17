@@ -31,18 +31,32 @@ export function registerFmtCommand(program: Command) {
                dryRun: options.dryRun ?? false,
             };
 
-            logger.info(`Initializing fmt preset: ${preset.name}`);
-            logger.info(`Description: ${preset.description}`);
+            const result = generateAllFmt(preset, opts);
+            const files = [...result.created, ...result.overwritten];
 
-            // Generate config files
-            const generated = generateAllFmt(preset, opts);
-
-            if (generated.length === 0) {
-               logger.warn('No files generated');
+            if (files.length === 0 && result.skipped.length === 0) {
+               logger.warn('No files to generate for this preset');
                return;
             }
 
-            logger.success(`Generated ${generated.length} config file(s)`);
+            if (opts.dryRun) {
+               if (files.length > 0) {
+                  logger.log(`[dry-run] Would create ${files.join(', ')}`);
+               }
+               if (result.skipped.length > 0) {
+                  logger.log(`[dry-run] Skipped ${result.skipped.join(', ')} (already exists)`);
+               }
+            } else {
+               if (files.length > 0) {
+                  logger.log(`Created ${files.join(', ')}`);
+               }
+               if (result.overwritten.length > 0) {
+                  logger.log(`Overwritten ${result.overwritten.join(', ')}`);
+               }
+               if (result.skipped.length > 0) {
+                  logger.log(`Skipped ${result.skipped.join(', ')} (already exists)`);
+               }
+            }
 
             // Inject scripts into package.json
             if (preset.scripts) {
@@ -52,7 +66,7 @@ export function registerFmtCommand(program: Command) {
             // Install dependencies
             if (preset.dependencies?.dev && options.install !== false) {
                if (opts.dryRun) {
-                  logger.info(`[dry-run] Would install: ${preset.dependencies.dev.join(', ')}`);
+                  logger.log(`[dry-run] Would install: ${preset.dependencies.dev.join(', ')}`);
                } else {
                   try {
                      await installDevDeps(preset.dependencies.dev, cwd);
@@ -61,22 +75,17 @@ export function registerFmtCommand(program: Command) {
                   }
                }
             } else if (preset.dependencies?.dev && options.install === false) {
-               logger.info('Dependencies to install:');
-               for (const dep of preset.dependencies.dev) {
-                  console.log(`  - ${dep}`);
-               }
+               const deps = preset.dependencies.dev;
+               logger.log(`Dependencies: ${deps.join(', ')}`);
             }
-
-            logger.success('fmt init complete!');
          },
       );
 
    fmt.command('list')
       .description('List available fmt presets')
       .action(() => {
-         logger.info('Available fmt presets:');
          for (const p of FMT_PRESETS) {
-            console.log(`  ${p.name.padEnd(12)} ${p.description}`);
+            console.log(`${p.name.padEnd(12)} ${p.description}`);
          }
       });
 }
@@ -90,7 +99,7 @@ async function injectScripts(
    const pkg = readJson<Record<string, unknown>>(pkgPath);
 
    if (!pkg) {
-      logger.warn('package.json not found, skipping scripts injection');
+      logger.warn('package.json not found, skipping script injection');
       return;
    }
 
@@ -98,7 +107,6 @@ async function injectScripts(
    const pm = detectPackageManager(opts.cwd);
    const prefix = getRunPrefix(pm);
 
-   // Resolve <pm> placeholders in script values
    const resolvedScripts: Record<string, string> = {};
    for (const [key, value] of Object.entries(scripts)) {
       resolvedScripts[key] = value.replace(/<pm>/g, prefix);
@@ -109,13 +117,11 @@ async function injectScripts(
 
    for (const [key, value] of Object.entries(resolvedScripts)) {
       if (existingScripts[key] !== undefined && !opts.force) {
-         logger.skip(`script:${key}`, 'already exists');
          skipped++;
          continue;
       }
 
       if (opts.dryRun) {
-         logger.info(`[dry-run] Would add script: ${key}`);
          added++;
          continue;
       }
@@ -127,6 +133,8 @@ async function injectScripts(
    if (added > 0 && !opts.dryRun) {
       pkg.scripts = existingScripts;
       writeJson(pkgPath, pkg);
-      logger.success(`Scripts: ${added} added, ${skipped} skipped`);
+      logger.log(
+         `Added ${added} script${added > 1 ? 's' : ''} to package.json${skipped > 0 ? ` (${skipped} skipped)` : ''}`,
+      );
    }
 }

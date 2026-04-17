@@ -4,13 +4,23 @@ import { logger } from '../utils/logger';
 
 const DEFAULT_PROXY = 'http://127.0.0.1:9876';
 
-function buildCommands(shell: 'cmd' | 'pw', httpProxy: string, socksProxy: string): string {
+export type Shell = 'cmd' | 'pw' | 'bash';
+
+export function buildCommands(shell: Shell, httpProxy: string, socksProxy: string): string {
    if (shell === 'cmd') {
       return [
          `set https_proxy=${httpProxy}`,
          `set http_proxy=${httpProxy}`,
          `set all_proxy=${socksProxy}`,
       ].join('\r\n');
+   }
+
+   if (shell === 'bash') {
+      return [
+         `export https_proxy=${httpProxy}`,
+         `export http_proxy=${httpProxy}`,
+         `export all_proxy=${socksProxy}`,
+      ].join('\n');
    }
 
    return [
@@ -25,7 +35,7 @@ function copyToClipboard(text: string): boolean {
    return result.status === 0;
 }
 
-function parseProxy(proxy: string): { httpProxy: string; socksProxy: string } {
+export function parseProxy(proxy: string): { httpProxy: string; socksProxy: string } {
    const url = new URL(proxy.includes('://') ? proxy : `http://${proxy}`);
    return {
       httpProxy: url.href,
@@ -33,19 +43,20 @@ function parseProxy(proxy: string): { httpProxy: string; socksProxy: string } {
    };
 }
 
-const SHELL_LABELS: Record<'cmd' | 'pw', string> = {
+const SHELL_LABELS: Record<Shell, string> = {
    cmd: 'CMD',
    pw: 'PowerShell',
+   bash: 'Bash',
 };
 
-function handleCopy(shell: 'cmd' | 'pw', proxy: string): void {
+function handleCopy(shell: Shell, proxy: string): void {
    const { httpProxy, socksProxy } = parseProxy(proxy);
    const commands = buildCommands(shell, httpProxy, socksProxy);
 
    if (copyToClipboard(commands)) {
-      logger.success(`已复制到剪贴板，Ctrl+V 粘贴到 ${SHELL_LABELS[shell]} 即可`);
+      logger.log(`Copied to clipboard — paste in ${SHELL_LABELS[shell]}`);
    } else {
-      logger.error('复制到剪贴板失败');
+      logger.error('Failed to copy to clipboard');
       console.log(commands);
    }
 }
@@ -62,4 +73,9 @@ export function registerVpnCommand(program: Command): void {
       .description('Copy PowerShell proxy commands to clipboard')
       .option('--proxy <addr>', 'Proxy address', DEFAULT_PROXY)
       .action((options: { proxy: string }) => handleCopy('pw', options.proxy));
+
+   vpn.command('bash')
+      .description('Copy Bash proxy commands to clipboard')
+      .option('--proxy <addr>', 'Proxy address', DEFAULT_PROXY)
+      .action((options: { proxy: string }) => handleCopy('bash', options.proxy));
 }

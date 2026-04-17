@@ -1,8 +1,7 @@
 import path from 'node:path';
-import type { FmtPreset, GenerateOptions } from '../presets/types';
+import type { FmtPreset, GenerateOptions, GenerateResult } from '../presets/types';
 import { resolveConflict } from '../core/conflict-resolver';
 import { writeFile, fileExists } from '../utils/fs';
-import { logger } from '../utils/logger';
 
 /** Maps config filenames to their content getter on a FmtPreset */
 const CONFIG_FILES: ReadonlyArray<{
@@ -18,6 +17,8 @@ const CONFIG_FILES: ReadonlyArray<{
    { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
 ];
 
+type FileAction = 'created' | 'overwritten' | 'skipped';
+
 /**
  * Generate a config file from a preset.
  * Handles conflict resolution, --force, --dry-run.
@@ -27,45 +28,35 @@ function generateConfigFile(
    filename: string,
    content: string,
    opts: GenerateOptions,
-): boolean {
+): FileAction | null {
    const filepath = path.join(opts.cwd, filename);
    const exists = fileExists(filepath);
    const action = resolveConflict(filename, exists, preset, opts.force);
 
-   if (action === 'skip') {
-      logger.skip(filename, 'already exists');
-      return false;
-   }
+   if (action === 'skip') return 'skipped';
 
-   if (opts.dryRun) {
-      logger.info(`[dry-run] Would ${exists ? 'overwrite' : 'create'} ${filename}`);
-      return true;
-   }
+   if (opts.dryRun) return exists ? 'overwritten' : 'created';
 
    writeFile(filepath, content);
-   if (exists) {
-      logger.overwrite(filename);
-   } else {
-      logger.create(filename);
-   }
-   return true;
+   return exists ? 'overwritten' : 'created';
 }
 
 /**
  * Generate all fmt config files for a preset.
- * Returns list of generated filenames.
+ * Returns structured result for the caller to format output.
  */
-export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): string[] {
-   const generated: string[] = [];
+export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): GenerateResult {
+   const result: GenerateResult = { created: [], overwritten: [], skipped: [] };
 
    for (const { filename, getContent } of CONFIG_FILES) {
       const content = getContent(preset);
       if (content === undefined) continue;
 
-      if (generateConfigFile(preset, filename, content, opts)) {
-         generated.push(filename);
-      }
+      const action = generateConfigFile(preset, filename, content, opts);
+      if (action === 'created') result.created.push(filename);
+      else if (action === 'overwritten') result.overwritten.push(filename);
+      else if (action === 'skipped') result.skipped.push(filename);
    }
 
-   return generated;
+   return result;
 }

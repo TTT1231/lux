@@ -276,8 +276,8 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('.prettierrc')).toBe(true);
          expect(ctx.fileExists('eslint.config.mjs')).toBe(true);
 
-         // Warning about missing package.json
-         expect(result.stdout).toContain('package.json not found');
+         // Warning about missing package.json (logger.warn outputs to stderr)
+         expect(result.stderr).toContain('package.json not found');
       });
    });
 
@@ -288,7 +288,8 @@ describe('Acceptance: lux CLI', () => {
 
          const result = ctx.run(['update', '--check']);
          expect(result.exitCode).toBe(0);
-         expect(result.stdout).toContain('Checking for updates');
+         const output = result.stdout + result.stderr;
+         expect(output).toMatch(/up to date|Update available|Failed to fetch/i);
       });
 
       it('shows error hint when update fails', () => {
@@ -299,7 +300,7 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['update']);
          // Either succeeds (unlikely in CI) or shows manual update hint
          const output = result.stdout + result.stderr;
-         expect(output).toMatch(/update|Successfully|manually/i);
+         expect(output).toMatch(/up to date|updated|update|manually/i);
       });
    });
 
