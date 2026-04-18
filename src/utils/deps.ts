@@ -12,6 +12,20 @@ export function detectPackageManager(cwd: string): PackageManager {
    return 'npm';
 }
 
+/** Get the lockfile filename for a given package manager */
+export function getLockfileName(pm: PackageManager): string {
+   switch (pm) {
+      case 'bun':
+         return 'bun.lock';
+      case 'pnpm':
+         return 'pnpm-lock.yaml';
+      case 'yarn':
+         return 'yarn.lock';
+      case 'npm':
+         return 'package-lock.json';
+   }
+}
+
 /** Get the run command prefix for the detected package manager */
 export function getRunPrefix(pm: PackageManager): string {
    switch (pm) {

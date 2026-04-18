@@ -58,7 +58,7 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
-    "package.json": "bun.lock, .gitignore, .npmrc, cspell.json,tsconfig.json,tsup.config.ts,.gitattributes,README.md,demo.gif",
+    "package.json": "bun.lock, .gitignore, .npmrc, cspell.json,tsconfig.json,tsup.config.ts,.gitattributes,README.md,demo.gif,README_Zh.md",
     "eslint.config.mjs": ".prettierignore, .prettierrc.json, .editorconfig,.prettierrc",
     "tsconfig.json": "tsconfig.*.json",
     ".env": ".env.*"

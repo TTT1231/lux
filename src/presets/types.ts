@@ -10,6 +10,7 @@ export interface GenerateOptions {
    cwd: string;
    force: boolean;
    dryRun: boolean;
+   lockfile?: string;
 }
 
 /** fmt preset — manages project-level formatting tools */

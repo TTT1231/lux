@@ -36,44 +36,11 @@ export default [
          2,
       ) + '\n',
 
-   prettierIgnore: () => `# Dependencies
-node_modules/
-pnpm-lock.yaml
-package-lock.json
-
-# Build outputs (UniApp 编译输出)
+   prettierIgnore: () => `node_modules/
+<lockfile>
 dist/
 unpackage/
-
-# Logs
-*.log
-logs/
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Coverage
 coverage/
-
-# Static assets
-*.svg
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
-*.woff
-*.woff2
-*.ttf
-*.eot
 `,
 
    stylelint: () => `export default {
@@ -98,31 +65,9 @@ coverage/
 }
 `,
 
-   stylelintIgnore: () => `# Dependencies
-node_modules/
-pnpm-lock.yaml
-
-# Build outputs (UniApp 编译输出)
+   stylelintIgnore: () => `node_modules/
 dist/
 unpackage/
-
-# Logs
-*.log
-
-# Environment files
-.env
-.env.local
-
-# Coverage
-coverage/
-
-# Static assets
-*.svg
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
 `,
 
    cspell: () =>
@@ -133,8 +78,7 @@ coverage/
             version: '0.2',
             language: 'en,en-US',
             allowCompoundWords: true,
-            words: ['vite', 'pinia', 'vueuse', 'unplugin', 'trw', 'uniapp'],
-            ignorePaths: ['pnpm-lock.yaml', '/coverage/', '*.svg', '*.png'],
+            words: ['vite', 'pinia', 'vueuse', 'unplugin', 'uniapp'],
          },
          null,
          2,

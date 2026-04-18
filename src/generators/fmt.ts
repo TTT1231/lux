@@ -22,6 +22,7 @@ type FileAction = 'created' | 'overwritten' | 'skipped';
 /**
  * Generate a config file from a preset.
  * Handles conflict resolution, --force, --dry-run.
+ * Replaces <lockfile> placeholder with the detected lockfile name.
  */
 function generateConfigFile(
    preset: FmtPreset,
@@ -37,7 +38,10 @@ function generateConfigFile(
 
    if (opts.dryRun) return exists ? 'overwritten' : 'created';
 
-   writeFile(filepath, content);
+   const resolved = opts.lockfile
+      ? content.replace(/<lockfile>/g, opts.lockfile)
+      : content.replace(/<lockfile>\n?/g, '');
+   writeFile(filepath, resolved);
    return exists ? 'overwritten' : 'created';
 }
 

@@ -12,7 +12,7 @@ import tseslint from 'typescript-eslint'
 
 export default defineConfig(
   {
-    ignores: ['eslint.config.mjs', 'dist/', 'vitest.config.ts', 'tsup.config.ts'],
+    ignores: ['eslint.config.mjs', 'dist/'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
@@ -65,42 +65,11 @@ export default defineConfig(
          2,
       ) + '\n',
 
-   prettierIgnore: () => `# Dependencies
-node_modules/
-bun.lock
-package-lock.json
-
-# Build outputs
+   prettierIgnore: () => `node_modules/
+<lockfile>
 dist/
 build/
-*.tsbuildinfo
-
-# Logs
-*.log
-logs/
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# IDE files
-.vscode/
-
-# Coverage
 coverage/
-
-# Static assets
-*.svg
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
-*.woff
-*.woff2
-*.ttf
-*.eot
 `,
 
    // No stylelint for node projects
@@ -114,7 +83,6 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: [],
-            ignorePaths: ['bun.lock', '*.svg', '*.png'],
          },
          null,
          2,

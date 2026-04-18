@@ -36,46 +36,12 @@ export default [
          2,
       ) + '\n',
 
-   prettierIgnore: () => `# Dependencies
-node_modules/
-pnpm-lock.yaml
-package-lock.json
-
-# Build outputs
+   prettierIgnore: () => `node_modules/
+<lockfile>
 dist/
 release/
 out/
-*.tsbuildinfo
-
-# Logs
-*.log
-logs/
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Coverage
 coverage/
-
-# Static assets
-*.svg
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
-*.woff
-*.woff2
-*.ttf
-*.eot
 `,
 
    stylelint: () => `export default {
@@ -100,33 +66,10 @@ coverage/
 }
 `,
 
-   stylelintIgnore: () => `# Dependencies
-node_modules/
-pnpm-lock.yaml
-
-# Build outputs
+   stylelintIgnore: () => `node_modules/
 dist/
 release/
 out/
-*.tsbuildinfo
-
-# Logs
-*.log
-
-# Environment files
-.env
-.env.local
-
-# Coverage
-coverage/
-
-# Static assets
-*.svg
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
 `,
 
    cspell: () =>
@@ -137,8 +80,7 @@ coverage/
             version: '0.2',
             language: 'en,en-US',
             allowCompoundWords: true,
-            words: ['vite', 'pinia', 'vueuse', 'unplugin', 'trw', 'electron', 'electron-builder'],
-            ignorePaths: ['pnpm-lock.yaml', '/coverage/', '*.svg', '*.png'],
+            words: ['vite', 'pinia', 'vueuse', 'unplugin', 'electron', 'electron-builder'],
          },
          null,
          2,

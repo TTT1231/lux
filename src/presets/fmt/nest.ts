@@ -25,42 +25,11 @@ export const nestFmt: FmtPreset = {
          2,
       ) + '\n',
 
-   prettierIgnore: () => `# Dependencies
-node_modules/
-pnpm-lock.yaml
-package-lock.json
-
-# Build outputs
+   prettierIgnore: () => `node_modules/
+<lockfile>
 dist/
 build/
-*.tsbuildinfo
-
-# Logs
-*.log
-logs/
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# IDE files
-.vscode/
-
-# Coverage
 coverage/
-
-# Static assets
-*.svg
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.ico
-*.woff
-*.woff2
-*.ttf
-*.eot
 `,
 
    // No stylelint for NestJS
@@ -74,7 +43,6 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['nestjs', 'typeorm', 'dtos'],
-            ignorePaths: ['pnpm-lock.yaml', '*.svg', '*.png'],
          },
          null,
          2,
