@@ -6,6 +6,11 @@ Project context for Claude Code.
 
 **lux** — A CLI tool for one-click project formatting and VSCode configuration initialization. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig configs and VSCode settings from predefined presets, with smart merge and conflict resolution.
 
+## Prerequisites
+
+- **Node.js 18+** (ESM-only runtime)
+- **bun** (package manager & task runner)
+
 ## Commands
 
 ### Local Development
@@ -40,14 +45,14 @@ bun bump:deps      # Sync dependency versions across presets
 ## Testing
 
 Uses **vitest** with two project tiers (see `vitest.config.ts`):
-- **Unit**: `tests/**/*.test.ts` — parallel, fast timeout
-- **Acceptance**: `tests/**/*.spec.ts` — serial, fork pool, 30s timeout (real filesystem + process)
 
-| Type | Pattern | Location |
-|------|---------|----------|
-| Unit tests | `*.test.ts` | `tests/**/*.test.ts` |
-| Acceptance tests | `*.spec.ts` | `tests/**/*.spec.ts` |
-| Test helpers | `*.ts` (no suffix) | `tests/helpers/` |
+| Type | Pattern | Location | Mode |
+|------|---------|----------|------|
+| Unit | `*.test.ts` | `tests/**/*.test.ts` | parallel, fast timeout |
+| Acceptance | `*.spec.ts` | `tests/**/*.spec.ts` | serial, fork pool, 30s timeout |
+| Helpers | `*.ts` | `tests/helpers/` | — |
+
+> Acceptance tests spawn `dist/index.js` — run `bun build` before `bun test` if the dist is stale.
 
 ## Architecture
 
