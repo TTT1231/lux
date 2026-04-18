@@ -17,7 +17,10 @@ Project context for Claude Code.
 
 ```bash
 bun link                  # Register `lux` globally for local testing
-lux fmt web          # Test CLI against any project
+lux fmt web               # Test CLI against any project
+lux fmt web --dry-run     # Preview without writing files
+lux fmt web --force       # Overwrite existing configs
+lux fmt web --no-install  # Skip dependency installation
 bun unlink                # Clean up global link
 ```
 
@@ -39,7 +42,6 @@ bun code:check     # lint + format:check
 bun code:fix       # lint:fix + format
 bun code:check:all # lint + format:check + cspell
 bun code:fix:all   # lint:fix + format
-bun bump:deps      # Sync dependency versions across presets
 ```
 
 ## Testing
@@ -72,7 +74,6 @@ src/
 │   └── merge-settings.ts     # VSCode settings merge with priority keys
 ├── presets/
 │   ├── types.ts              # FmtPreset & VscodePreset interfaces
-│   ├── versions.ts           # Centralized dep version pinning
 │   ├── fmt/                  # FmtPreset implementations (web, electron, uniapp, node, nest)
 │   └── vscode/               # VscodePreset implementations (web, electron, uniapp, node, nest, go)
 └── utils/
@@ -80,7 +81,7 @@ src/
     ├── errors.ts             # CliError, fuzzy preset matching (Levenshtein)
     ├── execFileNoThrow.ts    # Shell exec wrapper (uses exec for .cmd resolution on Windows)
     ├── fs.ts                 # File read/write/JSON helpers
-    ├── logger.ts             # Chalk-based structured logger
+    ├── logger.ts             # Thin chalk wrappers (log/success/warn/error)
     └── version.ts            # PACKAGE_NAME constant + getCurrentVersion() (cached)
 ```
 
@@ -99,7 +100,6 @@ src/
 - **ESM-only** (`"type": "module"`, tsup outputs ESM, target Node 18+)
 - **Lazy preset content**: all config content is generated via functions (`eslint: () => string`) not raw strings, so unused presets don't allocate memory
 - **`<pm>` placeholder in scripts**: scripts use `<pm>` which gets replaced at inject time with `bun run`/`pnpm run`/`yarn run`/`npm run` based on detected lockfile
-- **Version pinning**: all dependency versions are centralized in `presets/versions.ts`, not scattered across presets
 - **No runtime dependencies** beyond `chalk` and `commander` — everything else is devDependencies for the CLI's own linting
 
 ### Adding a New Preset
@@ -107,4 +107,3 @@ src/
 1. Create `src/presets/fmt/<name>.ts` — export a `FmtPreset` object with config generators
 2. Create `src/presets/vscode/<name>.ts` — export a `VscodePreset` object
 3. Re-export from each `index.ts` and add to the `FMT_PRESETS` / `VSCODE_PRESETS` arrays
-4. Pin any new dependency versions in `src/presets/versions.ts`

@@ -1,6 +1,6 @@
-import { fileExists } from './fs';
-import { resolveVersions } from '../presets/versions';
-import { execFileNoThrow } from './execFileNoThrow';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { fileExists, readJson } from './fs';
 
 export type PackageManager = 'bun' | 'pnpm' | 'yarn' | 'npm';
 
@@ -40,28 +40,52 @@ export function getRunPrefix(pm: PackageManager): string {
    }
 }
 
-/** Maps package managers to their install command parts */
-const INSTALL_CMDS: Record<PackageManager, [string, string[]]> = {
-   bun: ['bun', ['add']],
-   pnpm: ['pnpm', ['add']],
-   yarn: ['yarn', ['add']],
-   npm: ['npm', ['install']],
-};
-
-/** Install devDependencies using the detected package manager */
+/** Install devDependencies using the detected package manager (latest versions) */
 export async function installDevDeps(
    packages: string[],
    cwd: string,
    pm?: PackageManager,
 ): Promise<void> {
    const manager = pm ?? detectPackageManager(cwd);
-   const resolvedPackages = resolveVersions(packages);
 
-   const [command, subcommand] = INSTALL_CMDS[manager];
-   const args = [...subcommand, '-D', ...resolvedPackages];
+   const pkg = readJson<Record<string, unknown>>(path.join(cwd, 'package.json'));
+   if (!pkg) {
+      throw new Error('package.json not found');
+   }
 
-   const { stderr, exitCode } = await execFileNoThrow(command, args, { cwd });
+   const devDeps = (pkg.devDependencies ?? {}) as Record<string, string>;
+   const missing = packages.filter(pkg => !devDeps[pkg]);
 
+   if (missing.length === 0) return;
+
+   const addCmd = manager === 'npm' ? 'npm install -D' : `${manager} add -D`;
+
+   const exitCode = await new Promise<number | null>(resolve => {
+      const child = spawn(`${addCmd} ${missing.join(' ')}`, {
+         cwd,
+         shell: true,
+         stdio: 'inherit',
+      });
+
+      const timer = setTimeout(() => {
+         child.kill();
+         resolve(null);
+      }, 120_000);
+
+      child.on('close', code => {
+         clearTimeout(timer);
+         resolve(code);
+      });
+
+      child.on('error', () => {
+         clearTimeout(timer);
+         resolve(1);
+      });
+   });
+
+   if (exitCode === null) {
+      throw new Error('Dependency installation timed out (120s)');
+   }
    if (exitCode !== 0) {
       throw new Error(`Dependency installation failed (exit code ${exitCode})`);
    }

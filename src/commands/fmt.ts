@@ -36,66 +36,42 @@ export function registerFmtCommand(program: Command) {
             };
 
             const result = generateAllFmt(preset, opts);
-            const files = [...result.created, ...result.overwritten];
+            const allFiles = [...result.created, ...result.overwritten];
 
-            if (files.length === 0 && result.skipped.length === 0) {
+            if (allFiles.length === 0 && result.skipped.length === 0) {
                logger.warn('No files to generate for this preset');
                return;
             }
 
-            if (opts.dryRun) {
-               if (files.length > 0) {
-                  logger.log(`[dry-run] Would create ${files.join(', ')}`);
-               }
-               if (result.skipped.length > 0) {
-                  logger.log(`[dry-run] Skipped ${result.skipped.join(', ')} (already exists)`);
-               }
-            } else {
-               if (result.created.length > 0) {
-                  logger.log(
-                     `Created ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''}`,
-                  );
-               }
-               if (result.overwritten.length > 0) {
-                  logger.log(
-                     `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length} file${result.overwritten.length > 1 ? 's' : ''}`,
-                  );
-               }
-               if (result.skipped.length > 0) {
-                  logger.log(
-                     `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
-                  );
-               }
-            }
+            logGenerationResult(result, opts.dryRun);
 
             if (!pm) {
-               const tasks: string[] = [];
-               if (preset.scripts) tasks.push('script injection');
-               if (preset.dependencies?.dev && options.install !== false)
-                  tasks.push('dependency installation');
-               if (tasks.length > 0) {
-                  logger.warn(`package.json not found, skipping ${tasks.join(' and ')}`);
-               }
-            } else {
-               if (preset.scripts) {
-                  await injectScripts(preset.scripts, opts, pm);
-               }
+               warnMissingPackageJson(preset, options.install !== false);
+               return;
+            }
 
-               if (preset.dependencies?.dev && options.install !== false) {
-                  if (opts.dryRun) {
-                     logger.log(`[dry-run] Would install: ${preset.dependencies.dev.join(', ')}`);
-                  } else {
-                     try {
-                        logger.log(`Installing dependencies with ${pm}...`);
-                        await installDevDeps(preset.dependencies.dev, cwd, pm);
-                     } catch {
-                        logger.warn('Dependency installation failed. You can install manually.');
-                     }
-                  }
-               } else if (preset.dependencies?.dev && options.install === false) {
-                  const deps = preset.dependencies.dev;
-                  logger.log(`Dependencies: ${deps.join(', ')}`);
-               }
+            if (preset.scripts) {
+               await injectScripts(preset.scripts, opts, pm);
+            }
+
+            if (!preset.dependencies?.dev) return;
+
+            if (options.install === false) {
+               logger.log(`Dependencies: ${preset.dependencies.dev.join(', ')}`);
+               return;
+            }
+
+            if (opts.dryRun) {
+               logger.log(`[dry-run] Would install: ${preset.dependencies.dev.join(', ')}`);
+               return;
+            }
+
+            try {
+               logger.log(`Installing dependencies with ${pm}...`);
+               await installDevDeps(preset.dependencies.dev, cwd, pm);
+               logger.success('Dependencies installed successfully');
+            } catch {
+               logger.warn('Dependency installation failed. You can install manually.');
             }
          },
       );
@@ -107,6 +83,53 @@ export function registerFmtCommand(program: Command) {
             console.log(`${p.name.padEnd(12)} ${p.description}`);
          }
       });
+}
+
+/** Log file generation results, branching on dry-run vs real mode */
+function logGenerationResult(
+   result: { created: string[]; overwritten: string[]; skipped: string[] },
+   dryRun: boolean,
+): void {
+   const files = [...result.created, ...result.overwritten];
+
+   if (dryRun) {
+      if (files.length > 0) {
+         logger.log(`[dry-run] Would create ${files.join(', ')}`);
+      }
+      if (result.skipped.length > 0) {
+         logger.log(`[dry-run] Skipped ${result.skipped.join(', ')} (already exists)`);
+      }
+      return;
+   }
+
+   if (result.created.length > 0) {
+      logger.log(
+         `Created ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''}`,
+      );
+   }
+   if (result.overwritten.length > 0) {
+      logger.log(
+         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length} file${result.overwritten.length > 1 ? 's' : ''}`,
+      );
+   }
+   if (result.skipped.length > 0) {
+      logger.log(
+         `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
+      );
+   }
+}
+
+/** Warn about skipped tasks when package.json is missing */
+function warnMissingPackageJson(
+   preset: { scripts?: Record<string, string>; dependencies?: { dev?: string[] } },
+   installEnabled: boolean,
+): void {
+   const tasks: string[] = [];
+   if (preset.scripts) tasks.push('script injection');
+   if (preset.dependencies?.dev && installEnabled) tasks.push('dependency installation');
+   if (tasks.length > 0) {
+      logger.warn(`package.json not found, skipping ${tasks.join(' and ')}`);
+   }
 }
 
 /** Map filenames to tool categories: eslint, prettier, stylelint, cspell, editorconfig */

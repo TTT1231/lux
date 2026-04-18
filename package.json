@@ -1,6 +1,6 @@
 {
    "name": "@luxkit/cli",
-   "version": "1.0.1",
+   "version": "1.0.2",
    "description": "One-click project formatting & VSCode config CLI",
    "type": "module",
    "bin": {
@@ -28,8 +28,7 @@
       "prepublishOnly": "cross-env NODE_ENV=production bun run build",
       "test": "vitest run",
       "test:watch": "vitest",
-      "test:coverage": "vitest run --coverage",
-      "bump:deps": "bunx tsx scripts/bump-deps.ts"
+      "test:coverage": "vitest run --coverage"
    },
    "keywords": [],
    "author": "",
