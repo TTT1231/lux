@@ -12,7 +12,7 @@ Project context for Claude Code.
 
 ```bash
 bun link                  # Register `lux` globally for local testing
-lux fmt init web          # Test CLI against any project
+lux fmt web          # Test CLI against any project
 bun unlink                # Clean up global link
 ```
 
@@ -55,10 +55,10 @@ Uses **vitest** with two project tiers (see `vitest.config.ts`):
 src/
 ├── index.ts                  # CLI entry (commander)
 ├── commands/                 # CLI command handlers
-│   ├── fmt.ts                # lux fmt init <preset> / lux fmt list
+│   ├── fmt.ts                # lux fmt <preset> / lux fmt list
 │   ├── update.ts             # lux update [--check] — self-update via npm/bun
 │   ├── vpn.ts                # lux vpn cmd/pw — copy proxy env-vars to clipboard
-│   └── vscode.ts             # lux vscode init <preset> / lux vscode list
+│   └── vscode.ts             # lux vscode <preset> / lux vscode list
 ├── generators/               # File generation logic
 │   ├── fmt.ts                # Writes eslint/prettier/stylelint/cspell/editorconfig files
 │   └── vscode.ts             # Writes .vscode/settings.json + extensions.json

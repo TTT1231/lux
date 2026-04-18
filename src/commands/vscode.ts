@@ -6,11 +6,10 @@ import { resolvePreset } from '../utils/errors';
 import { generateAllVscode } from '../generators/vscode';
 
 export function registerVscodeCommand(program: Command) {
-   const vscode = program.command('vscode');
+   const vscode = program.command('vscode').description('Initialize VSCode config with preset');
 
    vscode
-      .command('init <preset>')
-      .description('Initialize VSCode config with preset')
+      .argument('<preset>')
       .option('-F, --force', 'Force overwrite existing files')
       .option('--dry-run', 'Preview without writing files')
       .action(async (presetName: string, options: { force?: boolean; dryRun?: boolean }) => {

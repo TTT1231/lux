@@ -29,7 +29,7 @@ describe('Acceptance: lux CLI', () => {
          });
 
          // Step 1: init fmt
-         const fmtResult = ctx.run(['fmt', 'init', 'web', '--no-install']);
+         const fmtResult = ctx.run(['fmt', 'web', '--no-install']);
          expect(fmtResult.exitCode).toBe(0);
 
          // Verify: all formatting config files exist
@@ -56,7 +56,7 @@ describe('Acceptance: lux CLI', () => {
          expect(editorconfig).toContain('indent_size = 2');
 
          // Step 2: init vscode
-         const vscodeResult = ctx.run(['vscode', 'init', 'web']);
+         const vscodeResult = ctx.run(['vscode', 'web']);
          expect(vscodeResult.exitCode).toBe(0);
 
          // Verify: VSCode config files exist
@@ -89,13 +89,13 @@ describe('Acceptance: lux CLI', () => {
          });
 
          // First run: create everything
-         ctx.run(['fmt', 'init', 'web', '--no-install']);
+         ctx.run(['fmt', 'web', '--no-install']);
 
          // Developer customizes .prettierrc
          ctx.writeJsonFile('.prettierrc', { semi: true, printWidth: 120 });
 
          // Re-run without --force
-         const result = ctx.run(['fmt', 'init', 'web', '--no-install']);
+         const result = ctx.run(['fmt', 'web', '--no-install']);
          expect(result.exitCode).toBe(0);
 
          // Verify: custom .prettierrc is preserved
@@ -104,7 +104,7 @@ describe('Acceptance: lux CLI', () => {
          expect(prettierrc['printWidth']).toBe(120);
 
          // Re-run WITH --force should overwrite
-         ctx.run(['fmt', 'init', 'web', '--force', '--no-install']);
+         ctx.run(['fmt', 'web', '--force', '--no-install']);
          const overwritten = ctx.readJsonFile<Record<string, unknown>>('.prettierrc')!;
          expect(overwritten['semi']).toBe(false); // reset to preset value
       });
@@ -127,7 +127,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['vscode', 'init', 'web']);
+         ctx.run(['vscode', 'web']);
 
          const settings = ctx.readJsonFile<Record<string, unknown>>('.vscode/settings.json')!;
 
@@ -159,13 +159,13 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         const fmtResult = ctx.run(['fmt', 'init', 'web', '--dry-run']);
+         const fmtResult = ctx.run(['fmt', 'web', '--dry-run']);
          expect(fmtResult.exitCode).toBe(0);
          expect(fmtResult.stdout).toContain('[dry-run]');
          expect(ctx.fileExists('.prettierrc')).toBe(false);
          expect(ctx.fileExists('eslint.config.mjs')).toBe(false);
 
-         const vscodeResult = ctx.run(['vscode', 'init', 'web', '--dry-run']);
+         const vscodeResult = ctx.run(['vscode', 'web', '--dry-run']);
          expect(vscodeResult.exitCode).toBe(0);
          expect(ctx.fileExists('.vscode/settings.json')).toBe(false);
       });
@@ -181,7 +181,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['fmt', 'init', 'web', '--no-install']);
+         ctx.run(['fmt', 'web', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['code:check']).toBe('bun run lint && bun run format:check');
       });
@@ -196,7 +196,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['fmt', 'init', 'web', '--no-install']);
+         ctx.run(['fmt', 'web', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['code:check']).toBe('pnpm run lint && pnpm run format:check');
       });
@@ -213,7 +213,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['fmt', 'init', 'nest', '--force', '--no-install']);
+         ctx.run(['fmt', 'nest', '--force', '--no-install']);
 
          // neverOverwrite: eslint.config.mjs preserved even with --force
          expect(ctx.readFile('eslint.config.mjs')).toBe('// NestJS custom eslint — do not touch');
@@ -235,7 +235,7 @@ describe('Acceptance: lux CLI', () => {
       it('suggests the closest match and exits with error', () => {
          ctx = createTestContext();
 
-         const result = ctx.run(['fmt', 'init', 'webs']);
+         const result = ctx.run(['fmt', 'webs']);
          expect(result.exitCode).toBe(1);
          expect(result.stderr).toContain("Did you mean 'web'");
       });
@@ -265,11 +265,11 @@ describe('Acceptance: lux CLI', () => {
    });
 
    // ─── Scenario 9: No package.json — graceful degradation ──────────
-   describe('Scenario: developer runs fmt init without package.json', () => {
+   describe('Scenario: developer runs fmt without package.json', () => {
       it('creates config files but skips script injection with warning', () => {
          ctx = createTestContext();
 
-         const result = ctx.run(['fmt', 'init', 'web', '--no-install']);
+         const result = ctx.run(['fmt', 'web', '--no-install']);
          expect(result.exitCode).toBe(0);
 
          // Config files still created
@@ -314,7 +314,7 @@ describe('Acceptance: lux CLI', () => {
             ctx = createTestContext({
                files: { 'package.json': JSON.stringify({ name: 'test', scripts: {} }) },
             });
-            const result = ctx.run(['fmt', 'init', preset, '--no-install']);
+            const result = ctx.run(['fmt', preset, '--no-install']);
             expect(result.exitCode).toBe(0);
 
             // All generated files must be non-empty
@@ -343,7 +343,7 @@ describe('Acceptance: lux CLI', () => {
       for (const preset of vscodePresets) {
          it(`vscode "${preset}" produces valid settings and extensions`, () => {
             ctx = createTestContext();
-            const result = ctx.run(['vscode', 'init', preset]);
+            const result = ctx.run(['vscode', preset]);
             expect(result.exitCode).toBe(0);
 
             const settingsRaw = ctx.readFile('.vscode/settings.json');

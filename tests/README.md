@@ -60,7 +60,7 @@ it('用户做了某事，期望某个结果', () => {
     files: { 'package.json': '...' }  // 可选：种子文件
   })
 
-  const result = ctx.run(['fmt', 'init', 'web', '--no-install'])
+  const result = ctx.run(['fmt', 'web', '--no-install'])
   expect(result.exitCode).toBe(0)
 
   // 断言最终文件系统状态

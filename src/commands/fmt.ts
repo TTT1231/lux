@@ -9,10 +9,10 @@ import { detectPackageManager, installDevDeps, getRunPrefix } from '../utils/dep
 import { readJson, writeJson } from '../utils/fs';
 
 export function registerFmtCommand(program: Command) {
-   const fmt = program.command('fmt');
+   const fmt = program.command('fmt').description('Initialize formatting config with preset');
 
-   fmt.command('init <preset>')
-      .description('Initialize formatting config with preset')
+   fmt
+      .argument('<preset>')
       .option('-F, --force', 'Force overwrite existing files')
       .option('--no-install', 'Skip dependency installation')
       .option('--dry-run', 'Preview without writing files')

@@ -30,7 +30,7 @@
 
 | Feature                    | Description                                                                    |
 | :------------------------- | :----------------------------------------------------------------------------- |
-| 🎯 **One Command Setup**   | `lux fmt init web` generates all linting & formatting configs instantly        |
+| 🎯 **One Command Setup**   | `lux fmt web` generates all linting & formatting configs instantly        |
 | 🔧 **5 Fmt Presets**       | `web` · `electron` · `uniapp` · `node` · `nest` — each with curated rules      |
 | 🖥️ **6 VSCode Presets**    | `web` · `electron` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
 | 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences               |
@@ -51,10 +51,10 @@ npm install -g @luxkit/cli
 bun add -g @luxkit/cli
 
 # Initialize formatting configs
-lux fmt init web          # Generate ESLint, Prettier, Stylelint, CSpell, EditorConfig
+lux fmt web          # Generate ESLint, Prettier, Stylelint, CSpell, EditorConfig
 
 # Initialize VSCode settings
-lux vscode init web       # Generate .vscode/settings.json + extensions.json
+lux vscode web       # Generate .vscode/settings.json + extensions.json
 
 # List available presets
 lux fmt list
@@ -67,9 +67,9 @@ lux vscode list
 
 | Command                    | Description                                 |
 | :------------------------- | :------------------------------------------ |
-| `lux fmt init <preset>`    | Initialize formatting config files          |
+| `lux fmt <preset>`    | Initialize formatting config files          |
 | `lux fmt list`             | List available fmt presets                  |
-| `lux vscode init <preset>` | Initialize VSCode workspace settings        |
+| `lux vscode <preset>` | Initialize VSCode workspace settings        |
 | `lux vscode list`          | List available VSCode presets               |
 | `lux vpn cmd`              | Copy CMD proxy env-vars to clipboard        |
 | `lux vpn pw`               | Copy PowerShell proxy env-vars to clipboard |
@@ -92,7 +92,7 @@ lux vscode list
 ### Options
 
 ```bash
-lux fmt init <preset> [options]
+lux fmt <preset> [options]
 
   --force       Force overwrite existing files
   --no-install  Skip dependency installation
@@ -104,7 +104,7 @@ lux fmt init <preset> [options]
 ### How It Works
 
 ```
-lux fmt init web
+lux fmt web
        │
        ▼
   Parse CLI args ──► Resolve preset (fuzzy match on typo)
@@ -148,7 +148,7 @@ cd lux
 bun install
 
 bun link                  # Register `lux` globally for testing
-lux fmt init web          # Test it on any project
+lux fmt web          # Test it on any project
 
 bun test                  # Run tests
 bun build                 # Build to dist/
@@ -183,7 +183,7 @@ bun code:check:all        # lint + format + spell check
 
 | 特性                    | 说明                                                                     |
 | :---------------------- | :----------------------------------------------------------------------- |
-| 🎯 **一键配置**         | `lux fmt init web` 即可生成所有 lint 与格式化配置                        |
+| 🎯 **一键配置**         | `lux fmt web` 即可生成所有 lint 与格式化配置                        |
 | 🔧 **5 种格式化预设**   | `web` · `electron` · `uniapp` · `node` · `nest` — 各配备精选规则         |
 | 🖥️ **6 种 VSCode 预设** | `web` · `electron` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
 | 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                    |
@@ -204,10 +204,10 @@ npm install -g @luxkit/cli
 bun add -g @luxkit/cli
 
 # 初始化格式化配置
-lux fmt init web          # 生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig
+lux fmt web          # 生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig
 
 # 初始化 VSCode 设置
-lux vscode init web       # 生成 .vscode/settings.json + extensions.json
+lux vscode web       # 生成 .vscode/settings.json + extensions.json
 
 # 查看可用预设
 lux fmt list
@@ -220,9 +220,9 @@ lux vscode list
 
 | 命令                       | 说明                                 |
 | :------------------------- | :----------------------------------- |
-| `lux fmt init <preset>`    | 初始化格式化配置文件                 |
+| `lux fmt <preset>`    | 初始化格式化配置文件                 |
 | `lux fmt list`             | 列出可用的格式化预设                 |
-| `lux vscode init <preset>` | 初始化 VSCode 工作区设置             |
+| `lux vscode <preset>` | 初始化 VSCode 工作区设置             |
 | `lux vscode list`          | 列出可用的 VSCode 预设               |
 | `lux vpn cmd`              | 复制 CMD 代理环境变量到剪贴板        |
 | `lux vpn pw`               | 复制 PowerShell 代理环境变量到剪贴板 |
@@ -245,7 +245,7 @@ lux vscode list
 ### 命令选项
 
 ```bash
-lux fmt init <preset> [options]
+lux fmt <preset> [options]
 
   --force       强制覆盖已有文件
   --no-install  跳过依赖安装
@@ -257,7 +257,7 @@ lux fmt init <preset> [options]
 ### 工作原理
 
 ```
-lux fmt init web
+lux fmt web
        │
        ▼
   解析 CLI 参数 ──► 解析预设（拼写错误时自动模糊匹配）
@@ -301,7 +301,7 @@ cd lux
 bun install
 
 bun link                  # 全局注册 `lux` 用于测试
-lux fmt init web          # 在任意项目上测试
+lux fmt web          # 在任意项目上测试
 
 bun test                  # 运行测试
 bun build                 # 构建到 dist/
