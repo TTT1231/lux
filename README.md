@@ -21,7 +21,7 @@
 `lux` is a CLI tool that initializes project formatting configs and VSCode workspace settings with a single command. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig files and VSCode settings from battle-tested presets — with smart merge and conflict resolution.
 
 <div align="center">
-  <img src="demo.gif" alt="lux demo" width="640" />
+  <img src="https://github.com/TTT1231/lux/blob/main/demo.gif?raw=true" alt="lux demo" width="640" />
 </div>
 
 ### ✨ Key Highlights

@@ -1,14 +1,13 @@
 {
    "name": "@luxkit/cli",
-   "version": "1.0.3",
+   "version": "1.0.4",
    "description": "One-click project formatting & VSCode config CLI",
    "type": "module",
    "bin": {
       "lux": "dist/index.js"
    },
    "files": [
-      "dist",
-      "demo.gif"
+      "dist"
    ],
    "publishConfig": {
       "access": "public"

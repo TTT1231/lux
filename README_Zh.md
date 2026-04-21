@@ -21,7 +21,7 @@
 `lux` 是一个 CLI 工具，只需一条命令即可初始化项目格式化配置和 VSCode 工作区设置。它从经过实战检验的预设中生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig 配置文件以及 VSCode 设置 —— 并带有智能合并和冲突解决机制。
 
 <div align="center">
-  <img src="demo.gif" alt="lux 演示" width="640" />
+  <img src="https://github.com/TTT1231/lux/blob/main/demo.gif?raw=true" alt="lux 演示" width="640" />
 </div>
 
 ### ✨ 核心亮点
