@@ -4,3 +4,4 @@ coverage/
 *.tsbuildinfo
 .vscode/extensions.json
 .claude/settings.local.json
+.claude/settings.json
