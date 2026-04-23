@@ -21,6 +21,9 @@ lux fmt web               # Test CLI against any project
 lux fmt web --dry-run     # Preview without writing files
 lux fmt web --force       # Overwrite existing configs
 lux fmt web --no-install  # Skip dependency installation
+lux show env              # Display stored proxy env vars
+lux set https_proxy=http://127.0.0.1:7890  # Store proxy env vars
+lux unset                 # Clear stored proxy configuration
 bun unlink                # Clean up global link
 ```
 
@@ -65,6 +68,7 @@ src/
 │   ├── fmt.ts                # lux fmt <preset> / lux fmt list
 │   ├── update.ts             # lux update [--check] — self-update via npm/bun
 │   ├── vpn.ts                # lux vpn cmd/pw — copy proxy env-vars to clipboard
+│   ├── show.ts               # lux show env — display stored proxy env vars
 │   └── vscode.ts             # lux vscode <preset> / lux vscode list
 ├── generators/               # File generation logic
 │   ├── fmt.ts                # Writes eslint/prettier/stylelint/cspell/editorconfig files
@@ -78,6 +82,7 @@ src/
 │   └── vscode/               # VscodePreset implementations (web, electron, uniapp, node, nest, go)
 └── utils/
     ├── deps.ts               # Package manager detection + devDep install
+    ├── config.ts             # Persistent env config read/write (~/.lux/env.txt)
     ├── errors.ts             # CliError, fuzzy preset matching (Levenshtein)
     ├── execFileNoThrow.ts    # Shell exec wrapper (uses exec for .cmd resolution on Windows)
     ├── fs.ts                 # File read/write/JSON helpers

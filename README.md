@@ -28,7 +28,7 @@
 
 | Feature                    | Description                                                                    |
 | :------------------------- | :----------------------------------------------------------------------------- |
-| 🎯 **One Command Setup**   | `lux fmt web` generates all linting & formatting configs instantly        |
+| 🎯 **One Command Setup**   | `lux fmt web` generates all linting & formatting configs instantly             |
 | 🔧 **5 Fmt Presets**       | `web` · `electron` · `uniapp` · `node` · `nest` — each with curated rules      |
 | 🖥️ **6 VSCode Presets**    | `web` · `electron` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
 | 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences               |
@@ -37,6 +37,8 @@
 | 🔍 **Fuzzy Matching**      | Typo a preset name? Levenshtein distance finds the closest match               |
 | 🧪 **Dry Run**             | Preview all changes with `--dry-run` before writing anything                   |
 | 🔗 **Script Injection**    | Auto-injects `<pm> lint` / `<pm> format` scripts into package.json             |
+| 🌐 **Proxy Management**    | Persistent proxy config with `set` / `unset` — copy to CMD / PowerShell / Bash |
+| 🔄 **Self-Update**         | `lux update` checks and installs the latest version automatically              |
 
 <br />
 
@@ -63,14 +65,20 @@ lux vscode list
 
 ### CLI Commands
 
-| Command                    | Description                                 |
-| :------------------------- | :------------------------------------------ |
-| `lux fmt <preset>`    | Initialize formatting config files          |
-| `lux fmt list`             | List available fmt presets                  |
-| `lux vscode <preset>` | Initialize VSCode workspace settings        |
-| `lux vscode list`          | List available VSCode presets               |
-| `lux vpn cmd`              | Copy CMD proxy env-vars to clipboard        |
-| `lux vpn pw`               | Copy PowerShell proxy env-vars to clipboard |
+| Command                     | Description                                        |
+| :-------------------------- | :------------------------------------------------- |
+| `lux fmt <preset>`          | Initialize formatting config files                 |
+| `lux fmt list`              | List available fmt presets                         |
+| `lux vscode <preset>`       | Initialize VSCode workspace settings               |
+| `lux vscode list`           | List available VSCode presets                      |
+| `lux set <key=value> [...]` | Persist proxy env vars (e.g. `https_proxy=http://127.0.0.1:7890`) |
+| `lux unset`                 | Clear all stored proxy configuration               |
+| `lux show env`              | Display stored proxy environment variables         |
+| `lux vpn cmd`               | Copy CMD proxy commands to clipboard               |
+| `lux vpn pw`                | Copy PowerShell proxy commands to clipboard        |
+| `lux vpn bash`              | Copy Bash proxy commands to clipboard              |
+| `lux update`                | Update `@luxkit/cli` to the latest version         |
+| `lux update --check`        | Check for available updates without installing     |
 
 <br />
 

@@ -28,7 +28,7 @@
 
 | 特性                    | 说明                                                                     |
 | :---------------------- | :----------------------------------------------------------------------- |
-| 🎯 **一键配置**         | `lux fmt web` 即可生成所有 lint 与格式化配置                        |
+| 🎯 **一键配置**         | `lux fmt web` 即可生成所有 lint 与格式化配置                             |
 | 🔧 **5 种格式化预设**   | `web` · `electron` · `uniapp` · `node` · `nest` — 各配备精选规则         |
 | 🖥️ **6 种 VSCode 预设** | `web` · `electron` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
 | 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                    |
@@ -37,6 +37,8 @@
 | 🔍 **模糊匹配**         | 预设名拼错了？Levenshtein 距离帮你找到最接近的匹配                       |
 | 🧪 **Dry Run**          | 使用 `--dry-run` 预览所有变更，不写入任何文件                            |
 | 🔗 **脚本注入**         | 自动将 `<pm> lint` / `<pm> format` 脚本注入 package.json                 |
+| 🌐 **代理管理**         | 持久化代理配置，支持 `set` / `unset` — 一键复制到 CMD / PowerShell / Bash |
+| 🔄 **自动更新**         | `lux update` 自动检测并安装最新版本                                      |
 
 <br />
 
@@ -63,14 +65,20 @@ lux vscode list
 
 ### CLI 命令
 
-| 命令                       | 说明                                 |
-| :------------------------- | :----------------------------------- |
-| `lux fmt <preset>`    | 初始化格式化配置文件                 |
-| `lux fmt list`             | 列出可用的格式化预设                 |
-| `lux vscode <preset>` | 初始化 VSCode 工作区设置             |
-| `lux vscode list`          | 列出可用的 VSCode 预设               |
-| `lux vpn cmd`              | 复制 CMD 代理环境变量到剪贴板        |
-| `lux vpn pw`               | 复制 PowerShell 代理环境变量到剪贴板 |
+| 命令                       | 说明                                                       |
+| :------------------------- | :--------------------------------------------------------- |
+| `lux fmt <preset>`         | 初始化格式化配置文件                                       |
+| `lux fmt list`             | 列出可用的格式化预设                                       |
+| `lux vscode <preset>`      | 初始化 VSCode 工作区设置                                   |
+| `lux vscode list`          | 列出可用的 VSCode 预设                                     |
+| `lux set <key=value> [...]` | 持久化保存代理环境变量（如 `https_proxy=http://127.0.0.1:7890`） |
+| `lux unset`                | 清除所有已保存的代理配置                                   |
+| `lux show env`             | 显示已保存的代理环境变量                                   |
+| `lux vpn cmd`              | 复制 CMD 代理命令到剪贴板                                  |
+| `lux vpn pw`               | 复制 PowerShell 代理命令到剪贴板                           |
+| `lux vpn bash`             | 复制 Bash 代理命令到剪贴板                                 |
+| `lux update`               | 更新 `@luxkit/cli` 到最新版本                              |
+| `lux update --check`       | 仅检查是否有可用更新，不执行安装                           |
 
 <br />
 
