@@ -163,6 +163,12 @@ bun code:check:all        # lint + format + spell check
 
 <br />
 
+### 🤝 Support
+
+If you have any questions or run into issues, feel free to [open an issue](https://github.com/TTT1231/lux/issues) on GitHub.
+
+<br />
+
 ### 📄 License
 
 [ISC](https://opensource.org/licenses/ISC) — Free to use, modify, and distribute.

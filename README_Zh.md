@@ -163,6 +163,12 @@ bun code:check:all        # lint + 格式化 + 拼写检查
 
 <br />
 
+### 🤝 反馈与支持
+
+如果你有任何疑问或遇到问题，欢迎到 GitHub [提交 Issue](https://github.com/TTT1231/lux/issues)。
+
+<br />
+
 ### 📄 许可证
 
 [ISC](https://opensource.org/licenses/ISC) — 可自由使用、修改和分发。
