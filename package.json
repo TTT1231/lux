@@ -1,6 +1,6 @@
 {
    "name": "@luxkit/cli",
-   "version": "1.0.5",
+   "version": "1.0.6",
    "description": "One-click project formatting & VSCode config CLI",
    "type": "module",
    "bin": {

@@ -9,17 +9,17 @@ type ProxyKey = (typeof ALLOWED_KEYS)[number];
 export type Shell = 'cmd' | 'pw' | 'bash';
 
 export function buildCommands(shell: Shell, env: Record<string, string>): string {
-   const entries = Object.entries(env).map(([k, v]) => `${k}=${v}`);
+   const entries = Object.entries(env);
 
    if (shell === 'cmd') {
-      return entries.map(e => `set ${e}`).join(' && ');
+      return entries.map(([k, v]) => `set ${k}=${v}`).join(' && ');
    }
 
    if (shell === 'bash') {
-      return entries.map(e => `export ${e}`).join(' && ');
+      return entries.map(([k, v]) => `export ${k}="${v}"`).join(' && ');
    }
 
-   return entries.map(e => `$env:${e}`).join(' ; ');
+   return entries.map(([k, v]) => `$env:${k}="${v}"`).join(' ; ');
 }
 
 function copyToClipboard(text: string): boolean {
@@ -73,7 +73,7 @@ export function handleSet(args: string[]): void {
 
       const eqIndex = arg.indexOf('=');
       const key = arg.slice(0, eqIndex);
-      const value = arg.slice(eqIndex + 1);
+      const value = arg.slice(eqIndex + 1).replace(/^["']|["']$/g, '');
 
       if (!isValidKey(key)) {
          logger.error(`Invalid key: "${key}". Allowed keys: ${ALLOWED_KEYS.join(', ')}`);

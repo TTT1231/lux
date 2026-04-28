@@ -25,7 +25,8 @@ export function getEnvConfig(): Record<string, string> {
       const eqIndex = trimmed.indexOf('=');
       if (eqIndex === -1) continue;
       const key = trimmed.slice(0, eqIndex).trim();
-      const value = trimmed.slice(eqIndex + 1).trim();
+      const raw = trimmed.slice(eqIndex + 1).trim();
+      const value = raw.replace(/^["']|["']$/g, '');
       if (key) result[key] = value;
    }
 
@@ -35,7 +36,7 @@ export function getEnvConfig(): Record<string, string> {
 export function setEnvConfig(data: Record<string, string>): void {
    const lines = Object.entries(data)
       .filter(([, v]) => v !== '')
-      .map(([k, v]) => `${k}=${v}`);
+      .map(([k, v]) => `${k}="${v}"`);
    writeFile(getEnvConfigPath(), lines.join('\n') + '\n');
 }
 

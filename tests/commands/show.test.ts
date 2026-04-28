@@ -59,6 +59,6 @@ describe('config utilities', () => {
 
       const content = fs.readFileSync(configPath, 'utf-8');
       expect(content).not.toContain('all_proxy=');
-      expect(content).toContain('https_proxy=http://test:9999/');
+      expect(content).toContain('https_proxy="http://test:9999/"');
    });
 });

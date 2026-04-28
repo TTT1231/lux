@@ -12,7 +12,7 @@ function handleShowEnv(): void {
    }
 
    for (const [key, value] of entries) {
-      logger.log(`${key}=${value}`);
+      logger.log(`${key}="${value}"`);
    }
 }
 
