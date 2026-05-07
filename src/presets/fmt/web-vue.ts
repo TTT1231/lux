@@ -1,8 +1,8 @@
 import type { FmtPreset } from '../types';
 
-export const electronFmt: FmtPreset = {
-   name: 'electron',
-   description: 'Vue 3 + Electron desktop app',
+export const webVueFmt: FmtPreset = {
+   name: 'web-vue',
+   description: 'Vue 3 Web frontend (Vite + Vue + TypeScript)',
 
    eslint: () => `import withVue from '@vue/eslint-config-typescript'
 import withPrettier from '@vue/eslint-config-prettier/skip-formatting'
@@ -39,8 +39,6 @@ export default [
    prettierIgnore: () => `node_modules/
 <lockfile>
 dist/
-release/
-out/
 coverage/
 `,
 
@@ -68,8 +66,6 @@ coverage/
 
    stylelintIgnore: () => `node_modules/
 dist/
-release/
-out/
 `,
 
    cspell: () =>
@@ -80,7 +76,7 @@ out/
             version: '0.2',
             language: 'en,en-US',
             allowCompoundWords: true,
-            words: ['vite', 'pinia', 'vueuse', 'unplugin', 'electron', 'electron-builder'],
+            words: ['vite', 'pinia', 'vueuse', 'unplugin'],
          },
          null,
          2,

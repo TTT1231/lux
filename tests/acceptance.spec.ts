@@ -29,7 +29,7 @@ describe('Acceptance: lux CLI', () => {
          });
 
          // Step 1: init fmt
-         const fmtResult = ctx.run(['fmt', 'web', '--no-install']);
+         const fmtResult = ctx.run(['fmt', 'web-vue', '--no-install']);
          expect(fmtResult.exitCode).toBe(0);
 
          // Verify: all formatting config files exist
@@ -89,13 +89,13 @@ describe('Acceptance: lux CLI', () => {
          });
 
          // First run: create everything
-         ctx.run(['fmt', 'web', '--no-install']);
+         ctx.run(['fmt', 'web-vue', '--no-install']);
 
          // Developer customizes .prettierrc
          ctx.writeJsonFile('.prettierrc', { semi: true, printWidth: 120 });
 
          // Re-run without --force
-         const result = ctx.run(['fmt', 'web', '--no-install']);
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
          expect(result.exitCode).toBe(0);
 
          // Verify: custom .prettierrc is preserved
@@ -104,7 +104,7 @@ describe('Acceptance: lux CLI', () => {
          expect(prettierrc['printWidth']).toBe(120);
 
          // Re-run WITH --force should overwrite
-         ctx.run(['fmt', 'web', '--force', '--no-install']);
+         ctx.run(['fmt', 'web-vue', '--force', '--no-install']);
          const overwritten = ctx.readJsonFile<Record<string, unknown>>('.prettierrc')!;
          expect(overwritten['semi']).toBe(false); // reset to preset value
       });
@@ -159,7 +159,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         const fmtResult = ctx.run(['fmt', 'web', '--dry-run']);
+         const fmtResult = ctx.run(['fmt', 'web-vue', '--dry-run']);
          expect(fmtResult.exitCode).toBe(0);
          expect(fmtResult.stdout).toContain('[dry-run]');
          expect(ctx.fileExists('.prettierrc')).toBe(false);
@@ -181,7 +181,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['fmt', 'web', '--no-install']);
+         ctx.run(['fmt', 'web-vue', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['code:check']).toBe('bun run lint && bun run format:check');
       });
@@ -196,7 +196,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['fmt', 'web', '--no-install']);
+         ctx.run(['fmt', 'web-vue', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['code:check']).toBe('pnpm run lint && pnpm run format:check');
       });
@@ -235,9 +235,9 @@ describe('Acceptance: lux CLI', () => {
       it('suggests the closest match and exits with error', () => {
          ctx = createTestContext();
 
-         const result = ctx.run(['fmt', 'webs']);
+         const result = ctx.run(['fmt', 'web-vu']);
          expect(result.exitCode).toBe(1);
-         expect(result.stderr).toContain("Did you mean 'web'");
+         expect(result.stderr).toContain("Did you mean 'web-vue'");
       });
    });
 
@@ -248,7 +248,7 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['fmt', 'list']);
 
          expect(result.exitCode).toBe(0);
-         for (const name of ['web', 'electron', 'uniapp', 'node', 'nest']) {
+         for (const name of ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest']) {
             expect(result.stdout).toContain(name);
          }
       });
@@ -269,7 +269,7 @@ describe('Acceptance: lux CLI', () => {
       it('creates config files but skips script injection with warning', () => {
          ctx = createTestContext();
 
-         const result = ctx.run(['fmt', 'web', '--no-install']);
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
          expect(result.exitCode).toBe(0);
 
          // Config files still created
@@ -306,7 +306,7 @@ describe('Acceptance: lux CLI', () => {
 
    // ─── Scenario 11: All presets produce valid output ───────────────
    describe('Scenario: each preset generates parseable, non-empty configs', () => {
-      const fmtPresets = ['web', 'electron', 'uniapp', 'node', 'nest'];
+      const fmtPresets = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest'];
       const vscodePresets = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest', 'go'];
 
       for (const preset of fmtPresets) {

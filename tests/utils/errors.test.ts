@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { fuzzyMatchPreset } from '../../src/utils/errors';
 
 describe('fuzzyMatchPreset', () => {
-   const available = ['web', 'electron', 'uniapp', 'node', 'nest'];
+   const available = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest'];
 
    it('returns exact match', () => {
-      expect(fuzzyMatchPreset('web', available)).toBe('web');
+      expect(fuzzyMatchPreset('web-vue', available)).toBe('web-vue');
    });
 
    it('returns close typo suggestion', () => {
-      expect(fuzzyMatchPreset('webs', available)).toBe('web');
-      expect(fuzzyMatchPreset('electorn', available)).toBe('electron');
+      expect(fuzzyMatchPreset('web-vu', available)).toBe('web-vue');
+      expect(fuzzyMatchPreset('electron-vu', available)).toBe('electron-vue');
    });
 
    it('returns null for gibberish', () => {
@@ -22,7 +22,7 @@ describe('fuzzyMatchPreset', () => {
    });
 
    it('is case-insensitive', () => {
-      expect(fuzzyMatchPreset('Web', available)).toBe('web');
+      expect(fuzzyMatchPreset('Web-vue', available)).toBe('web-vue');
       expect(fuzzyMatchPreset('NODE', available)).toBe('node');
    });
 });

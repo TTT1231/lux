@@ -28,8 +28,8 @@
 
 | 特性                    | 说明                                                                     |
 | :---------------------- | :----------------------------------------------------------------------- |
-| 🎯 **一键配置**         | `lux fmt web` 即可生成所有 lint 与格式化配置                             |
-| 🔧 **5 种格式化预设**   | `web` · `electron` · `uniapp` · `node` · `nest` — 各配备精选规则         |
+| 🎯 **一键配置**         | `lux fmt web-vue` 即可生成所有 lint 与格式化配置                             |
+| 🔧 **5 种格式化预设**   | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` — 各配备精选规则         |
 | 🖥️ **6 种 VSCode 预设** | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
 | 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                    |
 | 🛡️ **冲突解决**         | `neverOverwrite` / `forceOverwrite` 列表 + `--force` 标志                |
@@ -51,10 +51,10 @@ npm install -g @luxkit/cli
 bun add -g @luxkit/cli
 
 # 初始化格式化配置
-lux fmt web          # 生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig
+lux fmt web-vue          # 生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig
 
 # 初始化 VSCode 设置
-lux vscode web       # 生成 .vscode/settings.json + extensions.json
+lux vscode web-vue       # 生成 .vscode/settings.json + extensions.json
 
 # 查看可用预设
 lux fmt list
@@ -86,8 +86,8 @@ lux vscode list
 
 | 预设       | 格式化 | VSCode | 技术栈                 |
 | :--------- | :----: | :----: | :--------------------- |
-| `web`      |   ✅   |   ✅   | Vue / React / TS / CSS |
-| `electron` |   ✅   |   ✅   | Electron + Web 技术栈  |
+| `web-vue`  |   ✅   |   ✅   | Vue / React / TS / CSS |
+| `electron-vue` |   ✅   |   ✅   | Electron + Web 技术栈  |
 | `uniapp`   |   ✅   |   ✅   | UniApp / 微信小程序    |
 | `node`     |   ✅   |   ✅   | Node.js 后端           |
 | `nest`     |   ✅   |   ✅   | NestJS 后端            |
@@ -110,7 +110,7 @@ lux fmt <preset> [options]
 ### 工作原理
 
 ```
-lux fmt web
+lux fmt web-vue
        │
        ▼
   解析 CLI 参数 ──► 解析预设（拼写错误时自动模糊匹配）
@@ -154,7 +154,7 @@ cd lux
 bun install
 
 bun link                  # 全局注册 `lux` 用于测试
-lux fmt web          # 在任意项目上测试
+lux fmt web-vue          # 在任意项目上测试
 
 bun test                  # 运行测试
 bun build                 # 构建到 dist/

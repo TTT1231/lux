@@ -17,10 +17,10 @@ Project context for Claude Code.
 
 ```bash
 bun link                  # Register `lux` globally for local testing
-lux fmt web               # Test CLI against any project
-lux fmt web --dry-run     # Preview without writing files
-lux fmt web --force       # Overwrite existing configs
-lux fmt web --no-install  # Skip dependency installation
+lux fmt web-vue               # Test CLI against any project
+lux fmt web-vue --dry-run     # Preview without writing files
+lux fmt web-vue --force       # Overwrite existing configs
+lux fmt web-vue --no-install  # Skip dependency installation
 lux show env              # Display stored proxy env vars
 lux set https_proxy=http://127.0.0.1:7890  # Store proxy env vars
 lux unset                 # Clear stored proxy configuration
@@ -78,7 +78,7 @@ src/
 │   └── merge-settings.ts     # VSCode settings merge with priority keys
 ├── presets/
 │   ├── types.ts              # FmtPreset & VscodePreset interfaces
-│   ├── fmt/                  # FmtPreset implementations (web, electron, uniapp, node, nest)
+│   ├── fmt/                  # FmtPreset implementations (web-vue, electron-vue, uniapp, node, nest)
 │   └── vscode/               # VscodePreset implementations (web-vue, electron-vue, uniapp, node, nest, go)
 └── utils/
     ├── deps.ts               # Package manager detection + devDep install

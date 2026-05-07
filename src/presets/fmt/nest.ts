@@ -32,8 +32,6 @@ build/
 coverage/
 `,
 
-   // No stylelint for NestJS
-
    cspell: () =>
       JSON.stringify(
          {

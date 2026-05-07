@@ -49,7 +49,7 @@ export default defineConfig(
             trailingComma: 'all',
             singleQuote: true,
             printWidth: 100,
-            tabWidth: 3,
+            tabWidth: 2,
             useTabs: false,
             quoteProps: 'as-needed',
             jsxSingleQuote: true,
@@ -93,7 +93,7 @@ coverage/
 [*]
 charset = utf-8
 indent_style = space
-indent_size = 3
+indent_size = 2
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true

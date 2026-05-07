@@ -28,8 +28,8 @@
 
 | Feature                    | Description                                                                    |
 | :------------------------- | :----------------------------------------------------------------------------- |
-| 🎯 **One Command Setup**   | `lux fmt web` generates all linting & formatting configs instantly             |
-| 🔧 **5 Fmt Presets**       | `web` · `electron` · `uniapp` · `node` · `nest` — each with curated rules      |
+| 🎯 **One Command Setup**   | `lux fmt web-vue` generates all linting & formatting configs instantly             |
+| 🔧 **5 Fmt Presets**       | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` — each with curated rules      |
 | 🖥️ **6 VSCode Presets**    | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
 | 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences               |
 | 🛡️ **Conflict Resolution** | `neverOverwrite` / `forceOverwrite` lists + `--force` flag                     |
@@ -51,10 +51,10 @@ npm install -g @luxkit/cli
 bun add -g @luxkit/cli
 
 # Initialize formatting configs
-lux fmt web          # Generate ESLint, Prettier, Stylelint, CSpell, EditorConfig
+lux fmt web-vue          # Generate ESLint, Prettier, Stylelint, CSpell, EditorConfig
 
 # Initialize VSCode settings
-lux vscode web       # Generate .vscode/settings.json + extensions.json
+lux vscode web-vue       # Generate .vscode/settings.json + extensions.json
 
 # List available presets
 lux fmt list
@@ -86,8 +86,8 @@ lux vscode list
 
 | Preset     | Fmt | VSCode | Stack                        |
 | :--------- | :-: | :----: | :--------------------------- |
-| `web`      | ✅  |   ✅   | Vue / React / TS / CSS       |
-| `electron` | ✅  |   ✅   | Electron + Web stack         |
+| `web-vue`  | ✅  |   ✅   | Vue / React / TS / CSS       |
+| `electron-vue` | ✅  |   ✅   | Electron + Web stack         |
 | `uniapp`   | ✅  |   ✅   | UniApp / WeChat Mini Program |
 | `node`     | ✅  |   ✅   | Node.js backend              |
 | `nest`     | ✅  |   ✅   | NestJS backend               |
@@ -110,7 +110,7 @@ lux fmt <preset> [options]
 ### How It Works
 
 ```
-lux fmt web
+lux fmt web-vue
        │
        ▼
   Parse CLI args ──► Resolve preset (fuzzy match on typo)
@@ -154,7 +154,7 @@ cd lux
 bun install
 
 bun link                  # Register `lux` globally for testing
-lux fmt web          # Test it on any project
+lux fmt web-vue          # Test it on any project
 
 bun test                  # Run tests
 bun build                 # Build to dist/
