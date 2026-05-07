@@ -68,7 +68,7 @@ export const webVueVscode: VscodePreset = {
          '**/dist/**': true,
          '**/pnpm-lock.yaml': true,
          '**/package-lock.json': true,
-         '**/bun.lockb': true,
+         '**/bun.lock': true,
          '**/yarn.lock': true,
       },
       'search.exclude': {
@@ -82,7 +82,7 @@ export const webVueVscode: VscodePreset = {
          node_modules: true,
          '**/pnpm-lock.yaml': true,
          '**/package-lock.json': true,
-         '**/bun.lockb': true,
+         '**/bun.lock': true,
          '**/yarn.lock': true,
       },
 
@@ -91,7 +91,7 @@ export const webVueVscode: VscodePreset = {
       'explorer.fileNesting.expand': false,
       'explorer.fileNesting.patterns': {
          'package.json':
-            'pnpm-lock.yaml, .gitignore, .browserslistrc, .npmrc, cspell.json,README.md, LICENSE*,.editorconfig',
+            'pnpm-lock.yaml,yarn.lock,bun.lock, .gitignore, .browserslistrc, .npmrc, cspell.json,README.md, LICENSE*,.editorconfig',
          'eslint.config.mjs': '.prettierignore, .prettierrc, .prettierrc.json, .editorconfig',
          'tsconfig.json': 'tsconfig.*.json',
          'tailwind.config.js': 'postcss.config.js',

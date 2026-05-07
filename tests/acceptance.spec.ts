@@ -258,7 +258,7 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['vscode', 'list']);
 
          expect(result.exitCode).toBe(0);
-         for (const name of ['web-vue', 'electron', 'uniapp', 'node', 'nest', 'go']) {
+         for (const name of ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest', 'go']) {
             expect(result.stdout).toContain(name);
          }
       });
@@ -307,7 +307,7 @@ describe('Acceptance: lux CLI', () => {
    // ─── Scenario 11: All presets produce valid output ───────────────
    describe('Scenario: each preset generates parseable, non-empty configs', () => {
       const fmtPresets = ['web', 'electron', 'uniapp', 'node', 'nest'];
-      const vscodePresets = ['web-vue', 'electron', 'uniapp', 'node', 'nest', 'go'];
+      const vscodePresets = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest', 'go'];
 
       for (const preset of fmtPresets) {
          it(`fmt "${preset}" produces valid configs`, () => {

@@ -30,7 +30,7 @@
 | :------------------------- | :----------------------------------------------------------------------------- |
 | 🎯 **One Command Setup**   | `lux fmt web` generates all linting & formatting configs instantly             |
 | 🔧 **5 Fmt Presets**       | `web` · `electron` · `uniapp` · `node` · `nest` — each with curated rules      |
-| 🖥️ **6 VSCode Presets**    | `web` · `electron` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
+| 🖥️ **6 VSCode Presets**    | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
 | 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences               |
 | 🛡️ **Conflict Resolution** | `neverOverwrite` / `forceOverwrite` lists + `--force` flag                     |
 | 📦 **Auto Install**        | Detects bun / pnpm / yarn / npm and installs devDependencies                   |

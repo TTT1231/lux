@@ -79,7 +79,7 @@ src/
 ├── presets/
 │   ├── types.ts              # FmtPreset & VscodePreset interfaces
 │   ├── fmt/                  # FmtPreset implementations (web, electron, uniapp, node, nest)
-│   └── vscode/               # VscodePreset implementations (web, electron, uniapp, node, nest, go)
+│   └── vscode/               # VscodePreset implementations (web-vue, electron-vue, uniapp, node, nest, go)
 └── utils/
     ├── deps.ts               # Package manager detection + devDep install
     ├── config.ts             # Persistent env config read/write (~/.lux/env.txt)

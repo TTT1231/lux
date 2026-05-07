@@ -5,8 +5,8 @@ export const nodeVscode: VscodePreset = {
    description: 'VSCode config for Node.js',
 
    settings: () => ({
-      // ===== 编辑器爱好设置 =====
-      'editor.tabSize': 3,
+      // ===== Editor Preferences =====
+      'editor.tabSize': 2,
       'editor.detectIndentation': false,
       'editor.insertSpaces': true,
       'editor.renderWhitespace': 'selection',
@@ -27,16 +27,15 @@ export const nodeVscode: VscodePreset = {
       'editor.autoClosingBrackets': 'beforeWhitespace',
       'editor.autoClosingOvertype': 'always',
 
-      // ===== TypeScript 专项优化 =====
+      // ===== TypeScript =====
       'js/ts.inlayHints.enumMemberValues.enabled': true,
       'js/ts.preferences.preferTypeOnlyAutoImports': true,
       'js/ts.preferences.includePackageJsonAutoImports': 'on',
       'js/ts.preferences.importModuleSpecifier': 'relative',
       'js/ts.suggest.autoImports': true,
       'js/ts.tsserver.exclude': ['**/node_modules', '**/dist'],
-      'js/ts.tsdk.path': 'node_modules/typescript/lib',
 
-      // ===== 语言特定格式化 =====
+      // ===== Language-specific Formatting =====
       '[typescript]': {
          'editor.defaultFormatter': 'esbenp.prettier-vscode',
          'editor.formatOnSave': true,
@@ -47,18 +46,22 @@ export const nodeVscode: VscodePreset = {
       },
       '[json]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
 
-      // ===== 终端配置 =====
+      // ===== Terminal =====
       'terminal.integrated.cursorBlinking': true,
       'terminal.integrated.tabs.enabled': true,
       'terminal.integrated.scrollback': 10000,
 
-      // ===== 文件排除 =====
+      // ===== File Exclusion =====
       'files.watcherExclude': {
          '**/.git/objects/**': true,
          '**/.git/subtree-cache/**': true,
          '**/node_modules/**': true,
          '**/tmp/**': true,
          '**/dist/**': true,
+         '**/pnpm-lock.yaml': true,
+         '**/package-lock.json': true,
+         '**/bun.lock': true,
+         '**/yarn.lock': true,
       },
       'search.exclude': {
          '**/node_modules': true,
@@ -67,14 +70,18 @@ export const nodeVscode: VscodePreset = {
          '**/.git': true,
          '**/tmp': true,
          node_modules: true,
+         '**/pnpm-lock.yaml': true,
+         '**/package-lock.json': true,
          '**/bun.lock': true,
+         '**/yarn.lock': true,
       },
 
-      // ===== 文件嵌套 =====
+      // ===== File Nesting =====
       'explorer.fileNesting.enabled': true,
       'explorer.fileNesting.expand': false,
       'explorer.fileNesting.patterns': {
-         'package.json': 'bun.lock, .gitignore, .npmrc, cspell.json',
+         'package.json':
+            'pnpm-lock.yaml,yarn.lock,bun.lock, .gitignore, .npmrc, cspell.json,README.md,LICENSE*,.editorconfig',
          'eslint.config.mjs': '.prettierignore, .prettierrc.json, .editorconfig,.prettierrc',
          'tsconfig.json': 'tsconfig.*.json',
          '.env': '.env.*',
@@ -85,20 +92,12 @@ export const nodeVscode: VscodePreset = {
 
       // ===== CSpell =====
       'cSpell.language': 'en',
-
-      // ===== 包管理器 =====
-      'npm.packageManager': 'bun',
    }),
 
    extensions: () => [
       'dbaeumer.vscode-eslint',
       'esbenp.prettier-vscode',
       'streetsidesoftware.code-spell-checker',
-      'yoavbls.pretty-ts-errors',
       'editorconfig.editorconfig',
-      'aaron-bond.better-comments',
-      'usernamehw.errorlens',
-      'christian-kohler.path-intellisense',
-      'vscode-icons-team.vscode-icons',
    ],
 };

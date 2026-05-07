@@ -30,7 +30,7 @@
 | :---------------------- | :----------------------------------------------------------------------- |
 | 🎯 **一键配置**         | `lux fmt web` 即可生成所有 lint 与格式化配置                             |
 | 🔧 **5 种格式化预设**   | `web` · `electron` · `uniapp` · `node` · `nest` — 各配备精选规则         |
-| 🖥️ **6 种 VSCode 预设** | `web` · `electron` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
+| 🖥️ **6 种 VSCode 预设** | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
 | 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                    |
 | 🛡️ **冲突解决**         | `neverOverwrite` / `forceOverwrite` 列表 + `--force` 标志                |
 | 📦 **自动安装**         | 自动检测 bun / pnpm / yarn / npm 并安装 devDependencies                  |
