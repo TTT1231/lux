@@ -9,6 +9,23 @@ import { detectPackageManager, getLockfileName, getRunPrefix, installDevDeps } f
 import type { PackageManager } from '../utils/deps';
 import { fileExists, readJson, writeJson } from '../utils/fs';
 
+/** Filter stylelint-related scripts when --no-stylelint is set */
+function filterStylelintScripts(scripts: Record<string, string>): Record<string, string> {
+   const filtered: Record<string, string> = {};
+   for (const [key, value] of Object.entries(scripts)) {
+      if (key.startsWith('stylelint')) continue;
+      filtered[key] = value.replace(/\s*&&\s*<pm>\s+stylelint\S*/g, '');
+   }
+   return filtered;
+}
+
+/** Check if a dependency is NOT stylelint-related */
+function isNotStylelintDep(dep: string): boolean {
+   if (dep.includes('stylelint')) return false;
+   if (dep === 'postcss-html' || dep === 'postcss-scss') return false;
+   return true;
+}
+
 export function registerFmtCommand(program: Command) {
    const fmt = program.command('fmt').description('Initialize formatting config with preset');
 
@@ -57,25 +74,33 @@ export function registerFmtCommand(program: Command) {
                return;
             }
 
-            if (preset.scripts) {
-               await injectScripts(preset.scripts, opts, pm);
+            const scripts = opts.noStylelint && preset.scripts
+               ? filterStylelintScripts(preset.scripts)
+               : preset.scripts;
+
+            if (scripts) {
+               await injectScripts(scripts, opts, pm);
             }
 
             if (!preset.dependencies?.dev) return;
 
+            const devDeps = opts.noStylelint
+               ? preset.dependencies.dev.filter(isNotStylelintDep)
+               : preset.dependencies.dev;
+
             if (options.install === false) {
-               logger.log(`Dependencies: ${preset.dependencies.dev.join(', ')}`);
+               logger.log(`Dependencies: ${devDeps.join(', ')}`);
                return;
             }
 
             if (opts.dryRun) {
-               logger.log(`[dry-run] Would install: ${preset.dependencies.dev.join(', ')}`);
+               logger.log(`[dry-run] Would install: ${devDeps.join(', ')}`);
                return;
             }
 
             try {
                logger.log(`Installing dependencies with ${pm}...`);
-               await installDevDeps(preset.dependencies.dev, cwd, pm);
+               await installDevDeps(devDeps, cwd, pm);
                logger.success('Dependencies installed successfully');
             } catch {
                logger.warn('Dependency installation failed. You can install manually.');
