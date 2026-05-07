@@ -12,32 +12,39 @@ export function registerVscodeCommand(program: Command) {
       .argument('<preset>')
       .option('-F, --force', 'Force overwrite existing files')
       .option('--dry-run', 'Preview without writing files')
-      .action(async (presetName: string, options: { force?: boolean; dryRun?: boolean }) => {
-         const preset = resolvePreset(VSCODE_PRESETS, presetName);
-         if (!preset) return;
+      .option('--no-stylelint', 'Skip Stylelint settings and extension')
+      .action(
+         async (
+            presetName: string,
+            options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
+         ) => {
+            const preset = resolvePreset(VSCODE_PRESETS, presetName);
+            if (!preset) return;
 
-         const cwd = process.cwd();
-         const opts: GenerateOptions = {
-            cwd,
-            force: options.force ?? false,
-            dryRun: options.dryRun ?? false,
-         };
+            const cwd = process.cwd();
+            const opts: GenerateOptions = {
+               cwd,
+               force: options.force ?? false,
+               dryRun: options.dryRun ?? false,
+               noStylelint: options.stylelint === false,
+            };
 
-         const result = generateAllVscode(preset, opts);
-         const files = [...result.created, ...result.overwritten];
+            const result = generateAllVscode(preset, opts);
+            const files = [...result.created, ...result.overwritten];
 
-         if (files.length === 0) {
-            logger.warn('No files generated');
-            return;
-         }
+            if (files.length === 0) {
+               logger.warn('No files generated');
+               return;
+            }
 
-         if (opts.dryRun) {
-            logger.log(`[dry-run] Would create ${files.join(', ')}`);
-            return;
-         }
+            if (opts.dryRun) {
+               logger.log(`[dry-run] Would create ${files.join(', ')}`);
+               return;
+            }
 
-         logger.log(`Created ${files.join(', ')}`);
-      });
+            logger.log(`Created ${files.join(', ')}`);
+         },
+      );
 
    vscode
       .command('list')

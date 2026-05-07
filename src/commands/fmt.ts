@@ -16,10 +16,16 @@ export function registerFmtCommand(program: Command) {
       .option('-F, --force', 'Force overwrite existing files')
       .option('--no-install', 'Skip dependency installation')
       .option('--dry-run', 'Preview without writing files')
+      .option('--no-stylelint', 'Skip Stylelint config generation')
       .action(
          async (
             presetName: string,
-            options: { force?: boolean; install?: boolean; dryRun?: boolean },
+            options: {
+               force?: boolean;
+               install?: boolean;
+               dryRun?: boolean;
+               stylelint?: boolean;
+            },
          ) => {
             const preset = resolvePreset(FMT_PRESETS, presetName);
             if (!preset) return;
@@ -32,6 +38,7 @@ export function registerFmtCommand(program: Command) {
                cwd,
                force: options.force ?? false,
                dryRun: options.dryRun ?? false,
+               noStylelint: options.stylelint === false,
                lockfile: pm ? getLockfileName(pm) : undefined,
             };
 

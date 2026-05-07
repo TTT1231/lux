@@ -1,12 +1,15 @@
-// @ts-check
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import eslint from '@eslint/js';
 import { defineConfig } from 'eslint/config';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import tseslint from 'typescript-eslint';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 export default defineConfig(
    {
-      ignores: ['eslint.config.mjs', 'dist/', 'vitest.config.ts', 'tsup.config.ts', '.trees/'],
+      ignores: ['eslint.config.mjs', 'dist/', 'vitest.config.ts', 'tsup.config.ts', '.trees/', 'bun.lock', 'bun.lockb', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
    },
    eslint.configs.recommended,
    ...tseslint.configs.recommended,
@@ -17,7 +20,7 @@ export default defineConfig(
          sourceType: 'module',
          parserOptions: {
             projectService: true,
-            tsconfigRootDir: import.meta.dirname,
+            tsconfigRootDir: __dirname,
          },
       },
    },

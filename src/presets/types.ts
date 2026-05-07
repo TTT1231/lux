@@ -10,6 +10,7 @@ export interface GenerateOptions {
    cwd: string;
    force: boolean;
    dryRun: boolean;
+   noStylelint: boolean;
    lockfile?: string;
 }
 

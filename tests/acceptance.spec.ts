@@ -56,7 +56,7 @@ describe('Acceptance: lux CLI', () => {
          expect(editorconfig).toContain('indent_size = 2');
 
          // Step 2: init vscode
-         const vscodeResult = ctx.run(['vscode', 'web']);
+         const vscodeResult = ctx.run(['vscode', 'web-vue']);
          expect(vscodeResult.exitCode).toBe(0);
 
          // Verify: VSCode config files exist
@@ -127,7 +127,7 @@ describe('Acceptance: lux CLI', () => {
             },
          });
 
-         ctx.run(['vscode', 'web']);
+         ctx.run(['vscode', 'web-vue']);
 
          const settings = ctx.readJsonFile<Record<string, unknown>>('.vscode/settings.json')!;
 
@@ -165,7 +165,7 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('.prettierrc')).toBe(false);
          expect(ctx.fileExists('eslint.config.mjs')).toBe(false);
 
-         const vscodeResult = ctx.run(['vscode', 'web', '--dry-run']);
+         const vscodeResult = ctx.run(['vscode', 'web-vue', '--dry-run']);
          expect(vscodeResult.exitCode).toBe(0);
          expect(ctx.fileExists('.vscode/settings.json')).toBe(false);
       });
@@ -258,7 +258,7 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['vscode', 'list']);
 
          expect(result.exitCode).toBe(0);
-         for (const name of ['web', 'electron', 'uniapp', 'node', 'nest', 'go']) {
+         for (const name of ['web-vue', 'electron', 'uniapp', 'node', 'nest', 'go']) {
             expect(result.stdout).toContain(name);
          }
       });
@@ -307,7 +307,7 @@ describe('Acceptance: lux CLI', () => {
    // ─── Scenario 11: All presets produce valid output ───────────────
    describe('Scenario: each preset generates parseable, non-empty configs', () => {
       const fmtPresets = ['web', 'electron', 'uniapp', 'node', 'nest'];
-      const vscodePresets = ['web', 'electron', 'uniapp', 'node', 'nest', 'go'];
+      const vscodePresets = ['web-vue', 'electron', 'uniapp', 'node', 'nest', 'go'];
 
       for (const preset of fmtPresets) {
          it(`fmt "${preset}" produces valid configs`, () => {

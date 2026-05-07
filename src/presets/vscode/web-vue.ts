@@ -1,11 +1,11 @@
 import type { VscodePreset } from '../types';
 
-export const webVscode: VscodePreset = {
-   name: 'web',
+export const webVueVscode: VscodePreset = {
+   name: 'web-vue',
    description: 'VSCode config for Vue 3 Web',
 
    settings: () => ({
-      // ===== 编辑器爱好设置 =====
+      // ===== Editor Preferences =====
       'editor.tabSize': 2,
       'editor.detectIndentation': false,
       'editor.insertSpaces': true,
@@ -18,11 +18,11 @@ export const webVscode: VscodePreset = {
          'source.fixAll.stylelint': 'explicit',
          'source.organizeImports': 'never',
       },
-      // 光标与动画
+      // Cursor & Animation
       'editor.cursorBlinking': 'expand',
       'editor.cursorSmoothCaretAnimation': 'on',
       'editor.largeFileOptimizations': true,
-      // 代码辅助
+      // Code Assistance
       'editor.inlineSuggest.enabled': true,
       'editor.suggestSelection': 'recentlyUsedByPrefix',
       'editor.acceptSuggestionOnEnter': 'smart',
@@ -30,16 +30,15 @@ export const webVscode: VscodePreset = {
       'editor.autoClosingBrackets': 'beforeWhitespace',
       'editor.autoClosingOvertype': 'always',
 
-      // ===== TypeScript 专项优化 =====
+      // ===== TypeScript =====
       'js/ts.inlayHints.enumMemberValues.enabled': true,
       'js/ts.preferences.preferTypeOnlyAutoImports': true,
       'js/ts.preferences.includePackageJsonAutoImports': 'on',
       'js/ts.preferences.importModuleSpecifier': 'relative',
       'js/ts.suggest.autoImports': true,
       'js/ts.tsserver.exclude': ['**/node_modules', '**/dist', '**/.turbo'],
-      'js/ts.tsdk.path': 'node_modules/typescript/lib',
 
-      // ===== 语言特定格式化 =====
+      // ===== Language-specific Formatting =====
       '[html]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
       '[css]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
       '[scss]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
@@ -54,12 +53,12 @@ export const webVscode: VscodePreset = {
       '[json]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
       '[vue]': { 'editor.defaultFormatter': 'esbenp.prettier-vscode' },
 
-      // ===== 终端配置 =====
+      // ===== Terminal =====
       'terminal.integrated.cursorBlinking': true,
       'terminal.integrated.tabs.enabled': true,
       'terminal.integrated.scrollback': 10000,
 
-      // ===== 文件排除 =====
+      // ===== File Exclusion =====
       'files.watcherExclude': {
          '**/.git/objects/**': true,
          '**/.git/subtree-cache/**': true,
@@ -67,6 +66,10 @@ export const webVscode: VscodePreset = {
          '**/node_modules/**': true,
          '**/tmp/**': true,
          '**/dist/**': true,
+         '**/pnpm-lock.yaml': true,
+         '**/package-lock.json': true,
+         '**/bun.lockb': true,
+         '**/yarn.lock': true,
       },
       'search.exclude': {
          '**/node_modules': true,
@@ -78,13 +81,17 @@ export const webVscode: VscodePreset = {
          '**/tmp': true,
          node_modules: true,
          '**/pnpm-lock.yaml': true,
+         '**/package-lock.json': true,
+         '**/bun.lockb': true,
+         '**/yarn.lock': true,
       },
 
-      // ===== 文件嵌套（美观优化）=====
+      // ===== File Nesting =====
       'explorer.fileNesting.enabled': true,
       'explorer.fileNesting.expand': false,
       'explorer.fileNesting.patterns': {
-         'package.json': 'pnpm-lock.yaml, .gitignore, .browserslistrc, .npmrc, cspell.json',
+         'package.json':
+            'pnpm-lock.yaml, .gitignore, .browserslistrc, .npmrc, cspell.json,README.md, LICENSE*,.editorconfig',
          'eslint.config.mjs': '.prettierignore, .prettierrc, .prettierrc.json, .editorconfig',
          'tsconfig.json': 'tsconfig.*.json',
          'tailwind.config.js': 'postcss.config.js',
@@ -108,7 +115,6 @@ export const webVscode: VscodePreset = {
 
       // ===== Stylelint =====
       'stylelint.enable': true,
-      'stylelint.packageManager': 'pnpm',
       'stylelint.validate': ['css', 'scss', 'vue'],
       'stylelint.customSyntax': 'postcss-html',
       'stylelint.snippet': ['css', 'scss', 'vue'],
@@ -118,9 +124,6 @@ export const webVscode: VscodePreset = {
 
       // ===== CSpell =====
       'cSpell.language': 'en',
-
-      // ===== 包管理器 =====
-      'npm.packageManager': 'pnpm',
    }),
 
    extensions: () => [
@@ -130,11 +133,6 @@ export const webVscode: VscodePreset = {
       'stylelint.vscode-stylelint',
       'mrmlnc.vscode-scss',
       'streetsidesoftware.code-spell-checker',
-      'yoavbls.pretty-ts-errors',
       'editorconfig.editorconfig',
-      'aaron-bond.better-comments',
-      'usernamehw.errorlens',
-      'christian-kohler.path-intellisense',
-      'vscode-icons-team.vscode-icons',
    ],
 };

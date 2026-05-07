@@ -3,6 +3,14 @@ import { mergeVscodeSettings } from '../core/merge-settings';
 import { writeJson, readJson, fileExists, writeFile } from '../utils/fs';
 import { logger } from '../utils/logger';
 
+const STYLELINT_SETTINGS_PREFIXES = [
+   'stylelint.',
+   'css.validate',
+   'less.validate',
+   'scss.validate',
+];
+const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
+
 /**
  * Generate .vscode/settings.json from a vscode preset.
  * Always uses layered merge with backup.
@@ -18,7 +26,8 @@ export function generateVscodeSettings(
       return existingSettings ? 'overwritten' : 'created';
    }
 
-   const presetSettings = preset.settings();
+   const rawSettings = preset.settings();
+   const presetSettings = opts.noStylelint ? filterStylelintSettings(rawSettings) : rawSettings;
    const existingSettings = readJson<Record<string, unknown>>(settingsPath);
 
    if (existingSettings) {
@@ -46,7 +55,11 @@ export function generateVscodeExtensions(
 ): 'created' | null {
    if (opts.dryRun) return 'created';
 
-   writeJson(`${opts.cwd}/.vscode/extensions.json`, { recommendations: preset.extensions() });
+   const extensions = opts.noStylelint
+      ? preset.extensions().filter(ext => ext !== STYLELINT_EXTENSION)
+      : preset.extensions();
+
+   writeJson(`${opts.cwd}/.vscode/extensions.json`, { recommendations: extensions });
    return 'created';
 }
 
@@ -65,4 +78,24 @@ export function generateAllVscode(preset: VscodePreset, opts: GenerateOptions): 
    if (extAction === 'created') result.created.push('.vscode/extensions.json');
 
    return result;
+}
+
+/** Remove stylelint-related settings keys and clean up codeActionsOnSave */
+function filterStylelintSettings(settings: Record<string, unknown>): Record<string, unknown> {
+   const filtered = Object.fromEntries(
+      Object.entries(settings).filter(
+         ([key]) => !STYLELINT_SETTINGS_PREFIXES.some(prefix => key.startsWith(prefix)),
+      ),
+   );
+
+   if (
+      typeof filtered['editor.codeActionsOnSave'] === 'object' &&
+      filtered['editor.codeActionsOnSave'] !== null
+   ) {
+      const actions = { ...(filtered['editor.codeActionsOnSave'] as Record<string, unknown>) };
+      delete actions['source.fixAll.stylelint'];
+      filtered['editor.codeActionsOnSave'] = actions;
+   }
+
+   return filtered;
 }

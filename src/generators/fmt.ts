@@ -53,6 +53,8 @@ export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): Genera
    const result: GenerateResult = { created: [], overwritten: [], skipped: [] };
 
    for (const { filename, getContent } of CONFIG_FILES) {
+      if (opts.noStylelint && filename.includes('stylelint')) continue;
+
       const content = getContent(preset);
       if (content === undefined) continue;
 
