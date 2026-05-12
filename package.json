@@ -13,7 +13,7 @@
       "access": "public"
    },
    "scripts": {
-      "build": "tsup",
+      "build": "tsup && node scripts/copy-assets.mjs",
       "dev": "tsup --watch",
       "lint": "eslint .",
       "format": "prettier --write \"src/**/*.{ts,js,json}\"",
@@ -45,6 +45,7 @@
    "author": "TTT1231",
    "license": "ISC",
    "dependencies": {
+      "@clack/prompts": "^1.4.0",
       "chalk": "5",
       "commander": "^14.0.3"
    },

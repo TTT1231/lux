@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(
    {
-      ignores: ['eslint.config.mjs', 'dist/', 'vitest.config.ts', 'tsup.config.ts', '.trees/', 'bun.lock', 'bun.lockb', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
+      ignores: ['eslint.config.mjs', 'dist/', 'vitest.config.ts', 'tsup.config.ts', '.trees/', 'bun.lock', 'bun.lockb', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'scripts/'],
    },
    eslint.configs.recommended,
    ...tseslint.configs.recommended,

@@ -38,7 +38,9 @@ export function generateVscodeSettings(
             logger.log('Backed up .vscode/settings.json → settings.json.bak');
          } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            logger.warn(`Failed to backup .vscode/settings.json: ${message}. Continuing without backup.`);
+            logger.warn(
+               `Failed to backup .vscode/settings.json: ${message}. Continuing without backup.`,
+            );
          }
       }
 
