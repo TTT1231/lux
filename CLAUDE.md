@@ -42,6 +42,12 @@ src/
 ├── presets/          # 预设定义 (提供预设模板)
 ├── utils/            # 工具函数 (deps, version等)
 └── index.ts          # CLI 入口 (commander)
+openspec/
+├── changes/
+│   └── <change-name>/  # 单个变更（活跃变更）：design.md, tasks.md, specs/, proposal.md
+│       └── archive/    # 已归档变更（YYYY-MM-DD-<name>），仅历史回溯用(设计决策和
+  spec 内容)
+└── specs/              # 已同步的主 spec（每个 capability 一个目录）
 tests/
 ├── **/*.test.ts      # 单元测试 (并行, 快速超时)
 ├── **/*.spec.ts      # 验收测试 (串行, 进程池, 30s 超时)
@@ -94,6 +100,6 @@ flowchart LR
 - typecheck: tsc --noEmit
 - lint: eslint .
 - test: vitest run
-- format: prettier --check "src/**/*.{ts,js,json}"
-- spell: cspell --gitignore "src/**/*"
+- format: prettier --check "src/\*_/_.{ts,js,json}"
+- spell: cspell --gitignore "src/\*_/_"
 - gbrain: gbrain doctor --json

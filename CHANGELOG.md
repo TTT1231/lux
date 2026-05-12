@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0
+
+- Added `lux init` command — interactively select an AI coding tool (Claude Code / OpenCode) and copy bundled skill files to the project
+
 ## 1.0.9
 
 - **BREAKING**: `fmt` stylelint is now opt-in via `--stylelint` flag (previously included by default)

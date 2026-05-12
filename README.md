@@ -58,6 +58,9 @@ lux fmt web-vue --editorconfig # Also include EditorConfig
 # Initialize VSCode settings
 lux vscode web-vue       # Generate .vscode/settings.json + extensions.json
 
+# Initialize AI coding tool skills
+lux init                 # Select tool interactively, copy skills to project
+
 # List available presets
 lux fmt list
 lux vscode list
@@ -73,6 +76,7 @@ lux vscode list
 | `lux fmt list`              | List available fmt presets                                        |
 | `lux vscode <preset>`       | Initialize VSCode workspace settings                              |
 | `lux vscode list`           | List available VSCode presets                                     |
+| `lux init`                  | Initialize AI coding tool skills in current project               |
 | `lux set <key=value> [...]` | Persist proxy env vars (e.g. `https_proxy=http://127.0.0.1:7890`) |
 | `lux unset`                 | Clear all stored proxy configuration                              |
 | `lux show env`              | Display stored proxy environment variables                        |
@@ -146,7 +150,7 @@ lux fmt web-vue
 | Test     | Vitest (unit + acceptance)                 |
 | CLI      | Commander.js                               |
 | Output   | Chalk                                      |
-| Bundle   | Zero runtime deps (chalk + commander only) |
+| Bundle   | Minimal runtime deps (chalk + commander + @clack/prompts) |
 
 <br />
 

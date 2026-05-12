@@ -58,6 +58,9 @@ lux fmt web-vue --editorconfig # 同时包含 EditorConfig
 # 初始化 VSCode 设置
 lux vscode web-vue       # 生成 .vscode/settings.json + extensions.json
 
+# 初始化 AI 编码工具技能
+lux init                 # 交互式选择工具，复制技能文件到项目
+
 # 查看可用预设
 lux fmt list
 lux vscode list
@@ -73,6 +76,7 @@ lux vscode list
 | `lux fmt list`              | 列出可用的格式化预设                                             |
 | `lux vscode <preset>`       | 初始化 VSCode 工作区设置                                         |
 | `lux vscode list`           | 列出可用的 VSCode 预设                                           |
+| `lux init`                  | 初始化 AI 编码工具的技能文件到当前项目                           |
 | `lux set <key=value> [...]` | 持久化保存代理环境变量（如 `https_proxy=http://127.0.0.1:7890`） |
 | `lux unset`                 | 清除所有已保存的代理配置                                         |
 | `lux show env`              | 显示已保存的代理环境变量                                         |
@@ -146,7 +150,7 @@ lux fmt web-vue
 | 测试   | Vitest（单元测试 + 验收测试）        |
 | CLI    | Commander.js                         |
 | 输出   | Chalk                                |
-| 依赖   | 零运行时依赖（仅 chalk + commander） |
+| 依赖   | 最小运行时依赖（chalk + commander + @clack/prompts） |
 
 <br />
 
