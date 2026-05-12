@@ -2,6 +2,7 @@ import path from 'node:path';
 import type { FmtPreset, GenerateOptions, GenerateResult } from '../presets/types';
 import { resolveConflict } from '../core/conflict-resolver';
 import { writeFile, fileExists } from '../utils/fs';
+import { logger } from '../utils/logger';
 
 /** Maps config filenames to their content getter on a FmtPreset */
 const CONFIG_FILES: ReadonlyArray<{
@@ -41,7 +42,15 @@ function generateConfigFile(
    const resolved = opts.lockfile
       ? content.replace(/<lockfile>/g, opts.lockfile)
       : content.replace(/<lockfile>\n?/g, '');
-   writeFile(filepath, resolved);
+
+   try {
+      writeFile(filepath, resolved);
+   } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to write ${filename}: ${message}`);
+      return null;
+   }
+
    return exists ? 'overwritten' : 'created';
 }
 

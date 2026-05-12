@@ -113,8 +113,9 @@ export function registerFmtCommand(program: Command) {
                logger.log(`Installing dependencies with ${pm}...`);
                await installDevDeps(finalDeps, cwd, pm);
                logger.success('Dependencies installed successfully');
-            } catch {
-               logger.warn('Dependency installation failed. You can install manually.');
+            } catch (error) {
+               const message = error instanceof Error ? error.message : String(error);
+               logger.warn(`Dependency installation failed: ${message}. You can install manually.`);
             }
          },
       );

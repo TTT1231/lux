@@ -27,6 +27,7 @@ export function registerVscodeCommand(program: Command) {
                force: options.force ?? false,
                dryRun: options.dryRun ?? false,
                noStylelint: options.stylelint !== true,
+               noEditorconfig: false,
             };
 
             const result = generateAllVscode(preset, opts);

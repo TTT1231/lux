@@ -33,16 +33,33 @@ export function generateVscodeSettings(
    if (existingSettings) {
       const backupPath = `${settingsPath}.bak`;
       if (!fileExists(backupPath)) {
-         writeFile(backupPath, JSON.stringify(existingSettings, null, 2) + '\n');
-         logger.log(`Backed up .vscode/settings.json → settings.json.bak`);
+         try {
+            writeFile(backupPath, JSON.stringify(existingSettings, null, 2) + '\n');
+            logger.log('Backed up .vscode/settings.json → settings.json.bak');
+         } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logger.warn(`Failed to backup .vscode/settings.json: ${message}. Continuing without backup.`);
+         }
       }
 
-      const merged = mergeVscodeSettings(presetSettings, existingSettings);
-      writeJson(settingsPath, merged);
+      try {
+         const merged = mergeVscodeSettings(presetSettings, existingSettings);
+         writeJson(settingsPath, merged);
+      } catch (error) {
+         const msg = error instanceof Error ? error.message : String(error);
+         logger.error(`Failed to write .vscode/settings.json: ${msg}`);
+         return null;
+      }
       return 'overwritten';
    }
 
-   writeJson(settingsPath, presetSettings);
+   try {
+      writeJson(settingsPath, presetSettings);
+   } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to write .vscode/settings.json: ${msg}`);
+      return null;
+   }
    return 'created';
 }
 
@@ -59,7 +76,13 @@ export function generateVscodeExtensions(
       ? preset.extensions().filter(ext => ext !== STYLELINT_EXTENSION)
       : preset.extensions();
 
-   writeJson(`${opts.cwd}/.vscode/extensions.json`, { recommendations: extensions });
+   try {
+      writeJson(`${opts.cwd}/.vscode/extensions.json`, { recommendations: extensions });
+   } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to write .vscode/extensions.json: ${msg}`);
+      return null;
+   }
    return 'created';
 }
 
