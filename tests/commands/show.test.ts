@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
    getEnvConfig,
    getEnvConfigPath,
@@ -9,6 +9,10 @@ import fs from 'node:fs';
 
 describe('config utilities', () => {
    const configPath = getEnvConfigPath();
+
+   beforeAll(() => {
+      clearEnvConfig();
+   });
 
    afterEach(() => {
       clearEnvConfig();

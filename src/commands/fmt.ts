@@ -74,9 +74,10 @@ export function registerFmtCommand(program: Command) {
                return;
             }
 
-            const scripts = opts.noStylelint && preset.scripts
-               ? filterStylelintScripts(preset.scripts)
-               : preset.scripts;
+            const scripts =
+               opts.noStylelint && preset.scripts
+                  ? filterStylelintScripts(preset.scripts)
+                  : preset.scripts;
 
             if (scripts) {
                await injectScripts(scripts, opts, pm);

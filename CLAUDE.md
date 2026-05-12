@@ -88,3 +88,12 @@ flowchart LR
     Generators -->|"文件读写"| Utils
     Commands -->|"脚本注入 + 依赖安装"| Utils
 ```
+
+## Health Stack
+
+- typecheck: tsc --noEmit
+- lint: eslint .
+- test: vitest run
+- format: prettier --check "src/**/*.{ts,js,json}"
+- spell: cspell --gitignore "src/**/*"
+- gbrain: gbrain doctor --json
