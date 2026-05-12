@@ -9,7 +9,7 @@ import { detectPackageManager, getLockfileName, getRunPrefix, installDevDeps } f
 import type { PackageManager } from '../utils/deps';
 import { fileExists, readJson, writeJson } from '../utils/fs';
 
-/** Filter stylelint-related scripts when --no-stylelint is set */
+/** Filter stylelint-related scripts when stylelint is not enabled */
 function filterStylelintScripts(scripts: Record<string, string>): Record<string, string> {
    const filtered: Record<string, string> = {};
    for (const [key, value] of Object.entries(scripts)) {
@@ -33,7 +33,7 @@ export function registerFmtCommand(program: Command) {
       .option('-F, --force', 'Force overwrite existing files')
       .option('--no-install', 'Skip dependency installation')
       .option('--dry-run', 'Preview without writing files')
-      .option('--no-stylelint', 'Skip Stylelint config generation')
+      .option('--stylelint', 'Include Stylelint config generation')
       .action(
          async (
             presetName: string,
@@ -55,7 +55,7 @@ export function registerFmtCommand(program: Command) {
                cwd,
                force: options.force ?? false,
                dryRun: options.dryRun ?? false,
-               noStylelint: options.stylelint === false,
+               noStylelint: options.stylelint !== true,
                lockfile: pm ? getLockfileName(pm) : undefined,
             };
 

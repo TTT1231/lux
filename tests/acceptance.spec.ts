@@ -32,12 +32,12 @@ describe('Acceptance: lux CLI', () => {
          const fmtResult = ctx.run(['fmt', 'web-vue', '--no-install']);
          expect(fmtResult.exitCode).toBe(0);
 
-         // Verify: all formatting config files exist
+         // Verify: all formatting config files exist (except stylelint — opt-in only)
          expect(ctx.fileExists('eslint.config.mjs')).toBe(true);
          expect(ctx.fileExists('.prettierrc')).toBe(true);
          expect(ctx.fileExists('.prettierignore')).toBe(true);
-         expect(ctx.fileExists('stylelint.config.mjs')).toBe(true);
-         expect(ctx.fileExists('.stylelintignore')).toBe(true);
+         expect(ctx.fileExists('stylelint.config.mjs')).toBe(false);
+         expect(ctx.fileExists('.stylelintignore')).toBe(false);
          expect(ctx.fileExists('cspell.json')).toBe(true);
          expect(ctx.fileExists('.editorconfig')).toBe(true);
 
@@ -76,6 +76,30 @@ describe('Acceptance: lux CLI', () => {
 
          // Verify: no unexpected files created
          expect(ctx.fileExists('.vscode/settings.json.bak')).toBe(false);
+      });
+   });
+
+   // ─── Scenario 1b: Stylelint opt-in with --stylelint flag ─────────
+   describe('Scenario: developer opts into stylelint with --stylelint', () => {
+      it('generates stylelint config only when --stylelint is passed', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'my-vue-app',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const fmtResult = ctx.run(['fmt', 'web-vue', '--no-install', '--stylelint']);
+         expect(fmtResult.exitCode).toBe(0);
+
+         expect(ctx.fileExists('stylelint.config.mjs')).toBe(true);
+         expect(ctx.fileExists('.stylelintignore')).toBe(true);
+
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['stylelint']).toBeDefined();
       });
    });
 

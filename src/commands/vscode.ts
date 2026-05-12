@@ -12,7 +12,7 @@ export function registerVscodeCommand(program: Command) {
       .argument('<preset>')
       .option('-F, --force', 'Force overwrite existing files')
       .option('--dry-run', 'Preview without writing files')
-      .option('--no-stylelint', 'Skip Stylelint settings and extension')
+      .option('--stylelint', 'Include Stylelint settings and extension')
       .action(
          async (
             presetName: string,
@@ -26,7 +26,7 @@ export function registerVscodeCommand(program: Command) {
                cwd,
                force: options.force ?? false,
                dryRun: options.dryRun ?? false,
-               noStylelint: options.stylelint === false,
+               noStylelint: options.stylelint !== true,
             };
 
             const result = generateAllVscode(preset, opts);
