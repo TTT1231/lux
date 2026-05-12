@@ -18,7 +18,7 @@
 
 ### What is lux?
 
-`lux` is a CLI tool that initializes project formatting configs and VSCode workspace settings with a single command. It generates ESLint, Prettier, Stylelint, CSpell, EditorConfig files and VSCode settings from battle-tested presets — with smart merge and conflict resolution.
+`lux` is a CLI tool that initializes project formatting configs and VSCode workspace settings with a single command. It generates ESLint, Prettier, CSpell, EditorConfig files and VSCode settings from battle-tested presets — with smart merge and conflict resolution.
 
 <div align="center">
   <img src="https://github.com/TTT1231/lux/blob/main/demo.gif?raw=true" alt="lux demo" width="640" />
@@ -26,19 +26,19 @@
 
 ### ✨ Key Highlights
 
-| Feature                    | Description                                                                    |
-| :------------------------- | :----------------------------------------------------------------------------- |
-| 🎯 **One Command Setup**   | `lux fmt web-vue` generates all linting & formatting configs instantly             |
-| 🔧 **5 Fmt Presets**       | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` — each with curated rules      |
-| 🖥️ **6 VSCode Presets**    | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` · `go` — settings + extensions |
-| 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences               |
-| 🛡️ **Conflict Resolution** | `neverOverwrite` / `forceOverwrite` lists + `--force` flag                     |
-| 📦 **Auto Install**        | Detects bun / pnpm / yarn / npm and installs devDependencies                   |
-| 🔍 **Fuzzy Matching**      | Typo a preset name? Levenshtein distance finds the closest match               |
-| 🧪 **Dry Run**             | Preview all changes with `--dry-run` before writing anything                   |
-| 🔗 **Script Injection**    | Auto-injects `<pm> lint` / `<pm> format` scripts into package.json             |
-| 🌐 **Proxy Management**    | Persistent proxy config with `set` / `unset` — copy to CMD / PowerShell / Bash |
-| 🔄 **Self-Update**         | `lux update` checks and installs the latest version automatically              |
+| Feature                    | Description                                                                                          |
+| :------------------------- | :--------------------------------------------------------------------------------------------------- |
+| 🎯 **One Command Setup**   | `lux fmt web-vue` generates all linting & formatting configs instantly                               |
+| 🔧 **6 Fmt Presets**       | `web-vue` · `web-react` · `electron-vue` · `uniapp` · `node` · `nest` — each with curated rules      |
+| 🖥️ **7 VSCode Presets**    | `web-vue` · `web-react` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
+| 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences                                     |
+| 🛡️ **Conflict Resolution** | `neverOverwrite` / `forceOverwrite` lists + `--force` flag                                           |
+| 📦 **Auto Install**        | Detects bun / pnpm / yarn / npm and installs devDependencies                                         |
+| 🔍 **Fuzzy Matching**      | Typo a preset name? Levenshtein distance finds the closest match                                     |
+| 🧪 **Dry Run**             | Preview all changes with `--dry-run` before writing anything                                         |
+| 🔗 **Script Injection**    | Auto-injects `<pm> lint` / `<pm> format` scripts into package.json                                   |
+| 🌐 **Proxy Management**    | Persistent proxy config with `set` / `unset` — copy to CMD / PowerShell / Bash                       |
+| 🔄 **Self-Update**         | `lux update` checks and installs the latest version automatically                                    |
 
 <br />
 
@@ -51,7 +51,9 @@ npm install -g @luxkit/cli
 bun add -g @luxkit/cli
 
 # Initialize formatting configs
-lux fmt web-vue          # Generate ESLint, Prettier, Stylelint, CSpell, EditorConfig
+lux fmt web-vue          # Generate ESLint, Prettier, CSpell
+lux fmt web-vue --stylelint    # Also include Stylelint
+lux fmt web-vue --editorconfig # Also include EditorConfig
 
 # Initialize VSCode settings
 lux vscode web-vue       # Generate .vscode/settings.json + extensions.json
@@ -65,33 +67,33 @@ lux vscode list
 
 ### CLI Commands
 
-| Command                     | Description                                        |
-| :-------------------------- | :------------------------------------------------- |
-| `lux fmt <preset>`          | Initialize formatting config files                 |
-| `lux fmt list`              | List available fmt presets                         |
-| `lux vscode <preset>`       | Initialize VSCode workspace settings               |
-| `lux vscode list`           | List available VSCode presets                      |
+| Command                     | Description                                                       |
+| :-------------------------- | :---------------------------------------------------------------- |
+| `lux fmt <preset>`          | Initialize formatting config files                                |
+| `lux fmt list`              | List available fmt presets                                        |
+| `lux vscode <preset>`       | Initialize VSCode workspace settings                              |
+| `lux vscode list`           | List available VSCode presets                                     |
 | `lux set <key=value> [...]` | Persist proxy env vars (e.g. `https_proxy=http://127.0.0.1:7890`) |
-| `lux unset`                 | Clear all stored proxy configuration               |
-| `lux show env`              | Display stored proxy environment variables         |
-| `lux vpn cmd`               | Copy CMD proxy commands to clipboard               |
-| `lux vpn pw`                | Copy PowerShell proxy commands to clipboard        |
-| `lux vpn bash`              | Copy Bash proxy commands to clipboard              |
-| `lux update`                | Update `@luxkit/cli` to the latest version         |
-| `lux update --check`        | Check for available updates without installing     |
+| `lux unset`                 | Clear all stored proxy configuration                              |
+| `lux show env`              | Display stored proxy environment variables                        |
+| `lux vpn cmd`               | Copy CMD proxy commands to clipboard                              |
+| `lux vpn pw`                | Copy PowerShell proxy commands to clipboard                       |
+| `lux vpn bash`              | Copy Bash proxy commands to clipboard                             |
+| `lux update`                | Update `@luxkit/cli` to the latest version                        |
+| `lux update --check`        | Check for available updates without installing                    |
 
 <br />
 
 ### Available Presets
 
-| Preset          | Fmt | VSCode | Stack                        |
-| :-------------- | :-: | :----: | :--------------------------- |
-| `web-vue`       | ✅  |   ✅   | Vue 3 / Vite / TS / CSS      |
-| `web-react`     | ✅  |   ✅   | React / Vite / TS / CSS      |
-| `electron-vue`  | ✅  |   ✅   | Electron + Vue / Web stack   |
-| `node`          | ✅  |   ✅   | Node.js backend              |
-| `nest`          | ✅  |   ✅   | NestJS backend               |
-| `go`            |  —  |   ✅   | Go backend                   |
+| Preset         | Fmt | VSCode | Stack                      |
+| :------------- | :-: | :----: | :------------------------- |
+| `web-vue`      | ✅  |   ✅   | Vue 3 / Vite / TS / CSS    |
+| `web-react`    | ✅  |   ✅   | React / Vite / TS / CSS    |
+| `electron-vue` | ✅  |   ✅   | Electron + Vue / Web stack |
+| `node`         | ✅  |   ✅   | Node.js backend            |
+| `nest`         | ✅  |   ✅   | NestJS backend             |
+| `go`           |  —  |   ✅   | Go backend                 |
 
 <br />
 
@@ -100,9 +102,11 @@ lux vscode list
 ```bash
 lux fmt <preset> [options]
 
-  --force       Force overwrite existing files
-  --no-install  Skip dependency installation
-  --dry-run     Preview without writing files
+  --force         Force overwrite existing files
+  --no-install    Skip dependency installation
+  --dry-run       Preview without writing files
+  --stylelint     Include Stylelint config generation (opt-in)
+  --editorconfig  Include EditorConfig config generation (opt-in)
 ```
 
 <br />

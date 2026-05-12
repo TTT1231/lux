@@ -11,6 +11,7 @@ export interface GenerateOptions {
    force: boolean;
    dryRun: boolean;
    noStylelint: boolean;
+   noEditorconfig: boolean;
    lockfile?: string;
 }
 

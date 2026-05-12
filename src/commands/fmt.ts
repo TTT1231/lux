@@ -26,6 +26,11 @@ function isNotStylelintDep(dep: string): boolean {
    return true;
 }
 
+/** Check if a dependency is NOT editorconfig-related */
+function isNotEditorconfigDep(dep: string): boolean {
+   return !dep.includes('editorconfig');
+}
+
 export function registerFmtCommand(program: Command) {
    const fmt = program.command('fmt').description('Initialize formatting config with preset');
 
@@ -34,6 +39,7 @@ export function registerFmtCommand(program: Command) {
       .option('--no-install', 'Skip dependency installation')
       .option('--dry-run', 'Preview without writing files')
       .option('--stylelint', 'Include Stylelint config generation')
+      .option('--editorconfig', 'Include EditorConfig config generation')
       .action(
          async (
             presetName: string,
@@ -42,6 +48,7 @@ export function registerFmtCommand(program: Command) {
                install?: boolean;
                dryRun?: boolean;
                stylelint?: boolean;
+               editorconfig?: boolean;
             },
          ) => {
             const preset = resolvePreset(FMT_PRESETS, presetName);
@@ -56,6 +63,7 @@ export function registerFmtCommand(program: Command) {
                force: options.force ?? false,
                dryRun: options.dryRun ?? false,
                noStylelint: options.stylelint !== true,
+               noEditorconfig: options.editorconfig !== true,
                lockfile: pm ? getLockfileName(pm) : undefined,
             };
 
@@ -89,19 +97,21 @@ export function registerFmtCommand(program: Command) {
                ? preset.dependencies.dev.filter(isNotStylelintDep)
                : preset.dependencies.dev;
 
+            const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
+
             if (options.install === false) {
-               logger.log(`Dependencies: ${devDeps.join(', ')}`);
+               logger.log(`Dependencies: ${finalDeps.join(', ')}`);
                return;
             }
 
             if (opts.dryRun) {
-               logger.log(`[dry-run] Would install: ${devDeps.join(', ')}`);
+               logger.log(`[dry-run] Would install: ${finalDeps.join(', ')}`);
                return;
             }
 
             try {
                logger.log(`Installing dependencies with ${pm}...`);
-               await installDevDeps(devDeps, cwd, pm);
+               await installDevDeps(finalDeps, cwd, pm);
                logger.success('Dependencies installed successfully');
             } catch {
                logger.warn('Dependency installation failed. You can install manually.');

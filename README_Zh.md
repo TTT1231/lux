@@ -18,7 +18,7 @@
 
 ### lux 是什么？
 
-`lux` 是一个 CLI 工具，只需一条命令即可初始化项目格式化配置和 VSCode 工作区设置。它从经过实战检验的预设中生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig 配置文件以及 VSCode 设置 —— 并带有智能合并和冲突解决机制。
+`lux` 是一个 CLI 工具，只需一条命令即可初始化项目格式化配置和 VSCode 工作区设置。它从经过实战检验的预设中生成 ESLint、Prettier、CSpell、EditorConfig 配置文件以及 VSCode 设置 —— 并带有智能合并和冲突解决机制。
 
 <div align="center">
   <img src="https://github.com/TTT1231/lux/blob/main/demo.gif?raw=true" alt="lux 演示" width="640" />
@@ -26,19 +26,19 @@
 
 ### ✨ 核心亮点
 
-| 特性                    | 说明                                                                     |
-| :---------------------- | :----------------------------------------------------------------------- |
-| 🎯 **一键配置**         | `lux fmt web-vue` 即可生成所有 lint 与格式化配置                             |
-| 🔧 **5 种格式化预设**   | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` — 各配备精选规则         |
-| 🖥️ **6 种 VSCode 预设** | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
-| 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                    |
-| 🛡️ **冲突解决**         | `neverOverwrite` / `forceOverwrite` 列表 + `--force` 标志                |
-| 📦 **自动安装**         | 自动检测 bun / pnpm / yarn / npm 并安装 devDependencies                  |
-| 🔍 **模糊匹配**         | 预设名拼错了？Levenshtein 距离帮你找到最接近的匹配                       |
-| 🧪 **Dry Run**          | 使用 `--dry-run` 预览所有变更，不写入任何文件                            |
-| 🔗 **脚本注入**         | 自动将 `<pm> lint` / `<pm> format` 脚本注入 package.json                 |
-| 🌐 **代理管理**         | 持久化代理配置，支持 `set` / `unset` — 一键复制到 CMD / PowerShell / Bash |
-| 🔄 **自动更新**         | `lux update` 自动检测并安装最新版本                                      |
+| 特性                    | 说明                                                                                           |
+| :---------------------- | :--------------------------------------------------------------------------------------------- |
+| 🎯 **一键配置**         | `lux fmt web-vue` 即可生成所有 lint 与格式化配置                                               |
+| 🔧 **6 种格式化预设**   | `web-vue` · `web-react` · `electron-vue` · `uniapp` · `node` · `nest` — 各配备精选规则         |
+| 🖥️ **7 种 VSCode 预设** | `web-vue` · `web-react` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
+| 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                                          |
+| 🛡️ **冲突解决**         | `neverOverwrite` / `forceOverwrite` 列表 + `--force` 标志                                      |
+| 📦 **自动安装**         | 自动检测 bun / pnpm / yarn / npm 并安装 devDependencies                                        |
+| 🔍 **模糊匹配**         | 预设名拼错了？Levenshtein 距离帮你找到最接近的匹配                                             |
+| 🧪 **Dry Run**          | 使用 `--dry-run` 预览所有变更，不写入任何文件                                                  |
+| 🔗 **脚本注入**         | 自动将 `<pm> lint` / `<pm> format` 脚本注入 package.json                                       |
+| 🌐 **代理管理**         | 持久化代理配置，支持 `set` / `unset` — 一键复制到 CMD / PowerShell / Bash                      |
+| 🔄 **自动更新**         | `lux update` 自动检测并安装最新版本                                                            |
 
 <br />
 
@@ -51,7 +51,9 @@ npm install -g @luxkit/cli
 bun add -g @luxkit/cli
 
 # 初始化格式化配置
-lux fmt web-vue          # 生成 ESLint、Prettier、Stylelint、CSpell、EditorConfig
+lux fmt web-vue          # 生成 ESLint、Prettier、CSpell
+lux fmt web-vue --stylelint    # 同时包含 Stylelint
+lux fmt web-vue --editorconfig # 同时包含 EditorConfig
 
 # 初始化 VSCode 设置
 lux vscode web-vue       # 生成 .vscode/settings.json + extensions.json
@@ -65,33 +67,33 @@ lux vscode list
 
 ### CLI 命令
 
-| 命令                       | 说明                                                       |
-| :------------------------- | :--------------------------------------------------------- |
-| `lux fmt <preset>`         | 初始化格式化配置文件                                       |
-| `lux fmt list`             | 列出可用的格式化预设                                       |
-| `lux vscode <preset>`      | 初始化 VSCode 工作区设置                                   |
-| `lux vscode list`          | 列出可用的 VSCode 预设                                     |
+| 命令                        | 说明                                                             |
+| :-------------------------- | :--------------------------------------------------------------- |
+| `lux fmt <preset>`          | 初始化格式化配置文件                                             |
+| `lux fmt list`              | 列出可用的格式化预设                                             |
+| `lux vscode <preset>`       | 初始化 VSCode 工作区设置                                         |
+| `lux vscode list`           | 列出可用的 VSCode 预设                                           |
 | `lux set <key=value> [...]` | 持久化保存代理环境变量（如 `https_proxy=http://127.0.0.1:7890`） |
-| `lux unset`                | 清除所有已保存的代理配置                                   |
-| `lux show env`             | 显示已保存的代理环境变量                                   |
-| `lux vpn cmd`              | 复制 CMD 代理命令到剪贴板                                  |
-| `lux vpn pw`               | 复制 PowerShell 代理命令到剪贴板                           |
-| `lux vpn bash`             | 复制 Bash 代理命令到剪贴板                                 |
-| `lux update`               | 更新 `@luxkit/cli` 到最新版本                              |
-| `lux update --check`       | 仅检查是否有可用更新，不执行安装                           |
+| `lux unset`                 | 清除所有已保存的代理配置                                         |
+| `lux show env`              | 显示已保存的代理环境变量                                         |
+| `lux vpn cmd`               | 复制 CMD 代理命令到剪贴板                                        |
+| `lux vpn pw`                | 复制 PowerShell 代理命令到剪贴板                                 |
+| `lux vpn bash`              | 复制 Bash 代理命令到剪贴板                                       |
+| `lux update`                | 更新 `@luxkit/cli` 到最新版本                                    |
+| `lux update --check`        | 仅检查是否有可用更新，不执行安装                                 |
 
 <br />
 
 ### 可用预设
 
-| 预设            | 格式化 | VSCode | 技术栈                   |
-| :-------------- | :----: | :----: | :----------------------- |
-| `web-vue`       |   ✅   |   ✅   | Vue 3 / Vite / TS / CSS  |
-| `web-react`     |   ✅   |   ✅   | React / Vite / TS / CSS  |
-| `electron-vue`  |   ✅   |   ✅   | Electron + Vue 技术栈    |
-| `node`          |   ✅   |   ✅   | Node.js 后端             |
-| `nest`          |   ✅   |   ✅   | NestJS 后端              |
-| `go`            |   —    |   ✅   | Go 后端                  |
+| 预设           | 格式化 | VSCode | 技术栈                  |
+| :------------- | :----: | :----: | :---------------------- |
+| `web-vue`      |   ✅   |   ✅   | Vue 3 / Vite / TS / CSS |
+| `web-react`    |   ✅   |   ✅   | React / Vite / TS / CSS |
+| `electron-vue` |   ✅   |   ✅   | Electron + Vue 技术栈   |
+| `node`         |   ✅   |   ✅   | Node.js 后端            |
+| `nest`         |   ✅   |   ✅   | NestJS 后端             |
+| `go`           |   —    |   ✅   | Go 后端                 |
 
 <br />
 
@@ -100,9 +102,11 @@ lux vscode list
 ```bash
 lux fmt <preset> [options]
 
-  --force       强制覆盖已有文件
-  --no-install  跳过依赖安装
-  --dry-run     预览模式，不写入文件
+  --force         强制覆盖已有文件
+  --no-install    跳过依赖安装
+  --dry-run       预览模式，不写入文件
+  --stylelint     包含 Stylelint 配置（按需启用）
+  --editorconfig  包含 EditorConfig 的配置（按需启用）
 ```
 
 <br />

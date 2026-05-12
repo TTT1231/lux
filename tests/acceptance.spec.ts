@@ -39,21 +39,13 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('stylelint.config.mjs')).toBe(false);
          expect(ctx.fileExists('.stylelintignore')).toBe(false);
          expect(ctx.fileExists('cspell.json')).toBe(true);
-         expect(ctx.fileExists('.editorconfig')).toBe(true);
+         expect(ctx.fileExists('.editorconfig')).toBe(false);
 
          // Verify: scripts injected into package.json
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['lint']).toBe('eslint .');
          expect(pkg.scripts['format']).toBeDefined();
          expect(pkg.scripts['code:check']).toContain('npm run lint && npm run format:check');
-
-         // Verify: config contents are valid (spot checks)
-         const prettierrc = ctx.readJsonFile<Record<string, unknown>>('.prettierrc')!;
-         expect(prettierrc['semi']).toBe(false);
-         expect(prettierrc['singleQuote']).toBe(true);
-
-         const editorconfig = ctx.readFile('.editorconfig')!;
-         expect(editorconfig).toContain('indent_size = 2');
 
          // Step 2: init vscode
          const vscodeResult = ctx.run(['vscode', 'web-vue']);
@@ -103,6 +95,28 @@ describe('Acceptance: lux CLI', () => {
       });
    });
 
+   // ─── Scenario 1b2: Editorconfig opt-in with --editorconfig flag ───
+   describe('Scenario: developer opts into editorconfig with --editorconfig', () => {
+      it('generates editorconfig only when --editorconfig is passed', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'my-vue-app',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const fmtResult = ctx.run(['fmt', 'web-vue', '--no-install', '--editorconfig']);
+         expect(fmtResult.exitCode).toBe(0);
+
+         expect(ctx.fileExists('.editorconfig')).toBe(true);
+         const editorconfig = ctx.readFile('.editorconfig')!;
+         expect(editorconfig).toContain('indent_size = 2');
+      });
+   });
+
    // ─── Scenario 1c: New React web project — one-click setup ─────────
    describe('Scenario: developer initializes a fresh React web project', () => {
       it('sets up React-specific formatting tools and VSCode config', () => {
@@ -125,7 +139,7 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('.prettierrc')).toBe(true);
          expect(ctx.fileExists('.prettierignore')).toBe(true);
          expect(ctx.fileExists('cspell.json')).toBe(true);
-         expect(ctx.fileExists('.editorconfig')).toBe(true);
+         expect(ctx.fileExists('.editorconfig')).toBe(false);
 
          // Verify: ESLint config contains React-specific plugins
          const eslintConfig = ctx.readFile('eslint.config.mjs')!;
@@ -416,7 +430,7 @@ describe('Acceptance: lux CLI', () => {
             expect(result.exitCode).toBe(0);
 
             // All generated files must be non-empty
-            for (const file of ['cspell.json', '.editorconfig', '.prettierrc']) {
+            for (const file of ['cspell.json', '.prettierrc']) {
                if (ctx.fileExists(file)) {
                   const content = ctx.readFile(file);
                   expect(content).not.toBeNull();
