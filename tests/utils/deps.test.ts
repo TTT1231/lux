@@ -1,8 +1,16 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
-import { detectPackageManager, getRunPrefix } from '../../src/utils/deps';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { detectPackageManager, getRunPrefix, addDepsToManifest } from '../../src/utils/deps';
+
+vi.mock('../../src/utils/execFileNoThrow', () => ({
+   execFileNoThrow: vi.fn(),
+}));
+
+import { execFileNoThrow } from '../../src/utils/execFileNoThrow';
+
+const mockExecFileNoThrow = vi.mocked(execFileNoThrow);
 
 describe('getRunPrefix', () => {
    it('returns correct prefix for each package manager', () => {
@@ -62,5 +70,95 @@ describe('detectPackageManager', () => {
       fs.writeFileSync(path.join(tmpDir, 'pnpm-lock.yaml'), '');
       fs.writeFileSync(path.join(tmpDir, 'yarn.lock'), '');
       expect(detectPackageManager(tmpDir)).toBe('pnpm');
+   });
+});
+
+describe('addDepsToManifest', () => {
+   let tmpDir = '';
+
+   afterEach(() => {
+      vi.clearAllMocks();
+      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   function createPkgJson(dir: string, devDeps?: Record<string, string>) {
+      const content = JSON.stringify(
+         { name: 'test-project', devDependencies: devDeps ?? {} },
+         null,
+         2,
+      );
+      fs.writeFileSync(path.join(dir, 'package.json'), content);
+   }
+
+   function readDevDeps(dir: string): Record<string, string> {
+      const raw = fs.readFileSync(path.join(dir, 'package.json'), 'utf-8');
+      return JSON.parse(raw).devDependencies ?? {};
+   }
+
+   it('adds missing deps with ^version format', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+      createPkgJson(tmpDir);
+
+      mockExecFileNoThrow
+         .mockResolvedValueOnce({ stdout: '9.25.0', stderr: '', exitCode: 0 })
+         .mockResolvedValueOnce({ stdout: '3.3.0', stderr: '', exitCode: 0 });
+
+      const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
+
+      expect(added).toEqual(['eslint', 'prettier']);
+      const deps = readDevDeps(tmpDir);
+      expect(deps['eslint']).toBe('^9.25.0');
+      expect(deps['prettier']).toBe('^3.3.0');
+   });
+
+   it('skips already-installed deps', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+      createPkgJson(tmpDir, { eslint: '^9.0.0' });
+
+      mockExecFileNoThrow.mockResolvedValueOnce({
+         stdout: '3.3.0',
+         stderr: '',
+         exitCode: 0,
+      });
+
+      const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
+
+      expect(added).toEqual(['prettier']);
+      const deps = readDevDeps(tmpDir);
+      expect(deps['eslint']).toBe('^9.0.0');
+      expect(deps['prettier']).toBe('^3.3.0');
+   });
+
+   it('returns empty array when all deps already present', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+      createPkgJson(tmpDir, { eslint: '^9.0.0', prettier: '^3.0.0' });
+
+      const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
+
+      expect(added).toEqual([]);
+      expect(mockExecFileNoThrow).not.toHaveBeenCalled();
+   });
+
+   it('throws when package.json not found', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+
+      await expect(addDepsToManifest(['eslint'], tmpDir)).rejects.toThrow(
+         'package.json not found',
+      );
+   });
+
+   it('throws when npm view fails', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+      createPkgJson(tmpDir);
+
+      mockExecFileNoThrow.mockResolvedValueOnce({
+         stdout: '',
+         stderr: 'not found',
+         exitCode: 1,
+      });
+
+      await expect(addDepsToManifest(['nonexistent-pkg'], tmpDir)).rejects.toThrow(
+         'Failed to fetch version for "nonexistent-pkg"',
+      );
    });
 });

@@ -5,7 +5,13 @@ import { FMT_PRESETS } from '../presets/fmt';
 import { logger } from '../utils/logger';
 import { resolvePreset } from '../utils/errors';
 import { generateAllFmt } from '../generators/fmt';
-import { detectPackageManager, getLockfileName, getRunPrefix, installDevDeps } from '../utils/deps';
+import {
+   detectPackageManager,
+   getLockfileName,
+   getRunPrefix,
+   installDevDeps,
+   addDepsToManifest,
+} from '../utils/deps';
 import type { PackageManager } from '../utils/deps';
 import { fileExists, readJson, writeJson } from '../utils/fs';
 
@@ -100,7 +106,12 @@ export function registerFmtCommand(program: Command) {
             const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
 
             if (options.install === false) {
-               logger.log(`Dependencies: ${finalDeps.join(', ')}`);
+               const added = await addDepsToManifest(finalDeps, cwd);
+               if (added.length > 0) {
+                  logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
+               } else {
+                  logger.log('All dependencies already in package.json');
+               }
                return;
             }
 
