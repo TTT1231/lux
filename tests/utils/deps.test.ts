@@ -142,9 +142,7 @@ describe('addDepsToManifest', () => {
    it('throws when package.json not found', async () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
 
-      await expect(addDepsToManifest(['eslint'], tmpDir)).rejects.toThrow(
-         'package.json not found',
-      );
+      await expect(addDepsToManifest(['eslint'], tmpDir)).rejects.toThrow('package.json not found');
    });
 
    it('throws when npm view fails', async () => {
