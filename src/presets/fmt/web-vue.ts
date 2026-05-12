@@ -115,8 +115,9 @@ trim_trailing_whitespace = false
    },
 
    scripts: {
-      lint: 'eslint .',
-      'lint:fix': 'eslint "src/**/*.{js,ts,vue}" --fix',
+      lint: 'eslint . --cache --cache-location node_modules/.cache/.eslintcache',
+      'lint:fix':
+         'eslint "src/**/*.{js,ts,vue}" --fix --cache --cache-location node_modules/.cache/.eslintcache',
       format: 'prettier --write "src/**/*.{ts,js,json,vue,css,scss}"',
       'format:check': 'prettier --check "src/**/*.{ts,js,json,vue,css,scss}"',
       stylelint: 'stylelint "src/**/*.{css,scss,vue}"',

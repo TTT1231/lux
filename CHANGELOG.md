@@ -7,6 +7,7 @@
 - Added `web-react` preset for `fmt` and `vscode` commands
 - Dependencies are now written to `package.json` when using `--no-install` flag
 - Fixed silent crashes on file write and JSON read errors
+- ESLint lint and lint:fix scripts now use `--cache` with cache stored in `node_modules/.cache/.eslintcache`
 
 ## 1.0.8
 
