@@ -103,6 +103,64 @@ describe('Acceptance: lux CLI', () => {
       });
    });
 
+   // ─── Scenario 1c: New React web project — one-click setup ─────────
+   describe('Scenario: developer initializes a fresh React web project', () => {
+      it('sets up React-specific formatting tools and VSCode config', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'my-react-app',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         // Step 1: init fmt
+         const fmtResult = ctx.run(['fmt', 'web-react', '--no-install']);
+         expect(fmtResult.exitCode).toBe(0);
+
+         // Verify: all formatting config files exist
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(true);
+         expect(ctx.fileExists('.prettierrc')).toBe(true);
+         expect(ctx.fileExists('.prettierignore')).toBe(true);
+         expect(ctx.fileExists('cspell.json')).toBe(true);
+         expect(ctx.fileExists('.editorconfig')).toBe(true);
+
+         // Verify: ESLint config contains React-specific plugins
+         const eslintConfig = ctx.readFile('eslint.config.mjs')!;
+         expect(eslintConfig).toContain('react-hooks');
+         expect(eslintConfig).toContain('react-refresh');
+         expect(eslintConfig).toContain('typescript-eslint');
+
+         // Verify: scripts use tsc (not vue-tsc) and jsx/tsx extensions
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['type:check']).toBe('tsc --noEmit');
+         expect(pkg.scripts['lint:fix']).toContain('jsx,tsx');
+         expect(pkg.scripts['format']).toContain('jsx,tsx');
+
+         // Verify: CSpell contains React ecosystem words
+         const cspell = ctx.readJsonFile<{ words: string[] }>('cspell.json')!;
+         expect(cspell.words).toContain('react');
+
+         // Step 2: init vscode
+         const vscodeResult = ctx.run(['vscode', 'web-react']);
+         expect(vscodeResult.exitCode).toBe(0);
+
+         const settings = ctx.readJsonFile<Record<string, unknown>>('.vscode/settings.json')!;
+         expect(settings['editor.formatOnSave']).toBe(true);
+         expect(settings['editor.defaultFormatter']).toBe('esbenp.prettier-vscode');
+
+         const extensions = ctx.readJsonFile<{ recommendations: string[] }>(
+            '.vscode/extensions.json',
+         )!;
+         // React preset should NOT contain Vue extensions
+         expect(extensions.recommendations).not.toContain('vue.volar');
+         expect(extensions.recommendations).toContain('esbenp.prettier-vscode');
+         expect(extensions.recommendations).toContain('dbaeumer.vscode-eslint');
+      });
+   });
+
    // ─── Scenario 2: Existing project — re-run should not overwrite ───
    describe('Scenario: developer re-runs init on an existing project', () => {
       it('skips existing configs and preserves custom changes', () => {
@@ -272,7 +330,7 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['fmt', 'list']);
 
          expect(result.exitCode).toBe(0);
-         for (const name of ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest']) {
+         for (const name of ['web-vue', 'web-react', 'electron-vue', 'uniapp', 'node', 'nest']) {
             expect(result.stdout).toContain(name);
          }
       });
@@ -282,7 +340,15 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['vscode', 'list']);
 
          expect(result.exitCode).toBe(0);
-         for (const name of ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest', 'go']) {
+         for (const name of [
+            'web-vue',
+            'web-react',
+            'electron-vue',
+            'uniapp',
+            'node',
+            'nest',
+            'go',
+         ]) {
             expect(result.stdout).toContain(name);
          }
       });
@@ -330,8 +396,16 @@ describe('Acceptance: lux CLI', () => {
 
    // ─── Scenario 11: All presets produce valid output ───────────────
    describe('Scenario: each preset generates parseable, non-empty configs', () => {
-      const fmtPresets = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest'];
-      const vscodePresets = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest', 'go'];
+      const fmtPresets = ['web-vue', 'web-react', 'electron-vue', 'uniapp', 'node', 'nest'];
+      const vscodePresets = [
+         'web-vue',
+         'web-react',
+         'electron-vue',
+         'uniapp',
+         'node',
+         'nest',
+         'go',
+      ];
 
       for (const preset of fmtPresets) {
          it(`fmt "${preset}" produces valid configs`, () => {

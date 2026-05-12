@@ -29,8 +29,8 @@
 | 特性                    | 说明                                                                     |
 | :---------------------- | :----------------------------------------------------------------------- |
 | 🎯 **一键配置**         | `lux fmt web-vue` 即可生成所有 lint 与格式化配置                             |
-| 🔧 **5 种格式化预设**   | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` — 各配备精选规则         |
-| 🖥️ **6 种 VSCode 预设** | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
+| 🔧 **5 种格式化预设**   | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` — 各配备精选规则         |
+| 🖥️ **6 种 VSCode 预设** | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` · `go` — 设置 + 扩展推荐 |
 | 🔀 **智能合并**         | 预设优先覆盖 linting 相关键；用户配置优先保留个人偏好                    |
 | 🛡️ **冲突解决**         | `neverOverwrite` / `forceOverwrite` 列表 + `--force` 标志                |
 | 📦 **自动安装**         | 自动检测 bun / pnpm / yarn / npm 并安装 devDependencies                  |
@@ -84,14 +84,14 @@ lux vscode list
 
 ### 可用预设
 
-| 预设       | 格式化 | VSCode | 技术栈                 |
-| :--------- | :----: | :----: | :--------------------- |
-| `web-vue`  |   ✅   |   ✅   | Vue / React / TS / CSS |
-| `electron-vue` |   ✅   |   ✅   | Electron + Web 技术栈  |
-| `uniapp`   |   ✅   |   ✅   | UniApp / 微信小程序    |
-| `node`     |   ✅   |   ✅   | Node.js 后端           |
-| `nest`     |   ✅   |   ✅   | NestJS 后端            |
-| `go`       |   —    |   ✅   | Go 后端                |
+| 预设            | 格式化 | VSCode | 技术栈                   |
+| :-------------- | :----: | :----: | :----------------------- |
+| `web-vue`       |   ✅   |   ✅   | Vue 3 / Vite / TS / CSS  |
+| `web-react`     |   ✅   |   ✅   | React / Vite / TS / CSS  |
+| `electron-vue`  |   ✅   |   ✅   | Electron + Vue 技术栈    |
+| `node`          |   ✅   |   ✅   | Node.js 后端             |
+| `nest`          |   ✅   |   ✅   | NestJS 后端              |
+| `go`            |   —    |   ✅   | Go 后端                  |
 
 <br />
 

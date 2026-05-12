@@ -29,8 +29,8 @@
 | Feature                    | Description                                                                    |
 | :------------------------- | :----------------------------------------------------------------------------- |
 | 🎯 **One Command Setup**   | `lux fmt web-vue` generates all linting & formatting configs instantly             |
-| 🔧 **5 Fmt Presets**       | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` — each with curated rules      |
-| 🖥️ **6 VSCode Presets**    | `web-vue` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
+| 🔧 **5 Fmt Presets**       | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` — each with curated rules      |
+| 🖥️ **6 VSCode Presets**    | `web-vue` · `web-react` · `electron-vue` · `node` · `nest` · `go` — settings + extensions |
 | 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences               |
 | 🛡️ **Conflict Resolution** | `neverOverwrite` / `forceOverwrite` lists + `--force` flag                     |
 | 📦 **Auto Install**        | Detects bun / pnpm / yarn / npm and installs devDependencies                   |
@@ -84,14 +84,14 @@ lux vscode list
 
 ### Available Presets
 
-| Preset     | Fmt | VSCode | Stack                        |
-| :--------- | :-: | :----: | :--------------------------- |
-| `web-vue`  | ✅  |   ✅   | Vue / React / TS / CSS       |
-| `electron-vue` | ✅  |   ✅   | Electron + Web stack         |
-| `uniapp`   | ✅  |   ✅   | UniApp / WeChat Mini Program |
-| `node`     | ✅  |   ✅   | Node.js backend              |
-| `nest`     | ✅  |   ✅   | NestJS backend               |
-| `go`       |  —  |   ✅   | Go backend                   |
+| Preset          | Fmt | VSCode | Stack                        |
+| :-------------- | :-: | :----: | :--------------------------- |
+| `web-vue`       | ✅  |   ✅   | Vue 3 / Vite / TS / CSS      |
+| `web-react`     | ✅  |   ✅   | React / Vite / TS / CSS      |
+| `electron-vue`  | ✅  |   ✅   | Electron + Vue / Web stack   |
+| `node`          | ✅  |   ✅   | Node.js backend              |
+| `nest`          | ✅  |   ✅   | NestJS backend               |
+| `go`            |  —  |   ✅   | Go backend                   |
 
 <br />
 
