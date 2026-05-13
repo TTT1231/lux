@@ -313,7 +313,7 @@ describe('applyLocalFmtPreset', () => {
          force: true,
       });
 
-      expect(result.created).toContain('eslint.config.mjs');
+      expect(result.overwritten).toContain('eslint.config.mjs');
       expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe('new content');
    });
 

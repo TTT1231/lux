@@ -93,7 +93,7 @@ export function registerFmtCommand(program: Command) {
             const useLocal = localPresetExists('fmt', presetName);
 
             if (useLocal) {
-               await executeLocalPath(cwd, presetName, preset, options);
+               await executeLocalPath(cwd, presetName, options);
             } else {
                await executeBuiltinPath(cwd, presetName, preset, options);
             }
@@ -112,7 +112,6 @@ export function registerFmtCommand(program: Command) {
 async function executeLocalPath(
    cwd: string,
    presetName: string,
-   preset: { dependencies?: { dev?: string[] }; scripts?: Record<string, string> },
    options: {
       force?: boolean;
       install?: boolean;

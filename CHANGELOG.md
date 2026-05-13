@@ -6,6 +6,8 @@
 - Generated presets are now saved to `~/.lux/preset/` for reuse — subsequent runs use the local copy instead of regenerating
 - Added `--reset` flag to `fmt` and `vscode` commands to re-create local preset from built-in defaults
 - Edit files in `~/.lux/preset/` to customize what gets applied on future runs
+- `lux vscode` now merges extensions with existing `extensions.json` instead of overwriting — user-installed extensions are preserved
+- Fixed `--force` not reporting overwritten files correctly for local presets
 
 ## 1.0.9
 

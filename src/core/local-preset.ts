@@ -50,7 +50,14 @@ function getLuxDir(): string {
 }
 
 export function getLocalPresetDir(type: PresetType, presetName: string): string {
+   if (!isValidPresetName(presetName)) {
+      throw new Error(`Invalid preset name: "${presetName}"`);
+   }
    return path.join(getLuxDir(), 'preset', type, presetName);
+}
+
+function isValidPresetName(name: string): boolean {
+   return name.length > 0 && !name.includes('/') && !name.includes('\\') && !name.includes('..');
 }
 
 export function localPresetExists(type: PresetType, presetName: string): boolean {
@@ -157,7 +164,9 @@ export function applyLocalFmtPreset(
       }
    }
 
-   const entries = fs.readdirSync(presetDir).filter(name => name !== 'package.json');
+   const entries = fs
+      .readdirSync(presetDir)
+      .filter(name => name !== 'package.json' && fs.statSync(path.join(presetDir, name)).isFile());
 
    for (const filename of entries) {
       if (opts.noStylelint && STYLELINT_FILES.has(filename)) continue;
@@ -175,14 +184,14 @@ export function applyLocalFmtPreset(
       }
 
       if (opts.dryRun) {
-         result.created.push(filename);
+         (exists ? result.overwritten : result.created).push(filename);
          logger.log(`[dry-run] Would copy ${filename} from local preset`);
          continue;
       }
 
       const content = fs.readFileSync(path.join(presetDir, filename), 'utf-8');
       writeFile(destPath, content);
-      result.created.push(filename);
+      (exists ? result.overwritten : result.created).push(filename);
    }
 
    const templatePkg = readJson<{
@@ -193,7 +202,7 @@ export function applyLocalFmtPreset(
    const projectPkg = readJson<Record<string, unknown>>(projectPkgPath);
 
    if (templatePkg && projectPkg) {
-      const pm = detectPackageManager(cwd);
+      const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
       const merged = mergeTemplateIntoProject(templatePkg, projectPkg, pm, opts, result);
       if (!opts.dryRun) {
          writeJson(projectPkgPath, merged);
@@ -258,18 +267,20 @@ export function applyLocalVscodePreset(
    if (fileExists(extensionsSrc)) {
       const extensionsData = readJson<{ recommendations: string[] }>(extensionsSrc);
       if (extensionsData) {
-         let recommendations = extensionsData.recommendations ?? [];
+         let presetRecommendations = extensionsData.recommendations ?? [];
          if (opts.noStylelint) {
-            recommendations = recommendations.filter(ext => ext !== STYLELINT_EXTENSION);
+            presetRecommendations = presetRecommendations.filter(ext => ext !== STYLELINT_EXTENSION);
          }
 
          if (opts.dryRun) {
             result.created.push('.vscode/extensions.json');
             logger.log('[dry-run] Would create .vscode/extensions.json from local preset');
          } else {
-            writeJson(path.join(cwd, '.vscode', 'extensions.json'), {
-               recommendations,
-            });
+            const extensionsDest = path.join(cwd, '.vscode', 'extensions.json');
+            const existingExtensions = readJson<{ recommendations: string[] }>(extensionsDest);
+            const existingRecommendations = existingExtensions?.recommendations ?? [];
+            const merged = [...new Set([...existingRecommendations, ...presetRecommendations])];
+            writeJson(extensionsDest, { recommendations: merged });
             result.created.push('.vscode/extensions.json');
          }
       }
@@ -301,12 +312,12 @@ function buildTemplatePackageJson(preset: FmtPreset): Record<string, unknown> {
 function mergeTemplateIntoProject(
    templatePkg: { devDependencies?: Record<string, string>; scripts?: Record<string, string> },
    projectPkg: Record<string, unknown>,
-   pm: PackageManager,
+   pm: PackageManager | undefined,
    opts: GenerateOptions,
    result: ApplyLocalResult,
 ): Record<string, unknown> {
    const merged = { ...projectPkg };
-   const prefix = getRunPrefix(pm);
+   const prefix = pm ? getRunPrefix(pm) : '';
 
    if (templatePkg.devDependencies) {
       const existingDeps = (merged.devDependencies ?? {}) as Record<string, string>;
