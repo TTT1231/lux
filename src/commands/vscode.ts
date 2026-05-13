@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import type { GenerateOptions } from '../presets/types';
+import type { GenerateOptions, VscodePreset } from '../presets/types';
 import { VSCODE_PRESETS } from '../presets/vscode';
 import { logger } from '../utils/logger';
 import { resolvePreset } from '../utils/errors';
@@ -93,7 +93,7 @@ function executeVscodeLocalPath(
 function executeVscodeBuiltinPath(
    cwd: string,
    presetName: string,
-   preset: { settings: () => Record<string, unknown>; extensions: () => string[] },
+   preset: VscodePreset,
    options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
 ): void {
    const opts: GenerateOptions = {

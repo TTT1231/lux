@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
-import type { GenerateOptions } from '../presets/types';
+import type { GenerateOptions, FmtPreset } from '../presets/types';
 import { FMT_PRESETS } from '../presets/fmt';
 import { logger } from '../utils/logger';
 import { resolvePreset } from '../utils/errors';
@@ -219,10 +219,7 @@ async function executeLocalPath(
 async function executeBuiltinPath(
    cwd: string,
    presetName: string,
-   preset: {
-      scripts?: Record<string, string>;
-      dependencies?: { dev?: string[] };
-   },
+   preset: FmtPreset,
    options: {
       force?: boolean;
       install?: boolean;

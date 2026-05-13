@@ -567,7 +567,7 @@ describe('Acceptance: lux CLI', () => {
          expect(result.exitCode).toBe(0);
 
          // Verify project gets the edited version
-         const updatedPkg = ctx.readJsonFile<Record<string, string>>('package.json')!;
+         const updatedPkg = ctx.readJsonFile<{ devDependencies: Record<string, string> }>('package.json')!;
          expect(updatedPkg.devDependencies!['eslint']).toBe('^9.0.0');
       });
    });
