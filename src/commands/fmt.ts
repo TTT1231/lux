@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 import type { Command } from 'commander';
 import type { GenerateOptions } from '../presets/types';
@@ -20,6 +21,7 @@ import {
    materializeFmtPreset,
    applyLocalFmtPreset,
    resolveLocalDeps,
+   InvalidPackageJsonError,
 } from '../core/local-preset';
 
 /** Filter stylelint-related scripts when stylelint is not enabled */
@@ -71,6 +73,18 @@ export function registerFmtCommand(program: Command) {
 
             const cwd = process.cwd();
 
+            const pkgPath = path.join(cwd, 'package.json');
+            if (fileExists(pkgPath)) {
+               try {
+                  JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+               } catch {
+                  logger.error(
+                     'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
+                  );
+                  return;
+               }
+            }
+
             if (options.reset) {
                resetLocalPreset(cwd, 'fmt', presetName);
             }
@@ -108,6 +122,8 @@ async function executeLocalPath(
 ): Promise<void> {
    logger.log('Using local custom preset');
 
+   warnFlagMismatch(cwd, presetName, options);
+
    const opts: GenerateOptions = {
       cwd,
       force: options.force ?? false,
@@ -116,7 +132,18 @@ async function executeLocalPath(
       noEditorconfig: options.editorconfig !== true,
    };
 
-   const result = applyLocalFmtPreset(cwd, presetName, opts);
+   let result: Awaited<ReturnType<typeof applyLocalFmtPreset>>;
+   try {
+      result = applyLocalFmtPreset(cwd, presetName, opts);
+   } catch (error) {
+      if (error instanceof InvalidPackageJsonError) {
+         logger.error(
+            'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
+         );
+         return;
+      }
+      throw error;
+   }
    const allFiles = [...result.created, ...result.overwritten];
 
    if (allFiles.length > 0 || result.skipped.length > 0) {
@@ -332,6 +359,36 @@ function logApplyResult(result: {
       logger.log(
          `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
       );
+   }
+}
+
+/** Warn when flags request files not present in local preset */
+function warnFlagMismatch(
+   cwd: string,
+   presetName: string,
+   options: { stylelint?: boolean; editorconfig?: boolean },
+): void {
+   const presetDir = path.join(cwd, '.lux', 'preset', 'fmt', presetName);
+   if (!fileExists(presetDir)) return;
+
+   const entries = new Set(fs.readdirSync(presetDir));
+
+   if (options.stylelint) {
+      const hasStylelint = entries.has('stylelint.config.mjs');
+      if (!hasStylelint) {
+         logger.warn(
+            'Local preset was created without --stylelint. Run with --reset --stylelint to add stylelint support.',
+         );
+      }
+   }
+
+   if (options.editorconfig) {
+      const hasEditorconfig = entries.has('.editorconfig');
+      if (!hasEditorconfig) {
+         logger.warn(
+            'Local preset was created without --editorconfig. Run with --reset --editorconfig to add editorconfig support.',
+         );
+      }
    }
 }
 

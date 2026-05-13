@@ -104,6 +104,12 @@ export interface ApplyLocalResult {
    scriptsSkipped: number;
 }
 
+export class InvalidPackageJsonError extends Error {
+   constructor(public readonly filePath: string) {
+      super(`package.json exists but is not valid JSON: ${filePath}`);
+   }
+}
+
 export function applyLocalFmtPreset(
    cwd: string,
    presetName: string,
@@ -121,6 +127,15 @@ export function applyLocalFmtPreset(
    if (!fs.existsSync(presetDir)) {
       logger.warn(`Local preset not found at ${path.relative(cwd, presetDir)}`);
       return result;
+   }
+
+   const projectPkgPath = path.join(cwd, 'package.json');
+   if (fileExists(projectPkgPath)) {
+      try {
+         JSON.parse(fs.readFileSync(projectPkgPath, 'utf-8'));
+      } catch {
+         throw new InvalidPackageJsonError(projectPkgPath);
+      }
    }
 
    const entries = fs.readdirSync(presetDir).filter(name => name !== 'package.json');
@@ -156,7 +171,6 @@ export function applyLocalFmtPreset(
       scripts?: Record<string, string>;
    }>(path.join(presetDir, 'package.json'));
 
-   const projectPkgPath = path.join(cwd, 'package.json');
    const projectPkg = readJson<Record<string, unknown>>(projectPkgPath);
 
    if (templatePkg && projectPkg) {
@@ -295,12 +309,8 @@ function mergeTemplateIntoProject(
          if (opts.noStylelint && STYLELINT_DEPS.has(dep)) continue;
          if (opts.noEditorconfig && dep.includes('editorconfig')) continue;
 
-         if (existingDeps[dep] === undefined) {
-            if (version === '<latest>') {
-               newDeps[dep] = version;
-            } else {
-               newDeps[dep] = version;
-            }
+         if (existingDeps[dep] === undefined && version !== '<latest>') {
+            newDeps[dep] = version;
          }
       }
       merged.devDependencies = newDeps;

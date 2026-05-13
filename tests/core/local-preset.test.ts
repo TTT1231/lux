@@ -325,7 +325,7 @@ describe('applyLocalFmtPreset', () => {
       setupLocalPreset({
          'eslint.config.mjs': 'export default []',
          'package.json': JSON.stringify({
-            devDependencies: { eslint: '<latest>', prettier: '<latest>' },
+            devDependencies: { eslint: '<latest>', prettier: '<latest>', typescript: '^5.5.0' },
             scripts: { lint: 'eslint .' },
          }),
       });
@@ -337,7 +337,8 @@ describe('applyLocalFmtPreset', () => {
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
       expect(pkg.devDependencies['eslint']).toBe('^9.0.0');
-      expect(pkg.devDependencies['prettier']).toBe('<latest>');
+      expect(pkg.devDependencies['prettier']).toBeUndefined();
+      expect(pkg.devDependencies['typescript']).toBe('^5.5.0');
       expect(pkg.scripts['lint']).toBe('eslint .');
       expect(result.scriptsAdded).toBe(1);
    });
