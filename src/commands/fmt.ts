@@ -14,6 +14,13 @@ import {
 } from '../utils/deps';
 import type { PackageManager } from '../utils/deps';
 import { fileExists, readJson, writeJson } from '../utils/fs';
+import {
+   localPresetExists,
+   resetLocalPreset,
+   materializeFmtPreset,
+   applyLocalFmtPreset,
+   resolveLocalDeps,
+} from '../core/local-preset';
 
 /** Filter stylelint-related scripts when stylelint is not enabled */
 function filterStylelintScripts(scripts: Record<string, string>): Record<string, string> {
@@ -46,6 +53,7 @@ export function registerFmtCommand(program: Command) {
       .option('--dry-run', 'Preview without writing files')
       .option('--stylelint', 'Include Stylelint config generation')
       .option('--editorconfig', 'Include EditorConfig config generation')
+      .option('--reset', 'Reset local preset and re-materialize from built-in')
       .action(
          async (
             presetName: string,
@@ -55,78 +63,24 @@ export function registerFmtCommand(program: Command) {
                dryRun?: boolean;
                stylelint?: boolean;
                editorconfig?: boolean;
+               reset?: boolean;
             },
          ) => {
             const preset = resolvePreset(FMT_PRESETS, presetName);
             if (!preset) return;
 
             const cwd = process.cwd();
-            const pm = fileExists(path.join(cwd, 'package.json'))
-               ? detectPackageManager(cwd)
-               : undefined;
-            const opts: GenerateOptions = {
-               cwd,
-               force: options.force ?? false,
-               dryRun: options.dryRun ?? false,
-               noStylelint: options.stylelint !== true,
-               noEditorconfig: options.editorconfig !== true,
-               lockfile: pm ? getLockfileName(pm) : undefined,
-            };
 
-            const result = generateAllFmt(preset, opts);
-            const allFiles = [...result.created, ...result.overwritten];
-
-            if (allFiles.length === 0 && result.skipped.length === 0) {
-               logger.warn('No files to generate for this preset');
-               return;
+            if (options.reset) {
+               resetLocalPreset(cwd, 'fmt', presetName);
             }
 
-            logGenerationResult(result, opts.dryRun);
+            const useLocal = localPresetExists(cwd, 'fmt', presetName);
 
-            if (!pm) {
-               warnMissingPackageJson(preset, options.install !== false);
-               return;
-            }
-
-            const scripts =
-               opts.noStylelint && preset.scripts
-                  ? filterStylelintScripts(preset.scripts)
-                  : preset.scripts;
-
-            if (scripts) {
-               await injectScripts(scripts, opts, pm);
-            }
-
-            if (!preset.dependencies?.dev) return;
-
-            const devDeps = opts.noStylelint
-               ? preset.dependencies.dev.filter(isNotStylelintDep)
-               : preset.dependencies.dev;
-
-            const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
-
-            if (options.install === false) {
-               const added = await addDepsToManifest(finalDeps, cwd);
-               if (added.length > 0) {
-                  logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
-               } else {
-                  logger.log('All dependencies already in package.json');
-               }
-               return;
-            }
-
-            if (opts.dryRun) {
-               logger.log(`[dry-run] Would install: ${finalDeps.join(', ')}`);
-               return;
-            }
-
-            try {
-               logger.log(`Installing dependencies with ${pm}...`);
-               await installDevDeps(finalDeps, cwd, pm);
-               logger.success('Dependencies installed successfully');
-            } catch (error) {
-               const message = error instanceof Error ? error.message : String(error);
-               logger.warn(`Dependency installation failed: ${message}. You can install manually.`);
+            if (useLocal) {
+               await executeLocalPath(cwd, presetName, preset, options);
+            } else {
+               await executeBuiltinPath(cwd, presetName, preset, options);
             }
          },
       );
@@ -138,6 +92,190 @@ export function registerFmtCommand(program: Command) {
             console.log(`${p.name.padEnd(12)} ${p.description}`);
          }
       });
+}
+
+async function executeLocalPath(
+   cwd: string,
+   presetName: string,
+   preset: { dependencies?: { dev?: string[] }; scripts?: Record<string, string> },
+   options: {
+      force?: boolean;
+      install?: boolean;
+      dryRun?: boolean;
+      stylelint?: boolean;
+      editorconfig?: boolean;
+   },
+): Promise<void> {
+   logger.log('Using local custom preset');
+
+   const opts: GenerateOptions = {
+      cwd,
+      force: options.force ?? false,
+      dryRun: options.dryRun ?? false,
+      noStylelint: options.stylelint !== true,
+      noEditorconfig: options.editorconfig !== true,
+   };
+
+   const result = applyLocalFmtPreset(cwd, presetName, opts);
+   const allFiles = [...result.created, ...result.overwritten];
+
+   if (allFiles.length > 0 || result.skipped.length > 0) {
+      logApplyResult(result);
+   }
+
+   if (result.scriptsAdded > 0 || result.scriptsSkipped > 0) {
+      logger.log(
+         `Added ${result.scriptsAdded} script${result.scriptsAdded > 1 ? 's' : ''} to package.json${result.scriptsSkipped > 0 ? ` (${result.scriptsSkipped} skipped)` : ''}`,
+      );
+   }
+
+   const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
+
+   if (!pm) return;
+
+   const templatePkgPath = path.join(cwd, '.lux', 'preset', 'fmt', presetName, 'package.json');
+   const templatePkg = readJson<{
+      devDependencies?: Record<string, string>;
+   }>(templatePkgPath);
+
+   if (!templatePkg?.devDependencies) return;
+
+   const depsToInstall = filterDeps(
+      Object.keys(templatePkg.devDependencies),
+      opts.noStylelint,
+      opts.noEditorconfig,
+   );
+
+   const projectPkgPath = path.join(cwd, 'package.json');
+   const projectPkg = readJson<Record<string, unknown>>(projectPkgPath);
+   if (!projectPkg) return;
+
+   const existingDeps = (projectPkg.devDependencies ?? {}) as Record<string, string>;
+   const missing = depsToInstall.filter(dep => !existingDeps[dep]);
+
+   if (missing.length === 0) return;
+
+   if (options.install === false) {
+      const resolved = resolveLocalDeps(templatePkg.devDependencies);
+      const added = await addDepsToManifest(resolved, cwd);
+      if (added.length > 0) {
+         logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
+      } else {
+         logger.log('All dependencies already in package.json');
+      }
+      return;
+   }
+
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would install: ${missing.join(', ')}`);
+      return;
+   }
+
+   try {
+      logger.log(`Installing dependencies with ${pm}...`);
+      const resolved = resolveLocalDeps(
+         Object.fromEntries(
+            Object.entries(templatePkg.devDependencies).filter(([k]) => missing.includes(k)),
+         ),
+      );
+      await installDevDeps(resolved, cwd, pm);
+      logger.success('Dependencies installed successfully');
+   } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.warn(`Dependency installation failed: ${message}. You can install manually.`);
+   }
+}
+
+async function executeBuiltinPath(
+   cwd: string,
+   presetName: string,
+   preset: {
+      scripts?: Record<string, string>;
+      dependencies?: { dev?: string[] };
+   },
+   options: {
+      force?: boolean;
+      install?: boolean;
+      dryRun?: boolean;
+      stylelint?: boolean;
+      editorconfig?: boolean;
+   },
+): Promise<void> {
+   const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
+   const opts: GenerateOptions = {
+      cwd,
+      force: options.force ?? false,
+      dryRun: options.dryRun ?? false,
+      noStylelint: options.stylelint !== true,
+      noEditorconfig: options.editorconfig !== true,
+      lockfile: pm ? getLockfileName(pm) : undefined,
+   };
+
+   const result = generateAllFmt(preset, opts);
+   const allFiles = [...result.created, ...result.overwritten];
+
+   if (allFiles.length === 0 && result.skipped.length === 0) {
+      logger.warn('No files to generate for this preset');
+      return;
+   }
+
+   logGenerationResult(result, opts.dryRun);
+
+   if (!opts.dryRun) {
+      materializeFmtPreset(cwd, presetName, allFiles, preset as never, opts);
+   }
+
+   if (!pm) {
+      warnMissingPackageJson(preset, options.install !== false);
+      return;
+   }
+
+   const scripts =
+      opts.noStylelint && preset.scripts ? filterStylelintScripts(preset.scripts) : preset.scripts;
+
+   if (scripts) {
+      await injectScripts(scripts, opts, pm);
+   }
+
+   if (!preset.dependencies?.dev) return;
+
+   const devDeps = opts.noStylelint
+      ? preset.dependencies.dev.filter(isNotStylelintDep)
+      : preset.dependencies.dev;
+
+   const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
+
+   if (options.install === false) {
+      const added = await addDepsToManifest(finalDeps, cwd);
+      if (added.length > 0) {
+         logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
+      } else {
+         logger.log('All dependencies already in package.json');
+      }
+      return;
+   }
+
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would install: ${finalDeps.join(', ')}`);
+      return;
+   }
+
+   try {
+      logger.log(`Installing dependencies with ${pm}...`);
+      await installDevDeps(finalDeps, cwd, pm);
+      logger.success('Dependencies installed successfully');
+   } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.warn(`Dependency installation failed: ${message}. You can install manually.`);
+   }
+}
+
+/** Filter deps by stylelint and editorconfig flags */
+function filterDeps(deps: string[], noStylelint: boolean, noEditorconfig: boolean): string[] {
+   let filtered = deps;
+   if (noStylelint) filtered = filtered.filter(isNotStylelintDep);
+   if (noEditorconfig) filtered = filtered.filter(isNotEditorconfigDep);
+   return filtered;
 }
 
 /** Log file generation results, branching on dry-run vs real mode */
@@ -165,6 +303,29 @@ function logGenerationResult(
    if (result.overwritten.length > 0) {
       logger.log(
          `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length} file${result.overwritten.length > 1 ? 's' : ''}`,
+      );
+   }
+   if (result.skipped.length > 0) {
+      logger.log(
+         `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
+      );
+   }
+}
+
+/** Log apply local preset results */
+function logApplyResult(result: {
+   created: string[];
+   overwritten: string[];
+   skipped: string[];
+}): void {
+   if (result.created.length > 0) {
+      logger.log(
+         `Created ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''} from local preset`,
+      );
+   }
+   if (result.overwritten.length > 0) {
+      logger.log(
+         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length} file${result.overwritten.length > 1 ? 's' : ''} from local preset`,
       );
    }
    if (result.skipped.length > 0) {

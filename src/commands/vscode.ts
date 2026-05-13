@@ -4,6 +4,12 @@ import { VSCODE_PRESETS } from '../presets/vscode';
 import { logger } from '../utils/logger';
 import { resolvePreset } from '../utils/errors';
 import { generateAllVscode } from '../generators/vscode';
+import {
+   localPresetExists,
+   resetLocalPreset,
+   materializeVscodePreset,
+   applyLocalVscodePreset,
+} from '../core/local-preset';
 
 export function registerVscodeCommand(program: Command) {
    const vscode = program.command('vscode').description('Initialize VSCode config with preset');
@@ -13,37 +19,33 @@ export function registerVscodeCommand(program: Command) {
       .option('-F, --force', 'Force overwrite existing files')
       .option('--dry-run', 'Preview without writing files')
       .option('--stylelint', 'Include Stylelint settings and extension')
+      .option('--reset', 'Reset local preset and re-materialize from built-in')
       .action(
          async (
             presetName: string,
-            options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
+            options: {
+               force?: boolean;
+               dryRun?: boolean;
+               stylelint?: boolean;
+               reset?: boolean;
+            },
          ) => {
             const preset = resolvePreset(VSCODE_PRESETS, presetName);
             if (!preset) return;
 
             const cwd = process.cwd();
-            const opts: GenerateOptions = {
-               cwd,
-               force: options.force ?? false,
-               dryRun: options.dryRun ?? false,
-               noStylelint: options.stylelint !== true,
-               noEditorconfig: false,
-            };
 
-            const result = generateAllVscode(preset, opts);
-            const files = [...result.created, ...result.overwritten];
-
-            if (files.length === 0) {
-               logger.warn('No files generated');
-               return;
+            if (options.reset) {
+               resetLocalPreset(cwd, 'vscode', presetName);
             }
 
-            if (opts.dryRun) {
-               logger.log(`[dry-run] Would create ${files.join(', ')}`);
-               return;
-            }
+            const useLocal = localPresetExists(cwd, 'vscode', presetName);
 
-            logger.log(`Created ${files.join(', ')}`);
+            if (useLocal) {
+               executeVscodeLocalPath(cwd, presetName, options);
+            } else {
+               executeVscodeBuiltinPath(cwd, presetName, preset, options);
+            }
          },
       );
 
@@ -55,4 +57,67 @@ export function registerVscodeCommand(program: Command) {
             console.log(`${p.name.padEnd(12)} ${p.description}`);
          }
       });
+}
+
+function executeVscodeLocalPath(
+   cwd: string,
+   presetName: string,
+   options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
+): void {
+   logger.log('Using local custom preset');
+
+   const opts: GenerateOptions = {
+      cwd,
+      force: options.force ?? false,
+      dryRun: options.dryRun ?? false,
+      noStylelint: options.stylelint !== true,
+      noEditorconfig: false,
+   };
+
+   const result = applyLocalVscodePreset(cwd, presetName, opts);
+   const files = [...result.created, ...result.overwritten];
+
+   if (files.length === 0) {
+      logger.warn('No files generated');
+      return;
+   }
+
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would create ${files.join(', ')} from local preset`);
+      return;
+   }
+
+   logger.log(`Created ${files.join(', ')} from local preset`);
+}
+
+function executeVscodeBuiltinPath(
+   cwd: string,
+   presetName: string,
+   preset: { settings: () => Record<string, unknown>; extensions: () => string[] },
+   options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
+): void {
+   const opts: GenerateOptions = {
+      cwd,
+      force: options.force ?? false,
+      dryRun: options.dryRun ?? false,
+      noStylelint: options.stylelint !== true,
+      noEditorconfig: false,
+   };
+
+   const result = generateAllVscode(preset, opts);
+   const files = [...result.created, ...result.overwritten];
+
+   if (files.length === 0) {
+      logger.warn('No files generated');
+      return;
+   }
+
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would create ${files.join(', ')}`);
+      return;
+   }
+
+   logger.log(`Created ${files.join(', ')}`);
+
+   materializeVscodePreset(cwd, presetName);
 }

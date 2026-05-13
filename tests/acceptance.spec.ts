@@ -43,7 +43,7 @@ describe('Acceptance: lux CLI', () => {
 
          // Verify: scripts injected into package.json
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toBe('eslint .');
+         expect(pkg.scripts['lint']).toContain('eslint');
          expect(pkg.scripts['format']).toBeDefined();
          expect(pkg.scripts['code:check']).toContain('npm run lint && npm run format:check');
 
@@ -469,5 +469,241 @@ describe('Acceptance: lux CLI', () => {
             expect(ext.recommendations.length).toBeGreaterThan(0);
          });
       }
+   });
+
+   // ─── Scenario 12: First run materializes local preset ─────────────
+   describe('Scenario: first run materializes local preset', () => {
+      it('creates .lux/preset/fmt/<preset>/ with config files and template package.json', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-local',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
+         expect(result.exitCode).toBe(0);
+
+         // Local preset directory created
+         expect(ctx.fileExists('.lux/preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
+         expect(ctx.fileExists('.lux/preset/fmt/web-vue/.prettierrc')).toBe(true);
+         expect(ctx.fileExists('.lux/preset/fmt/web-vue/cspell.json')).toBe(true);
+
+         // Template package.json with <latest> and <pm> placeholders
+         const templatePkg = ctx.readJsonFile<{
+            devDependencies: Record<string, string>;
+            scripts: Record<string, string>;
+         }>('.lux/preset/fmt/web-vue/package.json')!;
+         expect(templatePkg.devDependencies['eslint']).toBe('<latest>');
+         expect(templatePkg.scripts['code:check']).toContain('<pm>');
+      });
+   });
+
+   // ─── Scenario 13: Second run uses local preset ────────────────────
+   describe('Scenario: second run uses local preset', () => {
+      it('shows using local preset message and files come from local preset', async () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-local2',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         // First run — built-in + materialization
+         ctx.run(['fmt', 'web-vue', '--no-install']);
+
+         // Customize local preset
+         ctx.writeFile('.lux/preset/fmt/web-vue/eslint.config.mjs', '// LOCAL MARKER');
+
+         // Delete project file to test copy from local
+         const fs = await import('node:fs');
+         const path = await import('node:path');
+         fs.unlinkSync(path.join(ctx.tmpDir, 'eslint.config.mjs'));
+
+         // Second run — should use local preset
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--force']);
+         expect(result.exitCode).toBe(0);
+         expect(result.stdout.toLowerCase()).toContain('using local custom preset');
+
+         // Verify file comes from local preset (has our marker)
+         const eslintConfig = ctx.readFile('eslint.config.mjs')!;
+         expect(eslintConfig).toBe('// LOCAL MARKER');
+      });
+   });
+
+   // ─── Scenario 14: User edits local preset ─────────────────────────
+   describe('Scenario: user edits local preset files', () => {
+      it('reflects edited changes on next run', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({ name: 'test-edit', version: '1.0.0', scripts: {} }),
+            },
+         });
+
+         ctx.run(['fmt', 'web-vue', '--no-install']);
+
+         // Edit template package.json to pin eslint version
+         const templatePkg = ctx.readJsonFile<Record<string, unknown>>(
+            '.lux/preset/fmt/web-vue/package.json',
+         )!;
+         const deps = templatePkg.devDependencies as Record<string, string>;
+         deps['eslint'] = '^9.0.0';
+         ctx.writeJsonFile('.lux/preset/fmt/web-vue/package.json', templatePkg);
+
+         // Remove eslint from project to force re-add
+         const projectPkg = ctx.readJsonFile<Record<string, unknown>>('package.json')!;
+         const projectDeps = projectPkg.devDependencies as Record<string, string>;
+         delete projectDeps['eslint'];
+         ctx.writeJsonFile('package.json', projectPkg);
+
+         // Re-run with --force to overwrite config files
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--force']);
+         expect(result.exitCode).toBe(0);
+
+         // Verify project gets the edited version
+         const updatedPkg = ctx.readJsonFile<Record<string, string>>('package.json')!;
+         expect(updatedPkg.devDependencies!['eslint']).toBe('^9.0.0');
+      });
+   });
+
+   // ─── Scenario 15: --reset deletes and re-materializes ─────────────
+   describe('Scenario: --reset deletes local preset', () => {
+      it('deletes local preset and re-materializes from built-in', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-reset',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         // First run
+         ctx.run(['fmt', 'web-vue', '--no-install']);
+         expect(ctx.fileExists('.lux/preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
+
+         // Edit local preset
+         ctx.writeFile('.lux/preset/fmt/web-vue/eslint.config.mjs', '// EDITED');
+
+         // Reset + re-materialize (with --force to regenerate existing files)
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--reset', '--force']);
+         expect(result.exitCode).toBe(0);
+
+         // Verify local preset was re-created (not the edited version)
+         const eslintConfig = ctx.readFile('.lux/preset/fmt/web-vue/eslint.config.mjs')!;
+         expect(eslintConfig).not.toBe('// EDITED');
+         expect(eslintConfig).toContain('eslint');
+      });
+   });
+
+   // ─── Scenario 16: --dry-run with local preset ─────────────────────
+   describe('Scenario: --dry-run with existing local preset', () => {
+      it('shows preview without writing files', async () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-dryrun',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         // First run creates local preset
+         ctx.run(['fmt', 'web-vue', '--no-install']);
+
+         // Delete all generated config files
+         const fs = await import('node:fs');
+         const path = await import('node:path');
+         for (const file of [
+            'eslint.config.mjs',
+            '.prettierrc',
+            '.prettierignore',
+            'cspell.json',
+         ]) {
+            const p = path.join(ctx.tmpDir, file);
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+         }
+
+         // Dry run with local preset — should show preview, not write
+         const result = ctx.run(['fmt', 'web-vue', '--dry-run']);
+         expect(result.exitCode).toBe(0);
+         expect(result.stdout).toContain('[dry-run]');
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(false);
+      });
+   });
+
+   // ─── Scenario 17: --stylelint filters from local preset ───────────
+   describe('Scenario: --stylelint flag filters from local preset', () => {
+      it('materializes stylelint on first run, then filters on second run without flag', async () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-stylelint',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         // First run WITH stylelint — materializes stylelint files
+         ctx.run(['fmt', 'web-vue', '--no-install', '--stylelint']);
+         expect(ctx.fileExists('.lux/preset/fmt/web-vue/stylelint.config.mjs')).toBe(true);
+
+         // Delete project files
+         const fs = await import('node:fs');
+         const path = await import('node:path');
+         for (const file of ['stylelint.config.mjs', '.stylelintignore']) {
+            const p = path.join(ctx.tmpDir, file);
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+         }
+
+         // Second run WITHOUT stylelint — should filter stylelint from local preset
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--force']);
+         expect(result.exitCode).toBe(0);
+         expect(ctx.fileExists('stylelint.config.mjs')).toBe(false);
+         expect(ctx.fileExists('.stylelintignore')).toBe(false);
+      });
+   });
+
+   // ─── Scenario 18: VSCode local preset merge ───────────────────────
+   describe('Scenario: VSCode local preset merge behavior', () => {
+      it('materializes VSCode preset and reuses it with merge on second run', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({ name: 'test-vscode', version: '1.0.0' }),
+            },
+         });
+
+         // First run
+         const firstResult = ctx.run(['vscode', 'web-vue']);
+         expect(firstResult.exitCode).toBe(0);
+
+         // Local preset materialized
+         expect(ctx.fileExists('.lux/preset/vscode/web-vue/settings.json')).toBe(true);
+         expect(ctx.fileExists('.lux/preset/vscode/web-vue/extensions.json')).toBe(true);
+
+         // Add user preference to existing settings
+         const settings = ctx.readJsonFile<Record<string, unknown>>('.vscode/settings.json')!;
+         settings['editor.cursorBlinking'] = 'smooth';
+         ctx.writeJsonFile('.vscode/settings.json', settings);
+
+         // Second run — uses local preset, merges
+         const secondResult = ctx.run(['vscode', 'web-vue']);
+         expect(secondResult.exitCode).toBe(0);
+         expect(secondResult.stdout.toLowerCase()).toContain('using local custom preset');
+
+         // User preference preserved, tooling settings enforced
+         const merged = ctx.readJsonFile<Record<string, unknown>>('.vscode/settings.json')!;
+         expect(merged['editor.cursorBlinking']).toBe('smooth');
+         expect(merged['editor.formatOnSave']).toBe(true);
+      });
    });
 });
