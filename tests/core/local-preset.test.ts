@@ -118,14 +118,10 @@ describe('materializeFmtPreset', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
    });
 
-   it('copies generated config files to local preset dir', () => {
+   it('generates all config files from preset getters', () => {
       tmpDir = createTempDir();
 
-      fs.writeFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'export default []');
-      fs.writeFileSync(path.join(tmpDir, '.prettierrc'), '{"semi": false}');
-
-      const generatedFiles = ['eslint.config.mjs', '.prettierrc'];
-      materializeFmtPreset(tmpDir, 'test-preset', generatedFiles, basePreset, {
+      materializeFmtPreset(tmpDir, 'test-preset', basePreset, {
          ...baseOpts,
          cwd: tmpDir,
       });
@@ -133,18 +129,24 @@ describe('materializeFmtPreset', () => {
       const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
       expect(fs.existsSync(path.join(presetDir, 'eslint.config.mjs'))).toBe(true);
       expect(fs.existsSync(path.join(presetDir, '.prettierrc'))).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, '.prettierignore'))).toBe(false);
+      expect(fs.existsSync(path.join(presetDir, 'cspell.json'))).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, 'stylelint.config.mjs'))).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, '.stylelintignore'))).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, '.editorconfig'))).toBe(true);
       expect(fs.readFileSync(path.join(presetDir, 'eslint.config.mjs'), 'utf-8')).toBe(
-         'export default []',
+         'export default []\n',
       );
    });
 
-   it('writes template package.json with <latest> deps and <pm> scripts', () => {
+   it('writes template package.json with ALL deps and scripts regardless of flags', () => {
       tmpDir = createTempDir();
-      fs.writeFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'export default []');
 
-      materializeFmtPreset(tmpDir, 'test-preset', ['eslint.config.mjs'], basePreset, {
+      materializeFmtPreset(tmpDir, 'test-preset', basePreset, {
          ...baseOpts,
          cwd: tmpDir,
+         noStylelint: true,
+         noEditorconfig: true,
       });
 
       const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
@@ -155,53 +157,35 @@ describe('materializeFmtPreset', () => {
       expect(pkg.devDependencies['eslint']).toBe('<latest>');
       expect(pkg.devDependencies['prettier']).toBe('<latest>');
       expect(pkg.devDependencies['stylelint']).toBe('<latest>');
+      expect(pkg.devDependencies['postcss-html']).toBe('<latest>');
+      expect(pkg.scripts['stylelint']).toBe('stylelint "src/**/*.{css,scss}"');
       expect(pkg.scripts['code:check']).toBe('<pm> lint && <pm> format:check');
    });
 
-   it('respects noStylelint flag — excludes stylelint deps and scripts', () => {
-      tmpDir = createTempDir();
-      fs.writeFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'export default []');
-
-      materializeFmtPreset(tmpDir, 'test-preset', ['eslint.config.mjs'], basePreset, {
-         ...baseOpts,
-         cwd: tmpDir,
-         noStylelint: true,
-      });
-
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
-      const pkg = JSON.parse(fs.readFileSync(path.join(presetDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['stylelint']).toBeUndefined();
-      expect(pkg.devDependencies['postcss-html']).toBeUndefined();
-      expect(pkg.scripts['stylelint']).toBeUndefined();
-   });
-
-   it('respects noEditorconfig flag — excludes editorconfig deps', () => {
-      tmpDir = createTempDir();
-      const presetWithEditorconfig: FmtPreset = {
-         ...basePreset,
-         dependencies: {
-            dev: ['eslint', 'editorconfig'],
-         },
+   it('resolves <lockfile> placeholders in generated files', () => {
+      const presetWithLockfile: FmtPreset = {
+         name: 'test-preset',
+         description: 'Test',
+         prettierIgnore: () => 'node_modules/\n<lockfile>\ndist/\n',
       };
-      fs.writeFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'export default []');
+      tmpDir = createTempDir();
 
-      materializeFmtPreset(tmpDir, 'test-preset', ['eslint.config.mjs'], presetWithEditorconfig, {
+      materializeFmtPreset(tmpDir, 'test-preset', presetWithLockfile, {
          ...baseOpts,
          cwd: tmpDir,
-         noEditorconfig: true,
+         lockfile: 'bun.lock',
       });
 
       const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
-      const pkg = JSON.parse(fs.readFileSync(path.join(presetDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['editorconfig']).toBeUndefined();
-      expect(pkg.devDependencies['eslint']).toBe('<latest>');
+      expect(fs.readFileSync(path.join(presetDir, '.prettierignore'), 'utf-8')).toBe(
+         'node_modules/\nbun.lock\ndist/\n',
+      );
    });
 
    it('does not write files in dry-run mode', () => {
       tmpDir = createTempDir();
-      fs.writeFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'export default []');
 
-      materializeFmtPreset(tmpDir, 'test-preset', ['eslint.config.mjs'], basePreset, {
+      materializeFmtPreset(tmpDir, 'test-preset', basePreset, {
          ...baseOpts,
          cwd: tmpDir,
          dryRun: true,

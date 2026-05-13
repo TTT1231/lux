@@ -122,8 +122,6 @@ async function executeLocalPath(
 ): Promise<void> {
    logger.log('Using local custom preset');
 
-   warnFlagMismatch(cwd, presetName, options);
-
    const opts: GenerateOptions = {
       cwd,
       force: options.force ?? false,
@@ -249,7 +247,7 @@ async function executeBuiltinPath(
    logGenerationResult(result, opts.dryRun);
 
    if (!opts.dryRun) {
-      materializeFmtPreset(cwd, presetName, allFiles, preset as never, opts);
+      materializeFmtPreset(cwd, presetName, preset as never, opts);
    }
 
    if (!pm) {
@@ -359,36 +357,6 @@ function logApplyResult(result: {
       logger.log(
          `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
       );
-   }
-}
-
-/** Warn when flags request files not present in local preset */
-function warnFlagMismatch(
-   cwd: string,
-   presetName: string,
-   options: { stylelint?: boolean; editorconfig?: boolean },
-): void {
-   const presetDir = path.join(cwd, '.lux', 'preset', 'fmt', presetName);
-   if (!fileExists(presetDir)) return;
-
-   const entries = new Set(fs.readdirSync(presetDir));
-
-   if (options.stylelint) {
-      const hasStylelint = entries.has('stylelint.config.mjs');
-      if (!hasStylelint) {
-         logger.warn(
-            'Local preset was created without --stylelint. Run with --reset --stylelint to add stylelint support.',
-         );
-      }
-   }
-
-   if (options.editorconfig) {
-      const hasEditorconfig = entries.has('.editorconfig');
-      if (!hasEditorconfig) {
-         logger.warn(
-            'Local preset was created without --editorconfig. Run with --reset --editorconfig to add editorconfig support.',
-         );
-      }
    }
 }
 

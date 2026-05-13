@@ -9,6 +9,19 @@ import type { PackageManager } from '../utils/deps';
 
 type PresetType = 'fmt' | 'vscode';
 
+const CONFIG_GETTERS: ReadonlyArray<{
+   filename: string;
+   getContent: (preset: FmtPreset) => string | undefined;
+}> = [
+   { filename: 'eslint.config.mjs', getContent: p => p.eslint?.() },
+   { filename: '.prettierrc', getContent: p => p.prettier?.() },
+   { filename: '.prettierignore', getContent: p => p.prettierIgnore?.() },
+   { filename: 'stylelint.config.mjs', getContent: p => p.stylelint?.() },
+   { filename: '.stylelintignore', getContent: p => p.stylelintIgnore?.() },
+   { filename: 'cspell.json', getContent: p => p.cspell?.() },
+   { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
+];
+
 const STYLELINT_FILES = new Set(['stylelint.config.mjs', '.stylelintignore']);
 const EDITORCONFIG_FILE = '.editorconfig';
 
@@ -51,7 +64,6 @@ export function resetLocalPreset(cwd: string, type: PresetType, presetName: stri
 export function materializeFmtPreset(
    cwd: string,
    presetName: string,
-   generatedFiles: string[],
    preset: FmtPreset,
    opts: GenerateOptions,
 ): void {
@@ -63,15 +75,18 @@ export function materializeFmtPreset(
    const presetDir = getLocalPresetDir(cwd, 'fmt', presetName);
    ensureDir(presetDir);
 
-   for (const filename of generatedFiles) {
-      const src = path.join(cwd, filename);
-      if (!fileExists(src)) continue;
+   for (const { filename, getContent } of CONFIG_GETTERS) {
+      const content = getContent(preset);
+      if (content === undefined) continue;
 
-      const content = fs.readFileSync(src, 'utf-8');
-      writeFile(path.join(presetDir, filename), content);
+      const resolved = opts.lockfile
+         ? content.replace(/<lockfile>/g, opts.lockfile)
+         : content.replace(/<lockfile>\n?/g, '');
+
+      writeFile(path.join(presetDir, filename), resolved);
    }
 
-   const templatePkg = buildTemplatePackageJson(preset, opts);
+   const templatePkg = buildTemplatePackageJson(preset);
    writeJson(path.join(presetDir, 'package.json'), templatePkg);
 
    logger.log(`Local preset created at ${path.relative(cwd, presetDir)}`);
@@ -259,27 +274,15 @@ export function applyLocalVscodePreset(
    return result;
 }
 
-function buildTemplatePackageJson(
-   preset: FmtPreset,
-   opts: GenerateOptions,
-): Record<string, unknown> {
+function buildTemplatePackageJson(preset: FmtPreset): Record<string, unknown> {
    const deps: Record<string, string> = {};
    if (preset.dependencies?.dev) {
       for (const dep of preset.dependencies.dev) {
-         if (opts.noStylelint && STYLELINT_DEPS.has(dep)) continue;
-         if (opts.noEditorconfig && dep.includes('editorconfig')) continue;
          deps[dep] = '<latest>';
       }
    }
 
-   let scripts: Record<string, string> | undefined;
-   if (preset.scripts) {
-      if (opts.noStylelint) {
-         scripts = filterStylelintScripts(preset.scripts);
-      } else {
-         scripts = { ...preset.scripts };
-      }
-   }
+   const scripts = preset.scripts ? { ...preset.scripts } : undefined;
 
    const result: Record<string, unknown> = {};
    if (Object.keys(deps).length > 0) {
@@ -348,15 +351,6 @@ function mergeTemplateIntoProject(
    }
 
    return merged;
-}
-
-function filterStylelintScripts(scripts: Record<string, string>): Record<string, string> {
-   const filtered: Record<string, string> = {};
-   for (const [key, value] of Object.entries(scripts)) {
-      if (key.startsWith('stylelint')) continue;
-      filtered[key] = value.replace(/\s*&&\s*<pm>\s+stylelint\S*/g, '');
-   }
-   return filtered;
 }
 
 function filterStylelintSettings(settings: Record<string, unknown>): Record<string, unknown> {
