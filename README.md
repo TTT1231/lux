@@ -111,6 +111,7 @@ lux fmt <preset> [options]
   --dry-run       Preview without writing files
   --stylelint     Include Stylelint config generation (opt-in)
   --editorconfig  Include EditorConfig config generation (opt-in)
+  --reset         Reset local preset and re-create from built-in defaults
 ```
 
 <br />
@@ -122,6 +123,12 @@ lux fmt web-vue
        │
        ▼
   Parse CLI args ──► Resolve preset (fuzzy match on typo)
+       │
+       ▼
+  Local preset exists in ~/.lux/preset/?
+       │
+       ├── Yes ──► Copy files from local preset (editable, survives updates)
+       └── No  ──► Generate from built-in ──► Save to ~/.lux/preset/ for reuse
        │
        ▼
   For each config file:

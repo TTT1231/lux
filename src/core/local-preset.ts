@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import type { FmtPreset, GenerateOptions } from '../presets/types';
 import { mergeVscodeSettings } from './merge-settings';
@@ -44,35 +45,38 @@ const STYLELINT_DEPS = new Set([
 
 const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
 
-export function getLocalPresetDir(cwd: string, type: PresetType, presetName: string): string {
-   return path.join(cwd, '.lux', 'preset', type, presetName);
+function getLuxDir(): string {
+   return process.env.LUX_HOME || path.join(os.homedir(), '.lux');
 }
 
-export function localPresetExists(cwd: string, type: PresetType, presetName: string): boolean {
-   const dir = getLocalPresetDir(cwd, type, presetName);
+export function getLocalPresetDir(type: PresetType, presetName: string): string {
+   return path.join(getLuxDir(), 'preset', type, presetName);
+}
+
+export function localPresetExists(type: PresetType, presetName: string): boolean {
+   const dir = getLocalPresetDir(type, presetName);
    return fs.existsSync(dir);
 }
 
-export function resetLocalPreset(cwd: string, type: PresetType, presetName: string): void {
-   const dir = getLocalPresetDir(cwd, type, presetName);
+export function resetLocalPreset(type: PresetType, presetName: string): void {
+   const dir = getLocalPresetDir(type, presetName);
    if (fs.existsSync(dir)) {
       fs.rmSync(dir, { recursive: true, force: true });
-      logger.log(`Reset local preset: ${path.relative(cwd, dir)}`);
+      logger.log(`Reset local preset: ${dir}`);
    }
 }
 
 export function materializeFmtPreset(
-   cwd: string,
    presetName: string,
    preset: FmtPreset,
    opts: GenerateOptions,
 ): void {
    if (opts.dryRun) {
-      logger.log('[dry-run] Would materialize local preset to .lux/preset/fmt/' + presetName);
+      logger.log('[dry-run] Would materialize local preset to ~/.lux/preset/fmt/' + presetName);
       return;
    }
 
-   const presetDir = getLocalPresetDir(cwd, 'fmt', presetName);
+   const presetDir = getLocalPresetDir('fmt', presetName);
    ensureDir(presetDir);
 
    for (const { filename, getContent } of CONFIG_GETTERS) {
@@ -89,11 +93,11 @@ export function materializeFmtPreset(
    const templatePkg = buildTemplatePackageJson(preset);
    writeJson(path.join(presetDir, 'package.json'), templatePkg);
 
-   logger.log(`Local preset created at ${path.relative(cwd, presetDir)}`);
+   logger.log(`Local preset created at ${presetDir}`);
 }
 
 export function materializeVscodePreset(cwd: string, presetName: string): void {
-   const presetDir = getLocalPresetDir(cwd, 'vscode', presetName);
+   const presetDir = getLocalPresetDir('vscode', presetName);
    ensureDir(presetDir);
 
    const settingsSrc = path.join(cwd, '.vscode', 'settings.json');
@@ -108,7 +112,7 @@ export function materializeVscodePreset(cwd: string, presetName: string): void {
       writeFile(path.join(presetDir, 'extensions.json'), content);
    }
 
-   logger.log(`Local preset created at ${path.relative(cwd, presetDir)}`);
+   logger.log(`Local preset created at ${presetDir}`);
 }
 
 export interface ApplyLocalResult {
@@ -138,9 +142,9 @@ export function applyLocalFmtPreset(
       scriptsSkipped: 0,
    };
 
-   const presetDir = getLocalPresetDir(cwd, 'fmt', presetName);
+   const presetDir = getLocalPresetDir('fmt', presetName);
    if (!fs.existsSync(presetDir)) {
-      logger.warn(`Local preset not found at ${path.relative(cwd, presetDir)}`);
+      logger.warn(`Local preset not found at ${presetDir}`);
       return result;
    }
 
@@ -212,9 +216,9 @@ export function applyLocalVscodePreset(
       scriptsSkipped: 0,
    };
 
-   const presetDir = getLocalPresetDir(cwd, 'vscode', presetName);
+   const presetDir = getLocalPresetDir('vscode', presetName);
    if (!fs.existsSync(presetDir)) {
-      logger.warn(`Local preset not found at ${path.relative(cwd, presetDir)}`);
+      logger.warn(`Local preset not found at ${presetDir}`);
       return result;
    }
 

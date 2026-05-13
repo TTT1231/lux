@@ -473,7 +473,7 @@ describe('Acceptance: lux CLI', () => {
 
    // ─── Scenario 12: First run materializes local preset ─────────────
    describe('Scenario: first run materializes local preset', () => {
-      it('creates .lux/preset/fmt/<preset>/ with config files and template package.json', () => {
+      it('creates preset/fmt/<preset>/ with config files and template package.json in lux home', () => {
          ctx = createTestContext({
             files: {
                'package.json': JSON.stringify({
@@ -488,15 +488,15 @@ describe('Acceptance: lux CLI', () => {
          expect(result.exitCode).toBe(0);
 
          // Local preset directory created
-         expect(ctx.fileExists('.lux/preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
-         expect(ctx.fileExists('.lux/preset/fmt/web-vue/.prettierrc')).toBe(true);
-         expect(ctx.fileExists('.lux/preset/fmt/web-vue/cspell.json')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/.prettierrc')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/cspell.json')).toBe(true);
 
          // Template package.json with <latest> and <pm> placeholders
-         const templatePkg = ctx.readJsonFile<{
+         const templatePkg = ctx.luxReadJsonFile<{
             devDependencies: Record<string, string>;
             scripts: Record<string, string>;
-         }>('.lux/preset/fmt/web-vue/package.json')!;
+         }>('preset/fmt/web-vue/package.json')!;
          expect(templatePkg.devDependencies['eslint']).toBe('<latest>');
          expect(templatePkg.scripts['code:check']).toContain('<pm>');
       });
@@ -519,7 +519,7 @@ describe('Acceptance: lux CLI', () => {
          ctx.run(['fmt', 'web-vue', '--no-install']);
 
          // Customize local preset
-         ctx.writeFile('.lux/preset/fmt/web-vue/eslint.config.mjs', '// LOCAL MARKER');
+         ctx.luxWriteFile('preset/fmt/web-vue/eslint.config.mjs', '// LOCAL MARKER');
 
          // Delete project file to test copy from local
          const fs = await import('node:fs');
@@ -549,12 +549,12 @@ describe('Acceptance: lux CLI', () => {
          ctx.run(['fmt', 'web-vue', '--no-install']);
 
          // Edit template package.json to pin eslint version
-         const templatePkg = ctx.readJsonFile<Record<string, unknown>>(
-            '.lux/preset/fmt/web-vue/package.json',
+         const templatePkg = ctx.luxReadJsonFile<Record<string, unknown>>(
+            'preset/fmt/web-vue/package.json',
          )!;
          const deps = templatePkg.devDependencies as Record<string, string>;
          deps['eslint'] = '^9.0.0';
-         ctx.writeJsonFile('.lux/preset/fmt/web-vue/package.json', templatePkg);
+         ctx.luxWriteJsonFile('preset/fmt/web-vue/package.json', templatePkg);
 
          // Remove eslint from project to force re-add
          const projectPkg = ctx.readJsonFile<Record<string, unknown>>('package.json')!;
@@ -587,17 +587,17 @@ describe('Acceptance: lux CLI', () => {
 
          // First run
          ctx.run(['fmt', 'web-vue', '--no-install']);
-         expect(ctx.fileExists('.lux/preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
 
          // Edit local preset
-         ctx.writeFile('.lux/preset/fmt/web-vue/eslint.config.mjs', '// EDITED');
+         ctx.luxWriteFile('preset/fmt/web-vue/eslint.config.mjs', '// EDITED');
 
          // Reset + re-materialize (with --force to regenerate existing files)
          const result = ctx.run(['fmt', 'web-vue', '--no-install', '--reset', '--force']);
          expect(result.exitCode).toBe(0);
 
          // Verify local preset was re-created (not the edited version)
-         const eslintConfig = ctx.readFile('.lux/preset/fmt/web-vue/eslint.config.mjs')!;
+         const eslintConfig = ctx.luxReadFile('preset/fmt/web-vue/eslint.config.mjs')!;
          expect(eslintConfig).not.toBe('// EDITED');
          expect(eslintConfig).toContain('eslint');
       });
@@ -655,7 +655,7 @@ describe('Acceptance: lux CLI', () => {
 
          // First run WITH stylelint — materializes stylelint files
          ctx.run(['fmt', 'web-vue', '--no-install', '--stylelint']);
-         expect(ctx.fileExists('.lux/preset/fmt/web-vue/stylelint.config.mjs')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/stylelint.config.mjs')).toBe(true);
 
          // Delete project files
          const fs = await import('node:fs');
@@ -687,8 +687,8 @@ describe('Acceptance: lux CLI', () => {
          expect(firstResult.exitCode).toBe(0);
 
          // Local preset materialized
-         expect(ctx.fileExists('.lux/preset/vscode/web-vue/settings.json')).toBe(true);
-         expect(ctx.fileExists('.lux/preset/vscode/web-vue/extensions.json')).toBe(true);
+         expect(ctx.luxFileExists('preset/vscode/web-vue/settings.json')).toBe(true);
+         expect(ctx.luxFileExists('preset/vscode/web-vue/extensions.json')).toBe(true);
 
          // Add user preference to existing settings
          const settings = ctx.readJsonFile<Record<string, unknown>>('.vscode/settings.json')!;

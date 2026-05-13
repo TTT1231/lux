@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
    getLocalPresetDir,
    localPresetExists,
@@ -17,6 +17,27 @@ import type { FmtPreset, GenerateOptions } from '../../src/presets/types';
 function createTempDir(): string {
    return fs.mkdtempSync(path.join(os.tmpdir(), 'lux-local-preset-test-'));
 }
+
+let luxHome: string;
+let savedLuxHome: string | undefined;
+
+beforeAll(() => {
+   luxHome = createTempDir();
+   savedLuxHome = process.env.LUX_HOME;
+   process.env.LUX_HOME = luxHome;
+});
+
+afterAll(() => {
+   process.env.LUX_HOME = savedLuxHome;
+   fs.rmSync(luxHome, { recursive: true, force: true });
+});
+
+beforeEach(() => {
+   const presetDir = path.join(luxHome, 'preset');
+   if (fs.existsSync(presetDir)) {
+      fs.rmSync(presetDir, { recursive: true, force: true });
+   }
+});
 
 const baseOpts: GenerateOptions = {
    cwd: '',
@@ -57,13 +78,13 @@ const basePreset: FmtPreset = {
 
 describe('getLocalPresetDir', () => {
    it('returns correct path for fmt preset', () => {
-      const result = getLocalPresetDir('/project', 'fmt', 'web-vue');
-      expect(result).toBe(path.join('/project', '.lux', 'preset', 'fmt', 'web-vue'));
+      const result = getLocalPresetDir('fmt', 'web-vue');
+      expect(result).toBe(path.join(luxHome, 'preset', 'fmt', 'web-vue'));
    });
 
    it('returns correct path for vscode preset', () => {
-      const result = getLocalPresetDir('/project', 'vscode', 'web-react');
-      expect(result).toBe(path.join('/project', '.lux', 'preset', 'vscode', 'web-react'));
+      const result = getLocalPresetDir('vscode', 'web-react');
+      expect(result).toBe(path.join(luxHome, 'preset', 'vscode', 'web-react'));
    });
 });
 
@@ -76,14 +97,14 @@ describe('localPresetExists', () => {
 
    it('returns false when directory does not exist', () => {
       tmpDir = createTempDir();
-      expect(localPresetExists(tmpDir, 'fmt', 'web-vue')).toBe(false);
+      expect(localPresetExists('fmt', 'web-vue')).toBe(false);
    });
 
    it('returns true when directory exists', () => {
       tmpDir = createTempDir();
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'web-vue');
+      const presetDir = getLocalPresetDir('fmt', 'web-vue');
       fs.mkdirSync(presetDir, { recursive: true });
-      expect(localPresetExists(tmpDir, 'fmt', 'web-vue')).toBe(true);
+      expect(localPresetExists('fmt', 'web-vue')).toBe(true);
    });
 });
 
@@ -96,18 +117,18 @@ describe('resetLocalPreset', () => {
 
    it('deletes the local preset directory', () => {
       tmpDir = createTempDir();
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'web-vue');
+      const presetDir = getLocalPresetDir('fmt', 'web-vue');
       fs.mkdirSync(presetDir, { recursive: true });
       fs.writeFileSync(path.join(presetDir, 'test.txt'), 'hello');
 
-      resetLocalPreset(tmpDir, 'fmt', 'web-vue');
+      resetLocalPreset('fmt', 'web-vue');
 
       expect(fs.existsSync(presetDir)).toBe(false);
    });
 
    it('does not throw when directory does not exist', () => {
       tmpDir = createTempDir();
-      expect(() => resetLocalPreset(tmpDir, 'fmt', 'nonexistent')).not.toThrow();
+      expect(() => resetLocalPreset('fmt', 'nonexistent')).not.toThrow();
    });
 });
 
@@ -121,12 +142,12 @@ describe('materializeFmtPreset', () => {
    it('generates all config files from preset getters', () => {
       tmpDir = createTempDir();
 
-      materializeFmtPreset(tmpDir, 'test-preset', basePreset, {
+      materializeFmtPreset('test-preset', basePreset, {
          ...baseOpts,
          cwd: tmpDir,
       });
 
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
+      const presetDir = getLocalPresetDir('fmt', 'test-preset');
       expect(fs.existsSync(path.join(presetDir, 'eslint.config.mjs'))).toBe(true);
       expect(fs.existsSync(path.join(presetDir, '.prettierrc'))).toBe(true);
       expect(fs.existsSync(path.join(presetDir, '.prettierignore'))).toBe(false);
@@ -142,14 +163,14 @@ describe('materializeFmtPreset', () => {
    it('writes template package.json with ALL deps and scripts regardless of flags', () => {
       tmpDir = createTempDir();
 
-      materializeFmtPreset(tmpDir, 'test-preset', basePreset, {
+      materializeFmtPreset('test-preset', basePreset, {
          ...baseOpts,
          cwd: tmpDir,
          noStylelint: true,
          noEditorconfig: true,
       });
 
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
+      const presetDir = getLocalPresetDir('fmt', 'test-preset');
       const pkgPath = path.join(presetDir, 'package.json');
       expect(fs.existsSync(pkgPath)).toBe(true);
 
@@ -170,13 +191,13 @@ describe('materializeFmtPreset', () => {
       };
       tmpDir = createTempDir();
 
-      materializeFmtPreset(tmpDir, 'test-preset', presetWithLockfile, {
+      materializeFmtPreset('test-preset', presetWithLockfile, {
          ...baseOpts,
          cwd: tmpDir,
          lockfile: 'bun.lock',
       });
 
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
+      const presetDir = getLocalPresetDir('fmt', 'test-preset');
       expect(fs.readFileSync(path.join(presetDir, '.prettierignore'), 'utf-8')).toBe(
          'node_modules/\nbun.lock\ndist/\n',
       );
@@ -185,13 +206,13 @@ describe('materializeFmtPreset', () => {
    it('does not write files in dry-run mode', () => {
       tmpDir = createTempDir();
 
-      materializeFmtPreset(tmpDir, 'test-preset', basePreset, {
+      materializeFmtPreset('test-preset', basePreset, {
          ...baseOpts,
          cwd: tmpDir,
          dryRun: true,
       });
 
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
+      const presetDir = getLocalPresetDir('fmt', 'test-preset');
       expect(fs.existsSync(presetDir)).toBe(false);
    });
 });
@@ -218,7 +239,7 @@ describe('materializeVscodePreset', () => {
 
       materializeVscodePreset(tmpDir, 'test-preset');
 
-      const presetDir = getLocalPresetDir(tmpDir, 'vscode', 'test-preset');
+      const presetDir = getLocalPresetDir('vscode', 'test-preset');
       expect(fs.existsSync(path.join(presetDir, 'settings.json'))).toBe(true);
       expect(fs.existsSync(path.join(presetDir, 'extensions.json'))).toBe(true);
 
@@ -235,7 +256,7 @@ describe('applyLocalFmtPreset', () => {
    });
 
    function setupLocalPreset(files: Record<string, string>): void {
-      const presetDir = getLocalPresetDir(tmpDir, 'fmt', 'test-preset');
+      const presetDir = getLocalPresetDir('fmt', 'test-preset');
       fs.mkdirSync(presetDir, { recursive: true });
       for (const [name, content] of Object.entries(files)) {
          fs.writeFileSync(path.join(presetDir, name), content);
@@ -482,7 +503,7 @@ describe('applyLocalVscodePreset', () => {
    });
 
    function setupLocalVscodePreset(files: Record<string, string>): void {
-      const presetDir = getLocalPresetDir(tmpDir, 'vscode', 'test-preset');
+      const presetDir = getLocalPresetDir('vscode', 'test-preset');
       fs.mkdirSync(presetDir, { recursive: true });
       for (const [name, content] of Object.entries(files)) {
          fs.writeFileSync(path.join(presetDir, name), content);

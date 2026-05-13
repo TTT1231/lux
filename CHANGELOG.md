@@ -3,6 +3,9 @@
 ## 1.1.0
 
 - Added `lux init` command — interactively select an AI coding tool (Claude Code / OpenCode) and copy bundled skill files to the project
+- Generated presets are now saved to `~/.lux/preset/` for reuse — subsequent runs use the local copy instead of regenerating
+- Added `--reset` flag to `fmt` and `vscode` commands to re-create local preset from built-in defaults
+- Edit files in `~/.lux/preset/` to customize what gets applied on future runs
 
 ## 1.0.9
 

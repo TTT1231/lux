@@ -36,10 +36,10 @@ export function registerVscodeCommand(program: Command) {
             const cwd = process.cwd();
 
             if (options.reset) {
-               resetLocalPreset(cwd, 'vscode', presetName);
+               resetLocalPreset('vscode', presetName);
             }
 
-            const useLocal = localPresetExists(cwd, 'vscode', presetName);
+            const useLocal = localPresetExists('vscode', presetName);
 
             if (useLocal) {
                executeVscodeLocalPath(cwd, presetName, options);

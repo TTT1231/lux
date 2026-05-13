@@ -16,6 +16,7 @@ import {
 import type { PackageManager } from '../utils/deps';
 import { fileExists, readJson, writeJson } from '../utils/fs';
 import {
+   getLocalPresetDir,
    localPresetExists,
    resetLocalPreset,
    materializeFmtPreset,
@@ -86,10 +87,10 @@ export function registerFmtCommand(program: Command) {
             }
 
             if (options.reset) {
-               resetLocalPreset(cwd, 'fmt', presetName);
+               resetLocalPreset('fmt', presetName);
             }
 
-            const useLocal = localPresetExists(cwd, 'fmt', presetName);
+            const useLocal = localPresetExists('fmt', presetName);
 
             if (useLocal) {
                await executeLocalPath(cwd, presetName, preset, options);
@@ -158,7 +159,7 @@ async function executeLocalPath(
 
    if (!pm) return;
 
-   const templatePkgPath = path.join(cwd, '.lux', 'preset', 'fmt', presetName, 'package.json');
+   const templatePkgPath = path.join(getLocalPresetDir('fmt', presetName), 'package.json');
    const templatePkg = readJson<{
       devDependencies?: Record<string, string>;
    }>(templatePkgPath);
@@ -247,7 +248,7 @@ async function executeBuiltinPath(
    logGenerationResult(result, opts.dryRun);
 
    if (!opts.dryRun) {
-      materializeFmtPreset(cwd, presetName, preset as never, opts);
+      materializeFmtPreset(presetName, preset as never, opts);
    }
 
    if (!pm) {
