@@ -32,6 +32,10 @@
 
 ## 5. Verify
 
-- [ ] 5.1 Run `bun run build` — clean build
-- [ ] 5.2 Run `bun run test` — all tests pass
-- [ ] 5.3 Run `bun run code:check:all` — lint, format, spell pass
+- [ ] 5.1 Build → create temp dir with `package.json`, run `lux fmt web-vue --no-install` → verify `.lux/preset/fmt/web-vue/` exists with all config files + template `package.json` containing `<latest>` and `<pm>` placeholders
+- [ ] 5.2 Run again → verify output shows "using local custom preset" and files come from `.lux/preset/` (not regenerated), config files unchanged
+- [ ] 5.3 Edit a file in `.lux/preset/fmt/web-vue/` (e.g. pin eslint version to `^9.0.0` in template `package.json`) → run again → verify project gets the edited version
+- [ ] 5.4 Delete a file from `.lux/preset/fmt/web-vue/` (e.g. `cspell.json`) → run again → verify `cspell.json` is NOT written to project root, no error
+- [ ] 5.5 Run `lux fmt web-vue --reset` → verify `.lux/preset/fmt/web-vue/` deleted → run again → verify re-materialized from built-in
+- [ ] 5.6 Create temp dir with `package.json`, run `lux vscode web-vue` → verify `.lux/preset/vscode/web-vue/` exists with `settings.json` + `extensions.json` → run again → verify "using local custom preset" and settings merged correctly
+- [ ] 5.7 Run `bun run build` → clean build, `bun run test` → all pass, `bun run code:check:all` → lint/format/spell clean
