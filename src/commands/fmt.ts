@@ -181,12 +181,17 @@ async function executeLocalPath(
    if (missing.length === 0) return;
 
    if (options.install === false) {
-      const resolved = resolveLocalDeps(templatePkg.devDependencies);
-      const added = await addDepsToManifest(resolved, cwd);
-      if (added.length > 0) {
-         logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
-      } else {
-         logger.log('All dependencies already in package.json');
+      try {
+         const resolved = resolveLocalDeps(templatePkg.devDependencies);
+         const added = await addDepsToManifest(resolved, cwd);
+         if (added.length > 0) {
+            logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
+         } else {
+            logger.log('All dependencies already in package.json');
+         }
+      } catch (error) {
+         const message = error instanceof Error ? error.message : String(error);
+         logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
       return;
    }
@@ -271,11 +276,16 @@ async function executeBuiltinPath(
    const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
 
    if (options.install === false) {
-      const added = await addDepsToManifest(finalDeps, cwd);
-      if (added.length > 0) {
-         logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
-      } else {
-         logger.log('All dependencies already in package.json');
+      try {
+         const added = await addDepsToManifest(finalDeps, cwd);
+         if (added.length > 0) {
+            logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
+         } else {
+            logger.log('All dependencies already in package.json');
+         }
+      } catch (error) {
+         const message = error instanceof Error ? error.message : String(error);
+         logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
       return;
    }

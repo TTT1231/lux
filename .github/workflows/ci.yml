@@ -41,9 +41,20 @@ jobs:
 
       - run: bun run test --coverage
 
+      - name: Check coverage files
+        id: coverage
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::coverage-summary.json not found, skipping coverage report"
+          fi
+
       - name: Coverage Report
         uses: davelosert/vitest-coverage-report-action@v2
-        if: always()
+        if: always() && steps.coverage.outputs.exists == 'true'
         with:
           file-coverage-mode: all
           json-summary-path: ./coverage/coverage-summary.json
