@@ -203,11 +203,6 @@ async function executeLocalPath(
       return;
    }
 
-   if (opts.dryRun) {
-      logger.log(`[dry-run] Would install: ${missing.join(', ')}`);
-      return;
-   }
-
    try {
       logger.log(`Installing dependencies with ${pm}...`);
       const resolved = resolveLocalDeps(
@@ -296,11 +291,6 @@ async function executeBuiltinPath(
          const message = error instanceof Error ? error.message : String(error);
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
-      return;
-   }
-
-   if (opts.dryRun) {
-      logger.log(`[dry-run] Would install: ${finalDeps.join(', ')}`);
       return;
    }
 

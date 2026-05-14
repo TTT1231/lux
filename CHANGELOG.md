@@ -7,7 +7,7 @@
 - `--no-stylelint` now strips stylelint segments inline from `lint` and `lint:fix` scripts instead of removing separate script keys
 - `--dry-run` now reports which dependencies would be added instead of silently skipping the install step
 - Fixed `--no-install` resolving all template deps instead of only the missing ones
-- CSpell configs in all presets now ignore `*.svg` and `*.png` files by default
+- CSpell configs in all presets now ignore `**/*.svg` and `**/*.png` files by default (recursive glob)
 - Fixed Vue presets (web-vue, electron-vue, uniapp) ESLint flat config import compatibility with `@vue/eslint-config-prettier`
 
 ## 1.1.1

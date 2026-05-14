@@ -41,7 +41,7 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['nestjs', 'typeorm', 'dtos'],
-            ignorePaths: ['*.svg', '*.png'],
+            ignorePaths: ['**/*.svg', '**/*.png'],
          },
          null,
          2,

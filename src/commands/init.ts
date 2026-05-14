@@ -11,11 +11,11 @@ import type { GenerateOptions } from '../presets/types';
 export function registerInitCommand(program: Command): void {
    program
       .command('init')
-      .description('Initialize AI coding tool skills in current project')
+      .description('Initialize skills or materialize presets')
       .option('--preset', 'Materialize all presets to ~/.lux/preset/ without writing to cwd')
       .action(async (options: { preset?: boolean }) => {
          if (options.preset) {
-            await materializeAllPresets();
+            materializeAllPresets();
             return;
          }
 
@@ -56,7 +56,7 @@ export function registerInitCommand(program: Command): void {
       });
 }
 
-async function materializeAllPresets(): Promise<void> {
+function materializeAllPresets(): void {
    const opts: GenerateOptions = {
       cwd: process.cwd(),
       force: false,

@@ -84,7 +84,7 @@ dist/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['vite', 'react', 'zustand', 'tanstack'],
-            ignorePaths: ['*.svg', '*.png'],
+            ignorePaths: ['**/*.svg', '**/*.png'],
          },
          null,
          2,

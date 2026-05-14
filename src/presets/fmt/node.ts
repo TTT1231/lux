@@ -83,7 +83,7 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: [],
-            ignorePaths: ['*.svg', '*.png'],
+            ignorePaths: ['**/*.svg', '**/*.png'],
          },
          null,
          2,

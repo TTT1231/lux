@@ -17,7 +17,7 @@ describe('registerInitCommand', () => {
 
       const initCmd = program.commands.find(cmd => cmd.name() === 'init');
       expect(initCmd).toBeDefined();
-      expect(initCmd!.description()).toBe('Initialize AI coding tool skills in current project');
+      expect(initCmd!.description()).toBe('Initialize skills or materialize presets');
    });
 
    it('init command has no required arguments', () => {

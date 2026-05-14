@@ -77,7 +77,7 @@ dist/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['vite', 'pinia', 'vueuse', 'unplugin'],
-            ignorePaths: ['*.svg', '*.png'],
+            ignorePaths: ['**/*.svg', '**/*.png'],
          },
          null,
          2,
