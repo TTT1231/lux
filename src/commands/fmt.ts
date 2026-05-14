@@ -25,12 +25,11 @@ import {
    InvalidPackageJsonError,
 } from '../core/local-preset';
 
-/** Filter stylelint-related scripts when stylelint is not enabled */
+/** Strip inline stylelint segments from script values when stylelint is not enabled */
 function filterStylelintScripts(scripts: Record<string, string>): Record<string, string> {
    const filtered: Record<string, string> = {};
    for (const [key, value] of Object.entries(scripts)) {
-      if (key.startsWith('stylelint')) continue;
-      filtered[key] = value.replace(/\s*&&\s*<pm>\s+stylelint\S*/g, '');
+      filtered[key] = value.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
    }
    return filtered;
 }
@@ -180,9 +179,17 @@ async function executeLocalPath(
 
    if (missing.length === 0) return;
 
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
+      return;
+   }
+
    if (options.install === false) {
       try {
-         const resolved = resolveLocalDeps(templatePkg.devDependencies);
+         const filteredTemplateDeps = Object.fromEntries(
+            Object.entries(templatePkg.devDependencies).filter(([k]) => missing.includes(k)),
+         );
+         const resolved = resolveLocalDeps(filteredTemplateDeps);
          const added = await addDepsToManifest(resolved, cwd);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
@@ -271,6 +278,11 @@ async function executeBuiltinPath(
       : preset.dependencies.dev;
 
    const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
+
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would add to package.json: ${finalDeps.join(', ')}`);
+      return;
+   }
 
    if (options.install === false) {
       try {

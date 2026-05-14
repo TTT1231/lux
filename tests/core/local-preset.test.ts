@@ -398,7 +398,7 @@ describe('applyLocalFmtPreset', () => {
       expect(pkg.scripts['code:check']).toBe('bun run lint && bun run format:check');
    });
 
-   it('filters stylelint files when noStylelint is true', () => {
+   it('filters stylelint files and inline stylelint segments when noStylelint is true', () => {
       tmpDir = createTempDir();
       setupLocalPreset({
          'eslint.config.mjs': 'export default []',
@@ -406,7 +406,10 @@ describe('applyLocalFmtPreset', () => {
          '.stylelintignore': 'node_modules/',
          'package.json': JSON.stringify({
             devDependencies: { eslint: '<latest>', stylelint: '<latest>' },
-            scripts: { lint: 'eslint .', stylelint: 'stylelint .' },
+            scripts: {
+               lint: 'eslint . && stylelint "src/**/*.{css,scss,vue}" --cache',
+               'lint:fix': 'eslint . --fix && stylelint "src/**/*.{css,scss,vue}" --fix',
+            },
          }),
       });
       fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test' }));
@@ -423,7 +426,8 @@ describe('applyLocalFmtPreset', () => {
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
       expect(pkg.devDependencies['stylelint']).toBeUndefined();
-      expect(pkg.scripts['stylelint']).toBeUndefined();
+      expect(pkg.scripts['lint']).toBe('eslint .');
+      expect(pkg.scripts['lint:fix']).toBe('eslint . --fix');
    });
 
    it('filters editorconfig file when noEditorconfig is true', () => {

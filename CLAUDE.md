@@ -23,8 +23,9 @@
 ## 命令
 
 ```bash
-bun run code:check:all               # 运行检查代码lint
-bun run code:fix:all                 # 运行修复代码lint
+bun run lint                         # 检查代码lint
+bun run lint:fix                     # 修复代码lint
+bun run format                       # 格式化代码
 bun run test                         # 单元 + 验收
 bun run test --project unit          # 单元测试
 bun run test --project acceptance    # 验收测试
@@ -36,17 +37,20 @@ bun run test --project acceptance    # 验收测试
 
 ```
 src/
-├── commands/         # CLI 命令处理器 (fmt, update, vpn, show, vscode等等)
-├── generators/       # 文件生成逻辑（写目标配置用） (fmt, vscode)
-├── core/             # 核心决策层：冲突解析 & 设置合并引擎
+├── commands/         # CLI 命令处理器 (fmt, vscode, init, update, vpn, show)
+├── generators/       # 文件生成逻辑（写目标配置用） (fmt, vscode, init)
+├── core/             # 核心决策层：冲突解析、设置合并、本地预设物化/应用
 ├── presets/          # 预设定义 (提供预设模板)
-├── utils/            # 工具函数 (deps, version等)
+│   ├── fmt/          # fmt 预设模板 (web-vue, web-react, nest, node 等)
+│   ├── vscode/       # vscode 预设模板
+│   └── skills/       # init 命令复制到目标项目的技能文件源
+├── utils/            # 工具函数 (deps, fs, logger, version, config等)
 └── index.ts          # CLI 入口 (commander)
 openspec/
+├── config.yaml       # openspec 配置
 ├── changes/
-│   └── <change-name>/  # 单个变更（活跃变更）：design.md, tasks.md, specs/, proposal.md
-│       └── archive/    # 已归档变更（YYYY-MM-DD-<name>），仅历史回溯用(设计决策和
-  spec 内容)
+│   ├── <change-name>/  # 活跃变更：design.md, tasks.md, specs/, proposal.md
+│   └── archive/        # 已归档变更 (YYYY-MM-DD-<name>)，仅历史回溯用
 └── specs/              # 已同步的主 spec（每个 capability 一个目录）
 tests/
 ├── **/*.test.ts      # 单元测试 (并行, 快速超时)
@@ -78,28 +82,34 @@ flowchart LR
     end
 
     subgraph Core["core/"]
-        conflict["conflict-resolver.ts resolveConflict()"]
-        merge["merge-settings.ts mergeVscodeSettings()"]
+        conflict["conflict-resolver.ts<br/>resolveConflict()"]
+        merge["merge-settings.ts<br/>mergeVscodeSettings()"]
+        localPreset["local-preset.ts<br/>materialize / apply / reset<br/>resolveLocalDeps()"]
     end
 
     subgraph Utils["utils/"]
         fs["fs.ts readFile/writeFile"]
         deps["deps.ts detectPM/installDevDeps"]
+        logger["logger.ts"]
     end
 
     CLI -->|"注册命令"| Commands
     Presets -->|"preset 数据"| Commands
-    Commands -->|"preset + GenerateOptions"| Generators
-    Generators -->|"filename + exists + preset"| Core
+
+    Commands -->|"builtin: preset + opts"| Generators
+    Generators -->|"resolveConflict / merge"| Core
     Generators -->|"文件读写"| Utils
+
+    Commands -->|"local: materialize / apply"| localPreset
+    localPreset -->|"mergeVscodeSettings"| merge
+    localPreset -->|"文件读写 + 依赖解析"| Utils
+
     Commands -->|"脚本注入 + 依赖安装"| Utils
 ```
 
 ## Health Stack
 
-- typecheck: tsc --noEmit
-- lint: eslint .
+- lint: bun run lint
 - test: vitest run
 - format: prettier --check "src/\*_/_.{ts,js,json}"
-- spell: cspell --gitignore "src/\*_/_"
 - gbrain: gbrain doctor --json

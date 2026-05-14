@@ -13,6 +13,7 @@ lux fmt list
 - `--force` — overwrite existing config files (default: skip)
 - `--dry-run` — preview what would be generated, write nothing
 - `--no-install` — write deps to package.json but skip install
+- `--reset` — reset local preset, re-materialize from built-in defaults
 
 Presets: `web-vue` `web-react` `electron-vue` `uniapp` `node` `nest`
 
@@ -23,12 +24,17 @@ lux vscode <preset> [--dry-run]
 lux vscode list
 ```
 
+- `--force` — overwrite existing settings (default: skip)
+- `--dry-run` — preview what would be generated, write nothing
+- `--reset` — reset local preset, re-materialize from built-in defaults
+
 Presets: `web-vue` `web-react` `electron-vue` `uniapp` `node` `nest` `go`
 
-## init — lux skill（human interaction）
+## init — initialize skills or presets
 
 ```bash
-lux init
+lux init                  # interactively select AI tool, copy skill files to project
+lux init --preset         # materialize all built-in presets to ~/.lux/preset/ (no cwd writes, no package.json required)
 ```
 
 ## vpn — proxy clipboard helper
@@ -53,3 +59,7 @@ lux show env      # show stored proxy env
 lux update        # update to latest
 lux update --check
 ```
+
+## Custom presets
+
+To customize preset rules, see `references/custom-preset-setting.md`.

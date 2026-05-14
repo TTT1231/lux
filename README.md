@@ -18,48 +18,29 @@
 
 ### What is lux?
 
-`lux` is a CLI tool that initializes project formatting configs and VSCode workspace settings with a single command. It generates ESLint, Prettier, CSpell, EditorConfig files and VSCode settings from battle-tested presets — with smart merge and conflict resolution.
+`lux` is a CLI tool that sets up project lint configs and VSCode workspace settings with a single command — saving you from repetitive configuration overhead and wasted tokens. It generates ESLint, Prettier, CSpell, Stylelint，EditorConfig configs and VSCode settings from presets — with smart merge and conflict resolution. Configurations can be customized to your needs.
 
 <div align="center">
   <img src="https://github.com/TTT1231/lux/blob/main/demo.gif?raw=true" alt="lux demo" width="640" />
 </div>
-
-### ✨ Key Highlights
-
-| Feature                    | Description                                                                                          |
-| :------------------------- | :--------------------------------------------------------------------------------------------------- |
-| 🎯 **One Command Setup**   | `lux fmt web-vue` generates all linting & formatting configs instantly                               |
-| 🔧 **6 Fmt Presets**       | `web-vue` · `web-react` · `electron-vue` · `uniapp` · `node` · `nest` — each with curated rules      |
-| 🖥️ **7 VSCode Presets**    | `web-vue` · `web-react` · `electron-vue` · `uniapp` · `node` · `nest` · `go` — settings + extensions |
-| 🔀 **Smart Merge**         | Preset wins for linting keys; user wins for personal preferences                                     |
-| 🛡️ **Conflict Resolution** | `neverOverwrite` / `forceOverwrite` lists + `--force` flag                                           |
-| 📦 **Auto Install**        | Detects bun / pnpm / yarn / npm and installs devDependencies                                         |
-| 🔍 **Fuzzy Matching**      | Typo a preset name? Levenshtein distance finds the closest match                                     |
-| 🧪 **Dry Run**             | Preview all changes with `--dry-run` before writing anything                                         |
-| 🔗 **Script Injection**    | Auto-injects `<pm> lint` / `<pm> format` scripts into package.json                                   |
-| 🌐 **Proxy Management**    | Persistent proxy config with `set` / `unset` — copy to CMD / PowerShell / Bash                       |
-| 🔄 **Self-Update**         | `lux update` checks and installs the latest version automatically                                    |
-
-<br />
 
 ### Quick Start
 
 ```bash
 # Install globally (pick your package manager)
 npm install -g @luxkit/cli
-# or
-bun add -g @luxkit/cli
 
-# Initialize formatting configs
-lux fmt web-vue          # Generate ESLint, Prettier, CSpell
+# Initialize skill and preset
+lux init && lux init --preset
+
+# Lint usage
+lux fmt web-vue                # Configure web-vue lint — ESLint, Prettier, CSpell
 lux fmt web-vue --stylelint    # Also include Stylelint
 lux fmt web-vue --editorconfig # Also include EditorConfig
 
-# Initialize VSCode settings
-lux vscode web-vue       # Generate .vscode/settings.json + extensions.json
-
-# Initialize AI coding tool skills
-lux init                 # Select tool interactively, copy skills to project
+# VSCode config (optional)
+# If you've already configured globally, you can skip this
+lux vscode web-vue       # Generate .vscode/settings.json + extensions.json (per-project)
 
 # List available presets
 lux fmt list
@@ -68,15 +49,26 @@ lux vscode list
 
 <br />
 
+### Custom Configuration
+
+```bash
+# Check if skill and presets are initialized (skip if already done)
+lux init && lux init --preset
+
+# Use an agent to customize a preset
+/lux help me configure my web react lint template to fit my development project style
+```
+
 ### CLI Commands
 
 | Command                     | Description                                                       |
 | :-------------------------- | :---------------------------------------------------------------- |
-| `lux fmt <preset>`          | Initialize formatting config files                                |
-| `lux fmt list`              | List available fmt presets                                        |
-| `lux vscode <preset>`       | Initialize VSCode workspace settings                              |
+| `lux fmt <preset>`          | Initialize lint configs                                           |
+| `lux fmt list`              | List available lint presets                                       |
+| `lux vscode <preset>`       | Configure VSCode settings (per-project)                           |
 | `lux vscode list`           | List available VSCode presets                                     |
-| `lux init`                  | Initialize AI coding tool skills in current project               |
+| `lux init`                  | Initialize skills                                                 |
+| `lux init --preset`         | Initialize all presets                                            |
 | `lux set <key=value> [...]` | Persist proxy env vars (e.g. `https_proxy=http://127.0.0.1:7890`) |
 | `lux unset`                 | Clear all stored proxy configuration                              |
 | `lux show env`              | Display stored proxy environment variables                        |
@@ -85,19 +77,6 @@ lux vscode list
 | `lux vpn bash`              | Copy Bash proxy commands to clipboard                             |
 | `lux update`                | Update `@luxkit/cli` to the latest version                        |
 | `lux update --check`        | Check for available updates without installing                    |
-
-<br />
-
-### Available Presets
-
-| Preset         | Fmt | VSCode | Stack                      |
-| :------------- | :-: | :----: | :------------------------- |
-| `web-vue`      | ✅  |   ✅   | Vue 3 / Vite / TS / CSS    |
-| `web-react`    | ✅  |   ✅   | React / Vite / TS / CSS    |
-| `electron-vue` | ✅  |   ✅   | Electron + Vue / Web stack |
-| `node`         | ✅  |   ✅   | Node.js backend            |
-| `nest`         | ✅  |   ✅   | NestJS backend             |
-| `go`           |  —  |   ✅   | Go backend                 |
 
 <br />
 
@@ -143,37 +122,6 @@ lux fmt web-vue
        │
        ▼
   Auto-install devDependencies (detects lockfile)
-```
-
-<br />
-
-### Tech Stack
-
-| Category | Technology                                 |
-| :------- | :----------------------------------------- |
-| Language | TypeScript 6.0 (ESM-only)                  |
-| Runtime  | Node.js 18+                                |
-| Build    | tsup                                       |
-| Test     | Vitest (unit + acceptance)                 |
-| CLI      | Commander.js                               |
-| Output   | Chalk                                      |
-| Bundle   | Minimal runtime deps (chalk + commander + @clack/prompts) |
-
-<br />
-
-### Development
-
-```bash
-git clone git@github.com:TTT1231/lux.git
-cd lux
-bun install
-
-bun link                  # Register `lux` globally for testing
-lux fmt web-vue          # Test it on any project
-
-bun test                  # Run tests
-bun build                 # Build to dist/
-bun code:check:all        # lint + format + spell check
 ```
 
 <br />

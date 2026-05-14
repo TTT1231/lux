@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import type { FmtPreset, GenerateOptions } from '../presets/types';
+import type { FmtPreset, GenerateOptions, VscodePreset } from '../presets/types';
 import { mergeVscodeSettings } from './merge-settings';
 import { fileExists, ensureDir, writeFile, readJson, writeJson } from '../utils/fs';
 import { logger } from '../utils/logger';
@@ -118,6 +118,19 @@ export function materializeVscodePreset(cwd: string, presetName: string): void {
       const content = fs.readFileSync(extensionsSrc, 'utf-8');
       writeFile(path.join(presetDir, 'extensions.json'), content);
    }
+
+   logger.log(`Local preset created at ${presetDir}`);
+}
+
+export function materializeVscodePresetFromBuiltin(presetName: string, preset: VscodePreset): void {
+   const presetDir = getLocalPresetDir('vscode', presetName);
+   ensureDir(presetDir);
+
+   const settings = preset.settings();
+   writeJson(path.join(presetDir, 'settings.json'), settings);
+
+   const extensions = preset.extensions();
+   writeJson(path.join(presetDir, 'extensions.json'), { recommendations: extensions });
 
    logger.log(`Local preset created at ${presetDir}`);
 }
@@ -269,7 +282,9 @@ export function applyLocalVscodePreset(
       if (extensionsData) {
          let presetRecommendations = extensionsData.recommendations ?? [];
          if (opts.noStylelint) {
-            presetRecommendations = presetRecommendations.filter(ext => ext !== STYLELINT_EXTENSION);
+            presetRecommendations = presetRecommendations.filter(
+               ext => ext !== STYLELINT_EXTENSION,
+            );
          }
 
          if (opts.dryRun) {
@@ -339,9 +354,11 @@ function mergeTemplateIntoProject(
       const newScripts = { ...existingScripts };
 
       for (const [key, value] of Object.entries(templatePkg.scripts)) {
-         if (opts.noStylelint && key.startsWith('stylelint')) continue;
+         let resolved = value.replace(/<pm>/g, prefix);
 
-         const resolved = value.replace(/<pm>/g, prefix);
+         if (opts.noStylelint) {
+            resolved = resolved.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
+         }
 
          if (existingScripts[key] !== undefined && !opts.force) {
             result.scriptsSkipped++;

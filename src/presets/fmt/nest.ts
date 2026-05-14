@@ -41,6 +41,7 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['nestjs', 'typeorm', 'dtos'],
+            ignorePaths: ['*.svg', '*.png'],
          },
          null,
          2,
@@ -64,11 +65,10 @@ trim_trailing_whitespace = false
       dev: ['prettier', 'cspell'],
    },
 
-   // NestJS: only append new scripts, don't conflict with existing ones
    scripts: {
-      cspell: 'cspell --gitignore "src/**/*"',
-      'type:check': 'tsc --noEmit',
-      'code:check': '<pm> lint && <pm> format:check',
-      'code:check:all': '<pm> lint && <pm> format:check && <pm> cspell',
+      lint: 'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit',
+      'lint:fix':
+         'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint --fix',
+      format: 'prettier --write "src/**/*.{ts,js,json}"',
    },
 };

@@ -83,6 +83,7 @@ coverage/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: [],
+            ignorePaths: ['*.svg', '*.png'],
          },
          null,
          2,
@@ -115,16 +116,8 @@ trim_trailing_whitespace = false
    },
 
    scripts: {
-      lint: 'eslint . --cache --cache-location node_modules/.cache/.eslintcache',
-      'lint:fix':
-         'eslint "src/**/*.{js,ts}" --fix --cache --cache-location node_modules/.cache/.eslintcache',
+      lint: 'eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit',
+      'lint:fix': 'eslint . --cache --cache-location node_modules/.cache/eslint --fix',
       format: 'prettier --write "src/**/*.{ts,js,json}"',
-      'format:check': 'prettier --check "src/**/*.{ts,js,json}"',
-      cspell: 'cspell --gitignore "src/**/*"',
-      'type:check': 'tsc --noEmit',
-      'code:check': '<pm> lint && <pm> format:check',
-      'code:fix': '<pm> lint:fix && <pm> format',
-      'code:check:all': '<pm> lint && <pm> format:check && <pm> cspell',
-      'code:fix:all': '<pm> lint:fix && <pm> format',
    },
 };

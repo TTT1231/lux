@@ -44,8 +44,10 @@ describe('Acceptance: lux CLI', () => {
          // Verify: scripts injected into package.json
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['lint']).toContain('eslint');
-         expect(pkg.scripts['format']).toBeDefined();
-         expect(pkg.scripts['code:check']).toContain('npm run lint && npm run format:check');
+         expect(pkg.scripts['lint']).toContain('cspell');
+         expect(pkg.scripts['lint:fix']).toContain('eslint');
+         expect(pkg.scripts['format']).toContain('prettier --write');
+         expect(pkg.scripts['code:check']).toBeUndefined();
 
          // Step 2: init vscode
          const vscodeResult = ctx.run(['vscode', 'web-vue']);
@@ -91,7 +93,7 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('.stylelintignore')).toBe(true);
 
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['stylelint']).toBeDefined();
+         expect(pkg.scripts['lint']).toContain('stylelint');
       });
    });
 
@@ -147,11 +149,11 @@ describe('Acceptance: lux CLI', () => {
          expect(eslintConfig).toContain('react-refresh');
          expect(eslintConfig).toContain('typescript-eslint');
 
-         // Verify: scripts use tsc (not vue-tsc) and jsx/tsx extensions
+         // Verify: scripts use tsc (not vue-tsc)
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['type:check']).toBe('tsc --noEmit');
-         expect(pkg.scripts['lint:fix']).toContain('jsx,tsx');
-         expect(pkg.scripts['format']).toContain('jsx,tsx');
+         expect(pkg.scripts['lint']).toContain('tsc --noEmit');
+         expect(pkg.scripts['lint']).not.toContain('vue-tsc');
+         expect(pkg.scripts['lint:fix']).toContain('eslint');
 
          // Verify: CSpell contains React ecosystem words
          const cspell = ctx.readJsonFile<{ words: string[] }>('cspell.json')!;
@@ -279,7 +281,8 @@ describe('Acceptance: lux CLI', () => {
 
          ctx.run(['fmt', 'web-vue', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['code:check']).toBe('bun run lint && bun run format:check');
+         expect(pkg.scripts['lint']).toContain('eslint');
+         expect(pkg.scripts['lint:fix']).toContain('eslint');
       });
    });
 
@@ -294,7 +297,8 @@ describe('Acceptance: lux CLI', () => {
 
          ctx.run(['fmt', 'web-vue', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['code:check']).toBe('pnpm run lint && pnpm run format:check');
+         expect(pkg.scripts['lint']).toContain('eslint');
+         expect(pkg.scripts['lint:fix']).toContain('eslint');
       });
    });
 
@@ -498,7 +502,7 @@ describe('Acceptance: lux CLI', () => {
             scripts: Record<string, string>;
          }>('preset/fmt/web-vue/package.json')!;
          expect(templatePkg.devDependencies['eslint']).toBe('<latest>');
-         expect(templatePkg.scripts['code:check']).toContain('<pm>');
+         expect(templatePkg.scripts['lint']).toContain('eslint');
       });
    });
 

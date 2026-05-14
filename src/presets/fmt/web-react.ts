@@ -84,6 +84,7 @@ dist/
             language: 'en,en-US',
             allowCompoundWords: true,
             words: ['vite', 'react', 'zustand', 'tanstack'],
+            ignorePaths: ['*.svg', '*.png'],
          },
          null,
          2,
@@ -124,18 +125,9 @@ trim_trailing_whitespace = false
    },
 
    scripts: {
-      lint: 'eslint . --cache --cache-location node_modules/.cache/.eslintcache',
+      lint: 'eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit && stylelint "src/**/*.{css,scss}" --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
       'lint:fix':
-         'eslint "src/**/*.{js,ts,jsx,tsx}" --fix --cache --cache-location node_modules/.cache/.eslintcache',
+         'eslint . --cache --cache-location node_modules/.cache/eslint --fix && stylelint "src/**/*.{css,scss}" --fix --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
       format: 'prettier --write "src/**/*.{ts,js,json,jsx,tsx,css,scss}"',
-      'format:check': 'prettier --check "src/**/*.{ts,js,json,jsx,tsx,css,scss}"',
-      stylelint: 'stylelint "src/**/*.{css,scss}"',
-      'stylelint:fix': 'stylelint "src/**/*.{css,scss}" --fix',
-      cspell: 'cspell --gitignore "src/**/*"',
-      'type:check': 'tsc --noEmit',
-      'code:check': '<pm> lint && <pm> format:check',
-      'code:fix': '<pm> lint:fix && <pm> format',
-      'code:check:all': '<pm> lint && <pm> format:check && <pm> stylelint && <pm> cspell',
-      'code:fix:all': '<pm> lint:fix && <pm> format && <pm> stylelint:fix',
    },
 };

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.2
+
+- All preset scripts consolidated: `lint` now runs eslint + cspell + typecheck (+ stylelint) in one command — removed `code:check`, `code:fix`, `code:check:all`, `code:fix:all`, `format:check`, `cspell`, `type:check`, `stylelint`, `stylelint:fix` scripts
+- Added `lux init --preset` to materialize all built-in presets to `~/.lux/preset/` without writing to project directory
+- `--no-stylelint` now strips stylelint segments inline from `lint` and `lint:fix` scripts instead of removing separate script keys
+- `--dry-run` now reports which dependencies would be added instead of silently skipping the install step
+- Fixed `--no-install` resolving all template deps instead of only the missing ones
+- CSpell configs in all presets now ignore `*.svg` and `*.png` files by default
+- Fixed Vue presets (web-vue, electron-vue, uniapp) ESLint flat config import compatibility with `@vue/eslint-config-prettier`
+
 ## 1.1.1
 
 - Added `lux init` command — interactively select an AI coding tool (Claude Code / OpenCode) and copy bundled skill files to the project
