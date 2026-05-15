@@ -31,7 +31,10 @@ bun run test --project unit          # 单元测试
 bun run test --project acceptance    # 验收测试
 ```
 
-**注意：**验收测试会启动 `dist/index.js` — 如果 dist 是旧的，在 ` test` 前先运行 `build`
+**注意：**
+
+- 验收测试会启动 `dist/index.js` — 如果 dist 是旧的，在 `test` 前先运行 `build`
+- 验收测试较慢，**不要跑全量验收**。优先用 `-t` 过滤只跑与改动相关的必要测试：
 
 ## 项目目录
 
