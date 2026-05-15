@@ -13,6 +13,8 @@ export interface GenerateOptions {
    noStylelint: boolean;
    noEditorconfig: boolean;
    noCspell: boolean;
+   noHusky: boolean;
+   noLintStaged: boolean;
    lockfile?: string;
 }
 
@@ -27,6 +29,7 @@ export interface FmtPreset {
    stylelintIgnore?: () => string;
    cspell?: () => string;
    editorconfig?: () => string;
+   lintStaged?: () => string;
    dependencies?: { dev?: string[] };
    scripts?: Record<string, string>;
    /** Files to always overwrite even without --force */

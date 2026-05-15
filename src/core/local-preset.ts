@@ -21,11 +21,13 @@ const CONFIG_GETTERS: ReadonlyArray<{
    { filename: '.stylelintignore', getContent: p => p.stylelintIgnore?.() },
    { filename: 'cspell.json', getContent: p => p.cspell?.() },
    { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
+   { filename: '.lintstagedrc.json', getContent: p => p.lintStaged?.() },
 ];
 
 const STYLELINT_FILES = new Set(['stylelint.config.mjs', '.stylelintignore']);
 const EDITORCONFIG_FILE = '.editorconfig';
 const CSPELL_FILE = 'cspell.json';
+const LINTSTAGED_FILE = '.lintstagedrc.json';
 
 const STYLELINT_SETTINGS_PREFIXES = [
    'stylelint.',
@@ -45,6 +47,9 @@ const STYLELINT_DEPS = new Set([
 ]);
 
 const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
+
+const HUSKY_DEPS = new Set(['husky']);
+const LINTSTAGED_DEPS = new Set(['lint-staged']);
 
 function getLuxDir(): string {
    return process.env.LUX_HOME || path.join(os.homedir(), '.lux');
@@ -216,6 +221,7 @@ export function applyLocalFmtPreset(
       if (opts.noStylelint && STYLELINT_FILES.has(filename)) continue;
       if (opts.noEditorconfig && filename === EDITORCONFIG_FILE) continue;
       if (opts.noCspell && filename === CSPELL_FILE) continue;
+      if (opts.noLintStaged && filename === LINTSTAGED_FILE) continue;
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);
@@ -374,6 +380,8 @@ function mergeTemplateIntoProject(
          if (opts.noStylelint && STYLELINT_DEPS.has(dep)) continue;
          if (opts.noEditorconfig && dep.includes('editorconfig')) continue;
          if (opts.noCspell && dep === 'cspell') continue;
+         if (opts.noHusky && HUSKY_DEPS.has(dep)) continue;
+         if (opts.noLintStaged && LINTSTAGED_DEPS.has(dep)) continue;
 
          if (existingDeps[dep] === undefined && version !== '<latest>') {
             newDeps[dep] = version;
@@ -391,6 +399,7 @@ function mergeTemplateIntoProject(
          opts.noStylelint,
          opts.noEditorconfig,
          opts.noCspell,
+         opts.noLintStaged,
       );
 
       for (const [key, value] of Object.entries(filteredScripts)) {
@@ -445,6 +454,7 @@ export function filterScripts(
    noStylelint: boolean,
    noEditorconfig: boolean,
    noCspell: boolean,
+   noLintStaged = false,
 ): Record<string, string> {
    const filtered: Record<string, string> = {};
 
@@ -452,6 +462,7 @@ export function filterScripts(
       if (noStylelint && key.includes('stylelint')) continue;
       if (noEditorconfig && key.includes('editorconfig')) continue;
       if (noCspell && key.includes('cspell')) continue;
+      if (noLintStaged && key.includes('lint-staged')) continue;
 
       let resolved = value;
       if (noStylelint) {
@@ -475,6 +486,7 @@ export function detectPresetCapabilities(presetName: string): {
    hasStylelint: boolean;
    hasEditorconfig: boolean;
    hasCspell: boolean;
+   hasLintStaged: boolean;
 } {
    const presetDir = path.join(getLuxDir(), 'preset', 'fmt', presetName);
    const entries = fs.readdirSync(presetDir);
@@ -497,10 +509,16 @@ export function detectPresetCapabilities(presetName: string): {
       ? Object.keys(pkg.devDependencies).some(d => d === 'cspell')
       : false;
 
+   const hasLintStagedFile = entries.includes(LINTSTAGED_FILE);
+   const hasLintStagedDep = pkg?.devDependencies
+      ? Object.keys(pkg.devDependencies).some(d => isNotLintStagedDep(d) === false)
+      : false;
+
    return {
       hasStylelint: hasStylelintFile || hasStylelintDep,
       hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
       hasCspell: hasCspellFile || hasCspellDep,
+      hasLintStaged: hasLintStagedFile || hasLintStagedDep,
    };
 }
 
@@ -512,6 +530,10 @@ function isNotStylelintDep(dep: string): boolean {
 
 function isNotEditorconfigDep(dep: string): boolean {
    return !dep.includes('editorconfig');
+}
+
+function isNotLintStagedDep(dep: string): boolean {
+   return dep !== 'lint-staged';
 }
 
 export function resolveLocalDeps(deps: Record<string, string>): string[] {

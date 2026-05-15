@@ -62,7 +62,7 @@ trim_trailing_whitespace = false
 `,
 
    dependencies: {
-      dev: ['prettier', 'cspell'],
+      dev: ['prettier', 'cspell', 'husky', 'lint-staged'],
    },
 
    scripts: {
@@ -70,5 +70,15 @@ trim_trailing_whitespace = false
       'lint:fix':
          'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint --fix',
       format: 'prettier --write "src/**/*.{ts,js,json}"',
+      'lint-staged': 'lint-staged',
    },
+
+   lintStaged: () =>
+      JSON.stringify(
+         {
+            '*.{ts,js}': ['eslint --fix', 'prettier --write'],
+         },
+         null,
+         2,
+      ) + '\n',
 };

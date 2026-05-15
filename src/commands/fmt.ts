@@ -15,7 +15,8 @@ import {
    addDepsToManifest,
 } from '../utils/deps';
 import type { PackageManager } from '../utils/deps';
-import { fileExists, readJson, writeJson } from '../utils/fs';
+import { execFileNoThrow } from '../utils/execFileNoThrow';
+import { fileExists, readJson, writeJson, ensureDir, writeFile } from '../utils/fs';
 import {
    getLocalPresetDir,
    localPresetExists,
@@ -47,6 +48,16 @@ function isNotCspellDep(dep: string): boolean {
    return dep !== 'cspell';
 }
 
+/** Check if a dependency is NOT husky */
+function isNotHuskyDep(dep: string): boolean {
+   return dep !== 'husky';
+}
+
+/** Check if a dependency is NOT lint-staged */
+function isNotLintStagedDep(dep: string): boolean {
+   return dep !== 'lint-staged';
+}
+
 export function registerFmtCommand(program: Command) {
    const fmt = program.command('fmt').description('Initialize formatting config with preset');
 
@@ -57,6 +68,8 @@ export function registerFmtCommand(program: Command) {
       .option('--stylelint', 'Include Stylelint config generation')
       .option('--editorconfig', 'Include EditorConfig config generation')
       .option('--cspell', 'Include CSpell config generation')
+      .option('--husky', 'Initialize husky for Git hooks')
+      .option('--lint-staged', 'Set up lint-staged (implies --husky)')
       .option('--reset', 'Reset local preset and re-materialize from built-in')
       .action(
          async (
@@ -68,6 +81,8 @@ export function registerFmtCommand(program: Command) {
                stylelint?: boolean;
                editorconfig?: boolean;
                cspell?: boolean;
+               husky?: boolean;
+               lintStaged?: boolean;
                reset?: boolean;
             },
          ) => {
@@ -147,6 +162,8 @@ async function executeLocalPath(
       stylelint?: boolean;
       editorconfig?: boolean;
       cspell?: boolean;
+      husky?: boolean;
+      lintStaged?: boolean;
    },
 ): Promise<void> {
    logger.log('Using local custom preset');
@@ -167,6 +184,14 @@ async function executeLocalPath(
          '--cspell has no effect: this custom preset has no cspell config or dependencies',
       );
    }
+   if (options.lintStaged && !caps.hasLintStaged) {
+      logger.warn(
+         '--lint-staged has no effect: this custom preset has no lint-staged config or dependencies',
+      );
+   }
+
+   const noHusky = options.husky !== true && options.lintStaged !== true;
+   const noLintStaged = options.lintStaged !== true;
 
    const opts: GenerateOptions = {
       cwd,
@@ -175,6 +200,8 @@ async function executeLocalPath(
       noStylelint: options.stylelint !== true,
       noEditorconfig: options.editorconfig !== true,
       noCspell: options.cspell !== true,
+      noHusky,
+      noLintStaged,
    };
 
    let result: Awaited<ReturnType<typeof applyLocalFmtPreset>>;
@@ -217,6 +244,8 @@ async function executeLocalPath(
       opts.noStylelint,
       opts.noEditorconfig,
       opts.noCspell,
+      opts.noHusky,
+      opts.noLintStaged,
    );
 
    const projectPkgPath = path.join(cwd, 'package.json');
@@ -230,6 +259,9 @@ async function executeLocalPath(
 
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
+      if (!opts.noHusky) {
+         await initHusky(cwd, pm, opts);
+      }
       return;
    }
 
@@ -249,6 +281,9 @@ async function executeLocalPath(
          const message = error instanceof Error ? error.message : String(error);
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
+      if (!opts.noHusky) {
+         await initHusky(cwd, pm, opts);
+      }
       return;
    }
 
@@ -265,6 +300,11 @@ async function executeLocalPath(
       const message = error instanceof Error ? error.message : String(error);
       logger.warn(`Dependency installation failed: ${message}. You can install manually.`);
    }
+
+   // Husky initialization
+   if (!opts.noHusky) {
+      await initHusky(cwd, pm, opts);
+   }
 }
 
 async function executeBuiltinPath(
@@ -278,9 +318,13 @@ async function executeBuiltinPath(
       stylelint?: boolean;
       editorconfig?: boolean;
       cspell?: boolean;
+      husky?: boolean;
+      lintStaged?: boolean;
    },
 ): Promise<void> {
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
+   const noHusky = options.husky !== true && options.lintStaged !== true;
+   const noLintStaged = options.lintStaged !== true;
    const opts: GenerateOptions = {
       cwd,
       force: options.force ?? false,
@@ -288,6 +332,8 @@ async function executeBuiltinPath(
       noStylelint: options.stylelint !== true,
       noEditorconfig: options.editorconfig !== true,
       noCspell: options.cspell !== true,
+      noHusky,
+      noLintStaged,
       lockfile: pm ? getLockfileName(pm) : undefined,
    };
 
@@ -311,7 +357,7 @@ async function executeBuiltinPath(
    }
 
    const scripts = preset.scripts
-      ? filterScripts(preset.scripts, opts.noStylelint, opts.noEditorconfig, opts.noCspell)
+      ? filterScripts(preset.scripts, opts.noStylelint, opts.noEditorconfig, opts.noCspell, opts.noLintStaged)
       : undefined;
 
    if (scripts) {
@@ -324,16 +370,27 @@ async function executeBuiltinPath(
       ? preset.dependencies.dev.filter(isNotStylelintDep)
       : preset.dependencies.dev;
 
-   const editorconfigFiltered = opts.noEditorconfig
+   const noEditorconfigDeps = opts.noEditorconfig
       ? devDeps.filter(isNotEditorconfigDep)
       : devDeps;
 
-   const finalDeps = opts.noCspell
-      ? editorconfigFiltered.filter(isNotCspellDep)
-      : editorconfigFiltered;
+   const noCspellDeps = opts.noCspell
+      ? noEditorconfigDeps.filter(isNotCspellDep)
+      : noEditorconfigDeps;
+
+   const noHuskyDeps = opts.noHusky
+      ? noCspellDeps.filter(isNotHuskyDep)
+      : noCspellDeps;
+
+   const finalDeps = opts.noLintStaged
+      ? noHuskyDeps.filter(isNotLintStagedDep)
+      : noHuskyDeps;
 
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${finalDeps.join(', ')}`);
+      if (!opts.noHusky) {
+         await initHusky(cwd, pm, opts);
+      }
       return;
    }
 
@@ -349,6 +406,9 @@ async function executeBuiltinPath(
          const message = error instanceof Error ? error.message : String(error);
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
+      if (!opts.noHusky) {
+         await initHusky(cwd, pm, opts);
+      }
       return;
    }
 
@@ -360,19 +420,28 @@ async function executeBuiltinPath(
       const message = error instanceof Error ? error.message : String(error);
       logger.warn(`Dependency installation failed: ${message}. You can install manually.`);
    }
+
+   // Husky initialization
+   if (!opts.noHusky) {
+      await initHusky(cwd, pm, opts);
+   }
 }
 
-/** Filter deps by stylelint, editorconfig, and cspell flags */
+/** Filter deps by stylelint, editorconfig, cspell, husky, and lint-staged flags */
 function filterDeps(
    deps: string[],
    noStylelint: boolean,
    noEditorconfig: boolean,
    noCspell: boolean,
+   noHusky: boolean,
+   noLintStaged: boolean,
 ): string[] {
    let filtered = deps;
    if (noStylelint) filtered = filtered.filter(isNotStylelintDep);
    if (noEditorconfig) filtered = filtered.filter(isNotEditorconfigDep);
    if (noCspell) filtered = filtered.filter(isNotCspellDep);
+   if (noHusky) filtered = filtered.filter(isNotHuskyDep);
+   if (noLintStaged) filtered = filtered.filter(isNotLintStagedDep);
    return filtered;
 }
 
@@ -446,7 +515,7 @@ function warnMissingPackageJson(
    }
 }
 
-/** Map filenames to tool categories: eslint, prettier, stylelint, cspell, editorconfig */
+/** Map filenames to tool categories: eslint, prettier, stylelint, cspell, editorconfig, husky, lint-staged */
 function summarizeFiles(filenames: string[]): string {
    const categories = new Set<string>();
    for (const name of filenames) {
@@ -455,6 +524,8 @@ function summarizeFiles(filenames: string[]): string {
       else if (name.includes('stylelint')) categories.add('stylelint');
       else if (name.includes('cspell')) categories.add('cspell');
       else if (name.includes('editorconfig')) categories.add('editorconfig');
+      else if (name.includes('husky')) categories.add('husky');
+      else if (name.includes('lintstagedrc')) categories.add('lint-staged');
    }
    return [...categories].join(', ');
 }
@@ -505,5 +576,64 @@ async function injectScripts(
       logger.log(
          `Added ${added} script${added > 1 ? 's' : ''} to package.json${skipped > 0 ? ` (${skipped} skipped)` : ''}`,
       );
+   }
+}
+
+/** Initialize husky: create .husky/pre-commit, inject init script, execute once */
+async function initHusky(
+   cwd: string,
+   pm: PackageManager,
+   opts: GenerateOptions,
+): Promise<void> {
+   const pkgPath = path.join(cwd, 'package.json');
+   const pkg = readJson<Record<string, unknown>>(pkgPath);
+   if (!pkg) {
+      logger.warn('package.json not found, skipping husky setup');
+      return;
+   }
+
+   const prefix = getRunPrefix(pm);
+   const isYarn = pm === 'yarn';
+   const initScriptName = isYarn ? 'postinstall' : 'prepare';
+   const hookCommand = opts.noLintStaged ? `${prefix} lint` : `${prefix} lint-staged`;
+
+   // 1. Create .husky/pre-commit
+   const huskyDir = path.join(cwd, '.husky');
+   const preCommitPath = path.join(huskyDir, 'pre-commit');
+
+   if (opts.dryRun) {
+      logger.log(`[dry-run] Would create .husky/pre-commit with: ${hookCommand}`);
+      logger.log(`[dry-run] Would inject "${initScriptName}": "husky" script`);
+      logger.log(`[dry-run] Would run ${prefix} ${initScriptName}`);
+      return;
+   }
+
+   ensureDir(huskyDir);
+   writeFile(preCommitPath, `${hookCommand}\n`);
+
+   // 2. Inject init script into package.json
+   const scripts = (pkg.scripts ?? {}) as Record<string, string>;
+   if (scripts[initScriptName] !== undefined && !opts.force) {
+      logger.log(`Skipped script "${initScriptName}" (already exists)`);
+   } else {
+      scripts[initScriptName] = 'husky';
+      pkg.scripts = scripts;
+      writeJson(pkgPath, pkg);
+      logger.log(`Injected "${initScriptName}" script for husky`);
+   }
+
+   // 3. Execute init script once
+   logger.log(`Running ${prefix} ${initScriptName} to initialize git hooks...`);
+   try {
+      const args = isYarn ? ['postinstall'] : ['run', initScriptName];
+      const { exitCode } = await execFileNoThrow(pm, args, { cwd });
+      if (exitCode === 0) {
+         logger.success('Husky initialized successfully');
+      } else {
+         logger.warn(`Husky init script exited with code ${exitCode}`);
+      }
+   } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.warn(`Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`);
    }
 }

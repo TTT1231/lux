@@ -840,4 +840,114 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('cspell.json')).toBe(true);
       });
    });
+   // ─── Scenario 19: --lint-staged generates .lintstagedrc.json ──────
+   describe('Scenario: developer opts into lint-staged', () => {
+      it('generates .lintstagedrc.json and injects lint-staged script', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'lint-staged-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--lint-staged']);
+         expect(result.exitCode).toBe(0);
+
+         // .lintstagedrc.json generated
+         expect(ctx.fileExists('.lintstagedrc.json')).toBe(true);
+         const lintStagedConfig = ctx.readJsonFile<Record<string, string[]>>('.lintstagedrc.json')!;
+         expect(lintStagedConfig['*.{ts,js,vue}']).toContain('eslint --fix');
+
+         // lint-staged script injected
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['lint-staged']).toBe('lint-staged');
+      });
+   });
+
+   // ─── Scenario 20: --lint-staged implies --husky ──────────────────
+   describe('Scenario: --lint-staged implicitly enables husky', () => {
+      it('creates .husky/pre-commit with lint-staged command when --lint-staged is used', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'lint-staged-husky-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--lint-staged']);
+         expect(result.exitCode).toBe(0);
+
+         // .husky/pre-commit created with lint-staged command
+         expect(ctx.fileExists('.husky/pre-commit')).toBe(true);
+         const preCommit = ctx.readFile('.husky/pre-commit')!;
+         expect(preCommit).toContain('lint-staged');
+
+         // prepare script injected
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['prepare']).toBe('husky');
+      });
+   });
+
+   // ─── Scenario 21: --husky alone generates pre-commit with lint ───
+   describe('Scenario: --husky without --lint-staged', () => {
+      it('creates .husky/pre-commit with lint command and no lint-staged artifacts', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'husky-only-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--husky']);
+         expect(result.exitCode).toBe(0);
+
+         // .husky/pre-commit with lint command (not lint-staged)
+         expect(ctx.fileExists('.husky/pre-commit')).toBe(true);
+         const preCommit = ctx.readFile('.husky/pre-commit')!;
+         expect(preCommit).toContain('lint');
+         expect(preCommit).not.toContain('lint-staged');
+
+         // No .lintstagedrc.json
+         expect(ctx.fileExists('.lintstagedrc.json')).toBe(false);
+
+         // No lint-staged script
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['lint-staged']).toBeUndefined();
+      });
+   });
+
+   // ─── Scenario 22: No flags = no husky/lint-staged artifacts ──────
+   describe('Scenario: no --husky or --lint-staged', () => {
+      it('creates no husky or lint-staged artifacts', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'no-husky-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
+         expect(result.exitCode).toBe(0);
+
+         expect(ctx.fileExists('.husky/pre-commit')).toBe(false);
+         expect(ctx.fileExists('.lintstagedrc.json')).toBe(false);
+
+         const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
+         expect(pkg.scripts['lint-staged']).toBeUndefined();
+         expect(pkg.scripts['prepare']).toBeUndefined();
+         expect(pkg.scripts['postinstall']).toBeUndefined();
+      });
+   });
 });

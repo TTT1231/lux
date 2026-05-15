@@ -51,6 +51,8 @@ const baseOpts: GenerateOptions = {
    noStylelint: false,
    noEditorconfig: false,
    noCspell: false,
+   noHusky: false,
+   noLintStaged: false,
 };
 
 const basePreset: FmtPreset = {
@@ -531,6 +533,78 @@ describe('applyLocalFmtPreset', () => {
       expect(result.overwritten).toEqual([]);
       expect(result.skipped).toEqual([]);
    });
+
+   it('filters .lintstagedrc.json when noLintStaged is true', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         '.lintstagedrc.json': JSON.stringify({ '*.{ts,js}': ['eslint --fix'] }),
+         'package.json': JSON.stringify({
+            devDependencies: { eslint: '<latest>', 'lint-staged': '<latest>' },
+            scripts: { 'lint-staged': 'lint-staged' },
+         }),
+      });
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test' }));
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         noLintStaged: true,
+      });
+
+      expect(result.created).toContain('eslint.config.mjs');
+      expect(result.created).not.toContain('.lintstagedrc.json');
+
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.devDependencies['lint-staged']).toBeUndefined();
+      expect(pkg.scripts['lint-staged']).toBeUndefined();
+   });
+
+   it('includes .lintstagedrc.json when noLintStaged is false', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         '.lintstagedrc.json': JSON.stringify({ '*.{ts,js}': ['eslint --fix'] }),
+         'package.json': JSON.stringify({
+            devDependencies: { eslint: '<latest>', 'lint-staged': '^15.0.0' },
+            scripts: { 'lint-staged': 'lint-staged' },
+         }),
+      });
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test' }));
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         noLintStaged: false,
+      });
+
+      expect(result.created).toContain('.lintstagedrc.json');
+
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.devDependencies['lint-staged']).toBe('^15.0.0');
+      expect(pkg.scripts['lint-staged']).toBe('lint-staged');
+   });
+
+   it('filters husky dep when noHusky is true', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         'package.json': JSON.stringify({
+            devDependencies: { eslint: '<latest>', husky: '<latest>' },
+            scripts: {},
+         }),
+      });
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test' }));
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         noHusky: true,
+      });
+
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.devDependencies['husky']).toBeUndefined();
+   });
 });
 
 describe('applyLocalVscodePreset', () => {
@@ -901,6 +975,41 @@ describe('filterScripts', () => {
          lint: 'eslint .',
       });
    });
+
+   // ─── Lint-staged filtering ─────────────────────────────────────
+
+   it('removes lint-staged entry when noLintStaged is true', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'lint-staged': 'lint-staged',
+      };
+      const result = filterScripts(scripts, false, false, false, true);
+      expect(result).toEqual({ lint: 'eslint .' });
+   });
+
+   it('keeps lint-staged entry when noLintStaged is false', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'lint-staged': 'lint-staged',
+      };
+      const result = filterScripts(scripts, false, false, false, false);
+      expect(result).toEqual(scripts);
+   });
+
+   it('handles all flags simultaneously including noLintStaged', () => {
+      const scripts = {
+         lint: 'eslint . && stylelint "src/**"',
+         format: 'prettier --write .',
+         'stylelint:check': 'stylelint "src/**"',
+         'editorconfig:check': 'editorconfig-checker',
+         'lint-staged': 'lint-staged',
+      };
+      const result = filterScripts(scripts, true, true, false, true);
+      expect(result).toEqual({
+         lint: 'eslint .',
+         format: 'prettier --write .',
+      });
+   });
 });
 
 describe('detectPresetCapabilities', () => {
@@ -935,5 +1044,246 @@ describe('detectPresetCapabilities', () => {
       });
       const caps = detectPresetCapabilities('cap-test3');
       expect(caps.hasCspell).toBe(false);
+   });
+});
+
+describe('applyLocalVscodePreset', () => {
+   let tmpDir: string;
+
+   afterEach(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   function setupLocalVscodePreset(files: Record<string, string>): void {
+      const presetDir = getLocalPresetDir('vscode', 'test-preset');
+      fs.mkdirSync(presetDir, { recursive: true });
+      for (const [name, content] of Object.entries(files)) {
+         fs.writeFileSync(path.join(presetDir, name), content);
+      }
+   }
+
+   it('creates .vscode/settings.json from local preset when none exists', () => {
+      tmpDir = createTempDir();
+      setupLocalVscodePreset({
+         'settings.json': JSON.stringify({
+            'editor.formatOnSave': true,
+            'editor.defaultFormatter': 'esbenp.prettier-vscode',
+         }),
+         'extensions.json': JSON.stringify({
+            recommendations: ['esbenp.prettier-vscode'],
+         }),
+      });
+
+      const result = applyLocalVscodePreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      expect(result.created).toContain('.vscode/settings.json');
+      expect(result.created).toContain('.vscode/extensions.json');
+
+      const settings = JSON.parse(
+         fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'),
+      );
+      expect(settings['editor.formatOnSave']).toBe(true);
+   });
+
+   it('merges with existing .vscode/settings.json using priority rules', () => {
+      tmpDir = createTempDir();
+      const vscodeDir = path.join(tmpDir, '.vscode');
+      fs.mkdirSync(vscodeDir, { recursive: true });
+      fs.writeFileSync(
+         path.join(vscodeDir, 'settings.json'),
+         JSON.stringify({
+            'editor.cursorBlinking': 'smooth',
+            'editor.formatOnSave': false,
+            'editor.tabSize': 8,
+         }),
+      );
+
+      setupLocalVscodePreset({
+         'settings.json': JSON.stringify({
+            'editor.formatOnSave': true,
+            'editor.tabSize': 2,
+            'editor.defaultFormatter': 'esbenp.prettier-vscode',
+         }),
+         'extensions.json': JSON.stringify({
+            recommendations: ['esbenp.prettier-vscode'],
+         }),
+      });
+
+      const result = applyLocalVscodePreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      expect(result.overwritten).toContain('.vscode/settings.json');
+
+      const settings = JSON.parse(
+         fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'),
+      );
+      expect(settings['editor.cursorBlinking']).toBe('smooth');
+      expect(settings['editor.formatOnSave']).toBe(true);
+      expect(settings['editor.tabSize']).toBe(2);
+   });
+
+   it('filters stylelint settings when noStylelint is true', () => {
+      tmpDir = createTempDir();
+      setupLocalVscodePreset({
+         'settings.json': JSON.stringify({
+            'editor.formatOnSave': true,
+            'stylelint.enable': true,
+            'stylelint.validate': ['css'],
+         }),
+         'extensions.json': JSON.stringify({
+            recommendations: ['esbenp.prettier-vscode', 'stylelint.vscode-stylelint'],
+         }),
+      });
+
+      const result = applyLocalVscodePreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         noStylelint: true,
+      });
+
+      expect(result.created).toContain('.vscode/settings.json');
+
+      const settings = JSON.parse(
+         fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'),
+      );
+      expect(settings['editor.formatOnSave']).toBe(true);
+      expect(settings['stylelint.enable']).toBeUndefined();
+
+      const extensions = JSON.parse(
+         fs.readFileSync(path.join(tmpDir, '.vscode', 'extensions.json'), 'utf-8'),
+      );
+      expect(extensions.recommendations).not.toContain('stylelint.vscode-stylelint');
+   });
+
+   it('does not write files in dry-run mode', () => {
+      tmpDir = createTempDir();
+      setupLocalVscodePreset({
+         'settings.json': JSON.stringify({ 'editor.formatOnSave': true }),
+         'extensions.json': JSON.stringify({ recommendations: [] }),
+      });
+
+      const result = applyLocalVscodePreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         dryRun: true,
+      });
+
+      expect(result.created).toContain('.vscode/settings.json');
+      expect(fs.existsSync(path.join(tmpDir, '.vscode', 'settings.json'))).toBe(false);
+   });
+});
+
+describe('resolveLocalDeps', () => {
+   it('resolves <latest> to bare package name', () => {
+      const result = resolveLocalDeps({ eslint: '<latest>', prettier: '<latest>' });
+      expect(result).toEqual(['eslint', 'prettier']);
+   });
+
+   it('passes through pinned versions', () => {
+      const result = resolveLocalDeps({ eslint: '^9.0.0', prettier: '<latest>' });
+      expect(result).toEqual(['eslint@^9.0.0', 'prettier']);
+   });
+
+   it('returns empty array for empty deps', () => {
+      const result = resolveLocalDeps({});
+      expect(result).toEqual([]);
+   });
+});
+
+describe('isValidPresetName', () => {
+   it('accepts valid names', () => {
+      expect(isValidPresetName('web-vue')).toBe(true);
+      expect(isValidPresetName('my-custom')).toBe(true);
+      expect(isValidPresetName('abc')).toBe(true);
+   });
+
+   it('rejects empty string', () => {
+      expect(isValidPresetName('')).toBe(false);
+   });
+
+   it('rejects path traversal attempts', () => {
+      expect(isValidPresetName('../escape')).toBe(false);
+      expect(isValidPresetName('..')).toBe(false);
+      expect(isValidPresetName('path\\traversal')).toBe(false);
+      expect(isValidPresetName('a/b')).toBe(false);
+   });
+});
+
+describe('listCustomPresets', () => {
+   it('returns empty array when fmt directory does not exist', () => {
+      expect(listCustomPresets()).toEqual([]);
+   });
+
+   it('returns directories with package.json', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'my-custom'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'my-custom', 'package.json'), '{}');
+      fs.mkdirSync(path.join(fmtDir, 'team-libs'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'team-libs', 'package.json'), '{}');
+
+      const result = listCustomPresets();
+      expect(result).toContain('my-custom');
+      expect(result).toContain('team-libs');
+   });
+
+   it('excludes directories without package.json', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'my-custom'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'my-custom', 'package.json'), '{}');
+      fs.mkdirSync(path.join(fmtDir, 'temp'), { recursive: true });
+
+      const result = listCustomPresets();
+      expect(result).toContain('my-custom');
+      expect(result).not.toContain('temp');
+   });
+
+   it('excludes names failing isValidPresetName', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, '../escape'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, '../escape', 'package.json'), '{}');
+
+      const result = listCustomPresets();
+      expect(result).not.toContain('../escape');
+   });
+
+   it('ignores files (non-directories) in fmt directory', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(fmtDir, { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'readme.txt'), 'hello');
+
+      const result = listCustomPresets();
+      expect(result).toEqual([]);
+   });
+});
+
+describe('isValidCustomPreset', () => {
+   it('returns true for valid custom preset', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'my-custom'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'my-custom', 'package.json'), '{}');
+
+      expect(isValidCustomPreset('my-custom')).toBe(true);
+   });
+
+   it('returns false when directory does not exist', () => {
+      expect(isValidCustomPreset('nonexistent')).toBe(false);
+   });
+
+   it('returns false when package.json is missing', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'incomplete'), { recursive: true });
+
+      expect(isValidCustomPreset('incomplete')).toBe(false);
+   });
+
+   it('returns false for invalid preset name', () => {
+      expect(isValidCustomPreset('../escape')).toBe(false);
+      expect(isValidCustomPreset('path\\traversal')).toBe(false);
+      expect(isValidCustomPreset('')).toBe(false);
    });
 });

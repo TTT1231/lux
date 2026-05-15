@@ -81,6 +81,8 @@ function executeVscodeLocalPath(
       noStylelint: options.stylelint !== true,
       noEditorconfig: false,
       noCspell: false,
+      noHusky: true,
+      noLintStaged: true,
    };
 
    const result = applyLocalVscodePreset(cwd, presetName, opts);
@@ -112,6 +114,8 @@ function executeVscodeBuiltinPath(
       noStylelint: options.stylelint !== true,
       noEditorconfig: false,
       noCspell: false,
+      noHusky: true,
+      noLintStaged: true,
    };
 
    const result = generateAllVscode(preset, opts);

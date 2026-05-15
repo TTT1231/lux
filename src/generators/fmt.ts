@@ -16,6 +16,7 @@ const CONFIG_FILES: ReadonlyArray<{
    { filename: '.stylelintignore', getContent: p => p.stylelintIgnore?.() },
    { filename: 'cspell.json', getContent: p => p.cspell?.() },
    { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
+   { filename: '.lintstagedrc.json', getContent: p => p.lintStaged?.() },
 ];
 
 type FileAction = 'created' | 'overwritten' | 'skipped';
@@ -65,6 +66,7 @@ export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): Genera
       if (opts.noStylelint && filename.includes('stylelint')) continue;
       if (opts.noEditorconfig && filename === '.editorconfig') continue;
       if (opts.noCspell && filename.includes('cspell')) continue;
+      if (opts.noLintStaged && filename === '.lintstagedrc.json') continue;
 
       const content = getContent(preset);
       if (content === undefined) continue;

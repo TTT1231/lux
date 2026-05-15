@@ -112,6 +112,8 @@ trim_trailing_whitespace = false
          'eslint-config-prettier',
          'prettier',
          'cspell',
+         'husky',
+         'lint-staged',
       ],
    },
 
@@ -119,5 +121,15 @@ trim_trailing_whitespace = false
       lint: 'eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit',
       'lint:fix': 'eslint . --cache --cache-location node_modules/.cache/eslint --fix',
       format: 'prettier --write "src/**/*.{ts,js,json}"',
+      'lint-staged': 'lint-staged',
    },
+
+   lintStaged: () =>
+      JSON.stringify(
+         {
+            '*.{ts,js}': ['eslint --fix', 'prettier --write'],
+         },
+         null,
+         2,
+      ) + '\n',
 };

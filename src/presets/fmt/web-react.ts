@@ -121,6 +121,8 @@ trim_trailing_whitespace = false
          '@stylistic/stylelint-plugin',
          'postcss-scss',
          'cspell',
+         'husky',
+         'lint-staged',
       ],
    },
 
@@ -129,5 +131,16 @@ trim_trailing_whitespace = false
       'lint:fix':
          'eslint . --cache --cache-location node_modules/.cache/eslint --fix && stylelint "src/**/*.{css,scss}" --fix --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
       format: 'prettier --write "src/**/*.{ts,js,json,jsx,tsx,css,scss}"',
+      'lint-staged': 'lint-staged',
    },
+
+   lintStaged: () =>
+      JSON.stringify(
+         {
+            '*.{ts,tsx,js,jsx}': ['eslint --fix', 'prettier --write'],
+            '*.{css,scss}': ['stylelint --fix', 'prettier --write'],
+         },
+         null,
+         2,
+      ) + '\n',
 };
