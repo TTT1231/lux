@@ -596,7 +596,7 @@ describe('applyLocalFmtPreset', () => {
       });
       fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test' }));
 
-      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+      applyLocalFmtPreset(tmpDir, 'test-preset', {
          ...baseOpts,
          cwd: tmpDir,
          noHusky: true,

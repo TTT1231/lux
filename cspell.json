@@ -14,7 +14,8 @@
       "usernamehw",
       "vueuse",
       "yoavbls",
-      "bunx"
+      "bunx",
+      "lintstagedrc"
    ],
    "ignorePaths": [
       "/node_modules/",

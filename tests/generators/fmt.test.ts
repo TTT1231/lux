@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { generateAllFmt } from '../../src/generators/fmt';
 import type { FmtPreset, GenerateOptions } from '../../src/presets/types';
 
