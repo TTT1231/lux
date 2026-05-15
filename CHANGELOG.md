@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.4
+
+- `lux fmt` now supports `--cspell` opt-in flag for CSpell config generation — consistent with existing `--stylelint` and `--editorconfig` opt-in pattern
+- `lux fmt` now supports `--husky` and `--lint-staged` opt-in flags for Git hooks automation — `--lint-staged` implicitly enables `--husky`, supports all package managers with yarn-specific postinstall handling
+- Added husky + lint-staged pre-commit hook to the project itself
+- Fixed pre-commit hook missing force guard and Unix execute permission
+- Fixed `.lintstagedrc` not recognized by CSpell dictionary
+
 ## 1.1.3
 
 - `lux fmt` now supports custom presets — create a directory under `~/.lux/preset/fmt/<name>/` with config files and a `package.json`, then run `lux fmt <name>` to apply it
