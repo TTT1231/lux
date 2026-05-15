@@ -37,6 +37,7 @@ export function registerVscodeCommand(program: Command) {
                   VSCODE_PRESETS.map(p => p.name),
                );
                logger.error(err.message);
+               process.exitCode = 1;
                return;
             }
 

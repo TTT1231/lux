@@ -108,6 +108,7 @@ export function registerFmtCommand(program: Command) {
                const allNames = [...builtinNames, ...customNames];
                const err = new PresetNotFoundError(presetName, allNames);
                logger.error(err.message);
+               process.exitCode = 1;
             }
          },
       );
