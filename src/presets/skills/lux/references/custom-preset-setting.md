@@ -1,6 +1,6 @@
 # Custom Preset Configuration
 
-lux 预设存储在`~/.lux/preset/` (i.e. `os.homedir()/.lux/preset/`). Override with `LUX_HOME` env var。
+Presets are stored at `~/.lux/preset/` (i.e. `os.homedir()/.lux/preset/`). Override with `LUX_HOME` env var.
 
 ```
 ~/.lux/preset/
@@ -8,7 +8,7 @@ lux 预设存储在`~/.lux/preset/` (i.e. `os.homedir()/.lux/preset/`). Override
 └── vscode/               # vscode presets (same + go)
 ```
 
-> ⚠️ **Always use `lux init --preset` to initialize all built-in presets.**。
+> ⚠️ **Always use `lux init --preset` to initialize all built-in presets.**
 
 ## Built-in presets File Reference
 
@@ -38,9 +38,9 @@ lux 预设存储在`~/.lux/preset/` (i.e. `os.homedir()/.lux/preset/`). Override
 lux init --preset                # init all built-in presets
 ```
 
-After init, edit files under `~/.lux/preset/<type>/<preset-name>/` to customize，例如`package.json`、`eslint.config.mjs`等等，也可以增加你自己的 lint 文件例如`your-file-lint-config`. Changes take effect on the next `lux fmt` / `lux vscode` run.
+After init, edit files under `~/.lux/preset/<type>/<preset-name>/` to customize — e.g. `package.json`, `eslint.config.mjs`, etc. You can also add your own lint files like `your-file-lint-config`. Changes take effect on the next `lux fmt` / `lux vscode` run.
 
-如果你自定义内置预设想重置的时候，可以重新执行`lux init --preset`去覆盖，或者使用`lux fmt <name> --reset` 、`lux vscode <name> --reset` (deletes local preset dir only; re-generated from built-in on next run).
+To reset a customized built-in preset, re-run `lux init --preset` to overwrite, or use `lux fmt <name> --reset` / `lux vscode <name> --reset` (deletes local preset dir only; re-generated from built-in on next run).
 
 ## Customize your own presets
 
@@ -52,11 +52,14 @@ Create a directory under `~/.lux/preset/fmt/<your-fmt-preset-name>/` with config
 # 1. Create the preset directory
 mkdir -p ~/.lux/preset/fmt/[your-custom-fmt-preset-name]
 
-# 2. Add config files (pick what you need)
+# 2. Add config files
 #    Required: package.json (with devDependencies/dependencies and/or scripts)
-#    Optional: eslint.config.mjs, .prettierrc, .prettierignore,
-#              stylelint.config.mjs, .stylelintignore,
-#              cspell.json, .editorconfig , etc....
+#    Recommended: include ALL tool configs so --stylelint / --cspell / --editorconfig flags can take effect
+#    Config files: eslint.config.mjs, .prettierrc, .prettierignore,
+#                  stylelint.config.mjs, .stylelintignore,
+#                  cspell.json, .editorconfig, etc.
+#
+#    ⚠️ Only configs present in the preset can be controlled by flags. See "Flag-based filtering" below.
 ```
 
 Minimum `package.json` example:
@@ -75,7 +78,7 @@ Minimum `package.json` example:
 }
 ```
 
-Then 执行`lux fmt list`检查是否生效——这个`<your-fmt-preset-name>` 是否出现在其中。
+Then run `lux fmt list` to verify — check if `<your-fmt-preset-name>` appears in the list.
 
 ```bash
 lux fmt <your-fmt-preset-name>                            # applies your custom preset
@@ -90,7 +93,9 @@ Notes:
 - `lux fmt <name> --reset` warns and aborts for custom presets — there is no built-in source to restore
 - Unknown preset names fuzzy-match against all available presets (builtin + custom combined)
 - `lux fmt` returns exit code **1** when a preset is not found (safe for CI/CD)
-- `lux fmt <name> --stylelint/--editorconfig` warns when the flag has no effect (preset has no matching config or dependencies)
+- `lux fmt <name> --stylelint/--editorconfig/--cspell` warns when the flag has no effect (preset has no matching config or dependencies)
+
+> For general flag behavior (`--force`, `--dry-run`, `--no-install`, `--reset`), see `skill.md`. The sections below only cover behaviors specific to custom preset interaction.
 
 ### vscode
 
@@ -106,14 +111,14 @@ lux vscode web-vue                                    # applies your customized 
 
 ## Fmt presets · package.json rules
 
-`devDependencies` 和 `dependencies` 最新版本占位使用`<latest>`，特定版本除外。还有这个`scripts`如果不确定包管理器就用占位符`<pm>`让 lux 自动检测。
+Use `<latest>` placeholder for `devDependencies` and `dependencies` to get the latest version, or pin a specific version. Use `<pm>` placeholder in `scripts` to let lux auto-detect the package manager.
 
 ```jsonc
 {
    "devDependencies": {
-      // 最新版本
+      // latest version
       "prettier": "<latest>",
-      // 固定版本
+      // pinned version
       "cspell": "10.0.0",
    },
    "scripts": {
@@ -122,4 +127,109 @@ lux vscode web-vue                                    # applies your customized 
       "cspell": "<pm> cspell \"**\"",
    },
 }
+```
+
+## Flag-based filtering (`--stylelint`, `--cspell`, `--editorconfig`)
+
+The `--stylelint`/`--cspell`/`--editorconfig` flags control **strip/inject** behavior. For these flags to work with your custom preset, you must include **all** relevant config files and dependencies in the preset directory — lux can only strip what already exists; it cannot inject what is missing.
+
+### Three-layer filtering
+
+When a flag is **not** passed (default), lux skips the corresponding files, deps, and scripts. When a flag **is** passed, those items are preserved.
+
+| Layer         | Matching rule                                                                                                                  | Examples                                                     |
+| :------------ | :----------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
+| **Files**     | Exact filename match                                                                                                           | `stylelint.config.mjs`, `.stylelintignore`, `cspell.json`, `.editorconfig` |
+| **Deps**      | stylelint: predefined set match; editorconfig: `includes('editorconfig')`; cspell: `dep === 'cspell'` exact match              | `stylelint`, `postcss-html`, `cspell`, `editorconfig-checker` |
+| **Script keys** | **Case-sensitive** `key.includes(keyword)` match + inline command segment stripping                                           | See detailed rules below                                     |
+
+### Script naming convention (important)
+
+lux checks whether a script **key** contains a specific keyword to decide if it should be filtered:
+
+| Script key example              | Filtered by `--stylelint`? | Reason                                        |
+| :------------------------------ | :------------------------- | :-------------------------------------------- |
+| `stylelint:check`               | ✅ Yes                      | key contains `stylelint` (all lowercase)      |
+| `stylelint`                     | ✅ Yes                      | key contains `stylelint`                       |
+| `Stylelint:check`               | ❌ No                       | uppercase `S`, case-sensitive mismatch         |
+| `style:check`                   | ❌ No                       | key does not contain the full word `stylelint` |
+| `lintX:check`                   | ❌ No                       | key does not contain any known keyword         |
+
+The same rules apply to `cspell` and `editorconfig`:
+
+| Keyword         | Matching key examples         | Non-matching key examples       |
+| :-------------- | :---------------------------- | :------------------------------ |
+| `stylelint`     | `stylelint:check`, `stylelint` | `Stylelint:*`, `style:*`        |
+| `cspell`        | `cspell`, `cspell:check`      | `Cspell:*`, `spell:*`           |
+| `editorconfig`  | `editorconfig:check`          | `Editorconfig:*`, `editor:*`    |
+
+**Non-matching script keys are copied as-is** to the target project — lux does not process them.
+
+### Inline command segment stripping
+
+lux also strips inline tool invocation segments from **composite scripts**:
+
+```jsonc
+{
+   "scripts": {
+      // Original: composite script with stylelint and cspell
+      "lint": "<pm> eslint . && stylelint \"src/**/*.{css,scss,vue}\" && cspell --gitignore \"src/**/*\"",
+
+      // When --stylelint and --cspell are NOT passed, both segments are stripped
+      // Result: "lint": "<pm> eslint ."
+   }
+}
+```
+
+Inline stripping matches `&& stylelint "..."` and `&& cspell ...` patterns in command text.
+
+### Full custom preset example (all flags supported)
+
+To make `--stylelint`, `--cspell`, and `--editorconfig` all functional, your custom preset should include configs for **every tool**:
+
+```
+~/.lux/preset/fmt/my-full-preset/
+├── eslint.config.mjs         # ESLint config
+├── .prettierrc                # Prettier config
+├── .prettierignore            # Prettier ignore rules
+├── stylelint.config.mjs      # ← enables --stylelint
+├── .stylelintignore           # ← enables --stylelint
+├── cspell.json                # ← enables --cspell
+├── .editorconfig              # ← enables --editorconfig
+└── package.json               # with all devDependencies and scripts
+```
+
+The `package.json` should include corresponding deps and scripts:
+
+```jsonc
+{
+   "devDependencies": {
+      "eslint": "<latest>",
+      "prettier": "<latest>",
+      // ← enables --stylelint
+      "stylelint": "<latest>",
+      "stylelint-config-standard-scss": "<latest>",
+      "stylelint-order": "<latest>",
+      "postcss-html": "<latest>",
+      // ← enables --cspell
+      "cspell": "<latest>"
+   },
+   "scripts": {
+      "lint": "<pm> eslint .",
+      "lint:fix": "<pm> eslint . --fix --cache --cache-location node_modules/.cache/.eslintcache",
+      // ← key contains "stylelint", controllable by --stylelint
+      "stylelint:check": "<pm> stylelint \"src/**/*.{css,scss,vue}\"",
+      // ← key contains "cspell", controllable by --cspell
+      "cspell": "<pm> cspell \"**\""
+   }
+}
+```
+
+Usage:
+
+```bash
+lux fmt my-full-preset                          # ESLint + Prettier only
+lux fmt my-full-preset --stylelint              # + Stylelint
+lux fmt my-full-preset --stylelint --cspell     # + Stylelint + CSpell
+lux fmt my-full-preset --stylelint --cspell --editorconfig  # all tools
 ```
