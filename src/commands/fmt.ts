@@ -27,6 +27,7 @@ import {
    filterScripts,
    isValidCustomPreset,
    listCustomPresets,
+   detectPresetCapabilities,
 } from '../core/local-preset';
 
 /** Check if a dependency is NOT stylelint-related */
@@ -141,6 +142,18 @@ async function executeLocalPath(
    },
 ): Promise<void> {
    logger.log('Using local custom preset');
+
+   const caps = detectPresetCapabilities(presetName);
+   if (options.stylelint && !caps.hasStylelint) {
+      logger.warn(
+         '--stylelint has no effect: this custom preset has no stylelint config or dependencies',
+      );
+   }
+   if (options.editorconfig && !caps.hasEditorconfig) {
+      logger.warn(
+         '--editorconfig has no effect: this custom preset has no editorconfig config or dependencies',
+      );
+   }
 
    const opts: GenerateOptions = {
       cwd,

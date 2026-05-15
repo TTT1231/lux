@@ -457,6 +457,42 @@ export function filterScripts(
    return filtered;
 }
 
+export function detectPresetCapabilities(presetName: string): {
+   hasStylelint: boolean;
+   hasEditorconfig: boolean;
+} {
+   const presetDir = path.join(getLuxDir(), 'preset', 'fmt', presetName);
+   const entries = fs.readdirSync(presetDir);
+
+   const hasStylelintFile = entries.some(f => STYLELINT_FILES.has(f));
+   const pkg = readJson<{ devDependencies?: Record<string, string> }>(
+      path.join(presetDir, 'package.json'),
+   );
+   const hasStylelintDep = pkg?.devDependencies
+      ? Object.keys(pkg.devDependencies).some(d => isNotStylelintDep(d) === false)
+      : false;
+
+   const hasEditorconfigFile = entries.includes(EDITORCONFIG_FILE);
+   const hasEditorconfigDep = pkg?.devDependencies
+      ? Object.keys(pkg.devDependencies).some(d => !isNotEditorconfigDep(d))
+      : false;
+
+   return {
+      hasStylelint: hasStylelintFile || hasStylelintDep,
+      hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
+   };
+}
+
+function isNotStylelintDep(dep: string): boolean {
+   if (dep.includes('stylelint')) return false;
+   if (dep === 'postcss-html' || dep === 'postcss-scss') return false;
+   return true;
+}
+
+function isNotEditorconfigDep(dep: string): boolean {
+   return !dep.includes('editorconfig');
+}
+
 export function resolveLocalDeps(deps: Record<string, string>): string[] {
    const packages: string[] = [];
    for (const [name, version] of Object.entries(deps)) {

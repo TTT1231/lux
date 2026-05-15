@@ -15,25 +15,28 @@ lux fmt list
 - `--no-install` — write deps to package.json but skip install
 - `--reset` — reset local preset, re-materialize from built-in defaults
 
-Presets: `web-vue` `web-react` `electron-vue` `uniapp` `node` `nest`
+`lux fmt list` Built-in presets first, custom presets last, marked with **custom**.
+
+built-in presets: `web-vue` `web-react` `electron-vue` `uniapp` `node` `nest`
 
 ## vscode — generate editor settings
 
 ```bash
-lux vscode <preset> [--dry-run]
+lux vscode <preset> [--dry-run] [--stylelint]
 lux vscode list
 ```
 
 - `--force` — overwrite existing settings (default: skip)
 - `--dry-run` — preview what would be generated, write nothing
+- `--stylelint` — Include Stylelint settings and extension
 - `--reset` — reset local preset, re-materialize from built-in defaults
 
-Presets: `web-vue` `web-react` `electron-vue` `uniapp` `node` `nest` `go`
+built-in presets: `web-vue` `web-react` `electron-vue` `uniapp` `node` `nest` `go`
 
 ## init — initialize skills or presets
 
 ```bash
-lux init                  # interactively select AI tool, copy skill files to project
+lux init                  # interactively select AI tool, copy skill files to AI Agent
 lux init --preset         # materialize all built-in presets to ~/.lux/preset/ (no cwd writes, no package.json required)
 ```
 

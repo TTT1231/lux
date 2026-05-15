@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.3
+
+- `lux fmt` now supports custom presets — create a directory under `~/.lux/preset/fmt/<name>/` with config files and a `package.json`, then run `lux fmt <name>` to apply it
+- `lux fmt list` now shows custom presets after built-in ones, marked with `(custom)` in yellow
+- `--stylelint` and `--editorconfig` flags now filter entire script entries by key name (e.g. `stylelint:check`, `editorconfig:check`) in addition to stripping inline segments
+- `lux fmt <name> --reset` now warns and aborts for custom presets (no builtin to restore)
+- `lux fmt <custom-preset> --stylelint/--editorconfig` now warns when the flag has no effect (preset has no matching config or dependencies)
+- Unknown preset names now fuzzy match against all available presets (builtin + custom combined)
+- Fixed `lux fmt` and `lux vscode` returning exit code 0 on preset not found — now correctly returns 1 for CI/CD pipelines
+- Fixed CSpell ignorePaths glob pattern in generated configs
+- Fixed Chinese README link returning 404 on npm — `README_Zh.md` now included in published package
+- update readme docs
+
 ## 1.1.2
 
 - All preset scripts consolidated: `lint` now runs eslint + cspell + typecheck (+ stylelint) in one command — removed `code:check`, `code:fix`, `code:check:all`, `code:fix:all`, `format:check`, `cspell`, `type:check`, `stylelint`, `stylelint:fix` scripts

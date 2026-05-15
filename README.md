@@ -16,15 +16,21 @@
 
 ---
 
-### What is lux?
+### 📌 What is lux?
 
-`lux` is a CLI tool that sets up project lint configs and VSCode workspace settings with a single command — saving you from repetitive configuration overhead and wasted tokens. It generates ESLint, Prettier, CSpell, Stylelint，EditorConfig configs and VSCode settings from presets — with smart merge and conflict resolution. Configurations can be customized to your needs.
+`lux` is a CLI tool for modern development & the **AI era** that sets up project lint configs and VSCode workspace settings with a single command.
+
+- 🚀**One-click setup**: ESLint, Prettier, CSpell, Stylelint, EditorConfig, and VSCode workspace — all in one command.
+- 🤖**AI Agent companion**: Built for Claude, Opencode and more! Use natural language (e.g. _"/lux configure a react lint template for my team"_) to let AI build and adjust custom presets for you.
+- 📦**Framework presets**: Built-in presets for `web-vue`, `web-react`, `node`, and more.
+- 🎨**Ultimate Freedom for Customization**: Tired of rigid one-size-fits-all encapsulated configurations? lux allows you to extract and fine-tune built-in presets, and also supports **fully custom private presets**. It perfectly balances out-of-the-box usability with the strong customization demands of team collaboration.
+- 🧠**Safe project integration**: Smart conflict resolution and merge, auto-detects `bun`, `pnpm`, `npm`, `yarn` dependency trees.
 
 <div align="center">
   <img src="https://github.com/TTT1231/lux/blob/main/demo.gif?raw=true" alt="lux demo" width="640" />
 </div>
 
-### Quick Start
+### ⚡Quick Start
 
 ```bash
 # Install globally (pick your package manager)
@@ -45,21 +51,42 @@ lux vscode web-vue       # Generate .vscode/settings.json + extensions.json (per
 # List available presets
 lux fmt list
 lux vscode list
+
+# Next: customize your own lint preset (optional)
 ```
 
 <br />
 
-### Custom Configuration
+### 🎨Customize Built-in Presets
 
 ```bash
 # Check if skill and presets are initialized (skip if already done)
 lux init && lux init --preset
 
-# Use an agent to customize a preset
-/lux help me configure my web react lint template to fit my development project style
+# Use an AI agent to customize a built-in preset (recommended)
+# In an AI agent like Claude, just run:
+/lux configure built-in preset web-react template to fit my development project style
+
+# Or manually edit files under ~/.lux/preset/
+# e.g. add a cspell script to web-react:
+# "cspell":"cspell \"src/**/*\"" to ~/.lux/preset/fmt/web-react/package.json
 ```
 
-### CLI Commands
+### 🧩Fully Custom Presets
+
+```bash
+# Check if skill and presets are initialized (skip if already done)
+lux init && lux init --preset
+
+# Use an AI agent to create a fully custom preset (recommended)
+# In an AI agent like Claude, just run:
+/lux configure my formatting template <your-custom-fmt-preset-name> to fit my development project style
+
+# Verify the preset is registered
+lux fmt list
+```
+
+### 📖CLI Commands
 
 | Command                     | Description                                                       |
 | :-------------------------- | :---------------------------------------------------------------- |
@@ -80,7 +107,7 @@ lux init && lux init --preset
 
 <br />
 
-### Options
+### ⚙️Options
 
 ```bash
 lux fmt <preset> [options]
@@ -91,34 +118,49 @@ lux fmt <preset> [options]
   --stylelint     Include Stylelint config generation (opt-in)
   --editorconfig  Include EditorConfig config generation (opt-in)
   --reset         Reset local preset and re-create from built-in defaults
+
+lux vscode <preset> [options]
+
+  --force         Force overwrite existing files
+  --dry-run       Preview without writing files
+  --stylelint     Include Stylelint settings and extension (opt-in)
+  --reset         Reset local preset and re-create from built-in defaults
 ```
 
 <br />
 
-### How It Works
+###🔧 How It Works
 
 ```
-lux fmt web-vue
+lux fmt <preset> [options]
        │
        ▼
-  Parse CLI args ──► Resolve preset (fuzzy match on typo)
+  Parse CLI args, validate project package.json
        │
        ▼
-  Local preset exists in ~/.lux/preset/?
+  Resolve preset type
        │
-       ├── Yes ──► Copy files from local preset (editable, survives updates)
-       └── No  ──► Generate from built-in ──► Save to ~/.lux/preset/ for reuse
+       ├── Built-in preset ──► --reset? ──► Reset local copy
+       │              │
+       │              ├── Local copy exists (~/.lux/preset/)? ──► Apply from local
+       │              └── Not found ──► Generate from built-in ──► Save to ~/.lux/preset/ ──► Apply
+       │
+       ├── Custom preset (~/.lux/preset/fmt/<name>/) ──► Apply from local directory
+       │
+       └── Not found ──► Fuzzy match against all presets (built-in + custom), show error
+       │
+       ▼
+  --stylelint / --editorconfig filtering (warns if custom preset lacks matching config)
        │
        ▼
   For each config file:
        │
        ├── File not found? ──► Create
-       ├── In neverOverwrite? ──► Skip
-       ├── In forceOverwrite? ──► Overwrite
-       └── Exists + --force? ──► Overwrite / Skip
+       ├── Exists + --force? ──► Overwrite
+       └── Exists? ──► Skip
        │
        ▼
-  Inject scripts into package.json (<pm> → bun run / pnpm run / ...)
+  Inject scripts into package.json (auto-detect bun / pnpm / npm / yarn)
        │
        ▼
   Auto-install devDependencies (detects lockfile)
@@ -128,7 +170,11 @@ lux fmt web-vue
 
 ### 🤝 Support
 
-If you have any questions or run into issues, feel free to [open an issue](https://github.com/TTT1231/lux/issues) on GitHub.
+Found a bug, have a feature idea, or want to improve the code? Contributions are welcome!
+
+- **Report bugs or request features**: [Open an issue](https://github.com/TTT1231/lux/issues) on GitHub.
+- **Submit code**: [Pull Requests](https://github.com/TTT1231/lux/pulls) are very welcome!
+- **Star us**: If this tool saved you even 5 minutes of config time, please give us a [⭐️Star](https://github.com/TTT1231/lux)!
 
 <br />
 
