@@ -357,7 +357,13 @@ async function executeBuiltinPath(
    }
 
    const scripts = preset.scripts
-      ? filterScripts(preset.scripts, opts.noStylelint, opts.noEditorconfig, opts.noCspell, opts.noLintStaged)
+      ? filterScripts(
+           preset.scripts,
+           opts.noStylelint,
+           opts.noEditorconfig,
+           opts.noCspell,
+           opts.noLintStaged,
+        )
       : undefined;
 
    if (scripts) {
@@ -370,21 +376,15 @@ async function executeBuiltinPath(
       ? preset.dependencies.dev.filter(isNotStylelintDep)
       : preset.dependencies.dev;
 
-   const noEditorconfigDeps = opts.noEditorconfig
-      ? devDeps.filter(isNotEditorconfigDep)
-      : devDeps;
+   const noEditorconfigDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
 
    const noCspellDeps = opts.noCspell
       ? noEditorconfigDeps.filter(isNotCspellDep)
       : noEditorconfigDeps;
 
-   const noHuskyDeps = opts.noHusky
-      ? noCspellDeps.filter(isNotHuskyDep)
-      : noCspellDeps;
+   const noHuskyDeps = opts.noHusky ? noCspellDeps.filter(isNotHuskyDep) : noCspellDeps;
 
-   const finalDeps = opts.noLintStaged
-      ? noHuskyDeps.filter(isNotLintStagedDep)
-      : noHuskyDeps;
+   const finalDeps = opts.noLintStaged ? noHuskyDeps.filter(isNotLintStagedDep) : noHuskyDeps;
 
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${finalDeps.join(', ')}`);
@@ -580,11 +580,7 @@ async function injectScripts(
 }
 
 /** Initialize husky: create .husky/pre-commit, inject init script, execute once */
-async function initHusky(
-   cwd: string,
-   pm: PackageManager,
-   opts: GenerateOptions,
-): Promise<void> {
+async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions): Promise<void> {
    const pkgPath = path.join(cwd, 'package.json');
    const pkg = readJson<Record<string, unknown>>(pkgPath);
    if (!pkg) {
@@ -639,6 +635,8 @@ async function initHusky(
       }
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.warn(`Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`);
+      logger.warn(
+         `Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`,
+      );
    }
 }
