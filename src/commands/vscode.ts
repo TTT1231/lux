@@ -2,7 +2,7 @@ import type { Command } from 'commander';
 import type { GenerateOptions, VscodePreset } from '../presets/types';
 import { VSCODE_PRESETS } from '../presets/vscode';
 import { logger } from '../utils/logger';
-import { resolvePreset } from '../utils/errors';
+import { resolvePreset, PresetNotFoundError } from '../utils/errors';
 import { generateAllVscode } from '../generators/vscode';
 import {
    localPresetExists,
@@ -31,7 +31,14 @@ export function registerVscodeCommand(program: Command) {
             },
          ) => {
             const preset = resolvePreset(VSCODE_PRESETS, presetName);
-            if (!preset) return;
+            if (!preset) {
+               const err = new PresetNotFoundError(
+                  presetName,
+                  VSCODE_PRESETS.map(p => p.name),
+               );
+               logger.error(err.message);
+               return;
+            }
 
             const cwd = process.cwd();
 

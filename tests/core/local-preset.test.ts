@@ -11,6 +11,10 @@ import {
    applyLocalVscodePreset,
    resetLocalPreset,
    resolveLocalDeps,
+   listCustomPresets,
+   isValidCustomPreset,
+   isValidPresetName,
+   filterScripts,
 } from '../../src/core/local-preset';
 import type { FmtPreset, GenerateOptions } from '../../src/presets/types';
 
@@ -644,5 +648,181 @@ describe('resolveLocalDeps', () => {
    it('returns empty array for empty deps', () => {
       const result = resolveLocalDeps({});
       expect(result).toEqual([]);
+   });
+});
+
+describe('isValidPresetName', () => {
+   it('accepts valid names', () => {
+      expect(isValidPresetName('web-vue')).toBe(true);
+      expect(isValidPresetName('my-custom')).toBe(true);
+      expect(isValidPresetName('abc')).toBe(true);
+   });
+
+   it('rejects empty string', () => {
+      expect(isValidPresetName('')).toBe(false);
+   });
+
+   it('rejects path traversal attempts', () => {
+      expect(isValidPresetName('../escape')).toBe(false);
+      expect(isValidPresetName('..')).toBe(false);
+      expect(isValidPresetName('path\\traversal')).toBe(false);
+      expect(isValidPresetName('a/b')).toBe(false);
+   });
+});
+
+describe('listCustomPresets', () => {
+   it('returns empty array when fmt directory does not exist', () => {
+      expect(listCustomPresets()).toEqual([]);
+   });
+
+   it('returns directories with package.json', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'my-custom'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'my-custom', 'package.json'), '{}');
+      fs.mkdirSync(path.join(fmtDir, 'team-libs'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'team-libs', 'package.json'), '{}');
+
+      const result = listCustomPresets();
+      expect(result).toContain('my-custom');
+      expect(result).toContain('team-libs');
+   });
+
+   it('excludes directories without package.json', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'my-custom'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'my-custom', 'package.json'), '{}');
+      fs.mkdirSync(path.join(fmtDir, 'temp'), { recursive: true });
+
+      const result = listCustomPresets();
+      expect(result).toContain('my-custom');
+      expect(result).not.toContain('temp');
+   });
+
+   it('excludes names failing isValidPresetName', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, '../escape'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, '../escape', 'package.json'), '{}');
+
+      const result = listCustomPresets();
+      expect(result).not.toContain('../escape');
+   });
+
+   it('ignores files (non-directories) in fmt directory', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(fmtDir, { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'readme.txt'), 'hello');
+
+      const result = listCustomPresets();
+      expect(result).toEqual([]);
+   });
+});
+
+describe('isValidCustomPreset', () => {
+   it('returns true for valid custom preset', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'my-custom'), { recursive: true });
+      fs.writeFileSync(path.join(fmtDir, 'my-custom', 'package.json'), '{}');
+
+      expect(isValidCustomPreset('my-custom')).toBe(true);
+   });
+
+   it('returns false when directory does not exist', () => {
+      expect(isValidCustomPreset('nonexistent')).toBe(false);
+   });
+
+   it('returns false when package.json is missing', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+      fs.mkdirSync(path.join(fmtDir, 'incomplete'), { recursive: true });
+
+      expect(isValidCustomPreset('incomplete')).toBe(false);
+   });
+
+   it('returns false for invalid preset name', () => {
+      expect(isValidCustomPreset('../escape')).toBe(false);
+      expect(isValidCustomPreset('path\\traversal')).toBe(false);
+      expect(isValidCustomPreset('')).toBe(false);
+   });
+});
+
+describe('filterScripts', () => {
+   it('returns all scripts when no flags are set', () => {
+      const scripts = {
+         lint: 'eslint .',
+         format: 'prettier --write .',
+         'stylelint:check': 'stylelint "src/**"',
+         'editorconfig:check': 'editorconfig-checker',
+      };
+      const result = filterScripts(scripts, false, false);
+      expect(result).toEqual(scripts);
+   });
+
+   it('removes entire entry when key contains stylelint and noStylelint is true', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'stylelint:check': 'stylelint "src/**"',
+      };
+      const result = filterScripts(scripts, true, false);
+      expect(result).toEqual({ lint: 'eslint .' });
+   });
+
+   it('removes entire entry when key contains editorconfig and noEditorconfig is true', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'editorconfig:check': 'editorconfig-checker',
+      };
+      const result = filterScripts(scripts, false, true);
+      expect(result).toEqual({ lint: 'eslint .' });
+   });
+
+   it('strips inline stylelint fragments from remaining entries when noStylelint is true', () => {
+      const scripts = {
+         lint: 'eslint . && stylelint "src/**/*.{css,scss,vue}" --cache',
+         'lint:fix': 'eslint . --fix && stylelint "src/**/*.{css,scss,vue}" --fix',
+      };
+      const result = filterScripts(scripts, true, false);
+      expect(result).toEqual({
+         lint: 'eslint .',
+         'lint:fix': 'eslint . --fix',
+      });
+   });
+
+   it('handles both flags simultaneously', () => {
+      const scripts = {
+         lint: 'eslint . && stylelint "src/**"',
+         format: 'prettier --write .',
+         'stylelint:check': 'stylelint "src/**"',
+         'editorconfig:check': 'editorconfig-checker',
+      };
+      const result = filterScripts(scripts, true, true);
+      expect(result).toEqual({
+         lint: 'eslint .',
+         format: 'prettier --write .',
+      });
+   });
+
+   it('is case-sensitive for stylelint key matching', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'Stylelint:check': 'stylelint "src/**"',
+      };
+      const result = filterScripts(scripts, true, false);
+      expect(result['Stylelint:check']).toBe('stylelint "src/**"');
+   });
+
+   it('is case-sensitive for editorconfig key matching', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'Editorconfig:check': 'editorconfig-checker',
+      };
+      const result = filterScripts(scripts, false, true);
+      expect(result['Editorconfig:check']).toBe('editorconfig-checker');
+   });
+
+   it('returns empty object when all entries are filtered', () => {
+      const scripts = {
+         'stylelint:check': 'stylelint "src/**"',
+      };
+      const result = filterScripts(scripts, true, false);
+      expect(result).toEqual({});
    });
 });

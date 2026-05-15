@@ -1,10 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import chalk from 'chalk';
 import type { Command } from 'commander';
 import type { GenerateOptions, FmtPreset } from '../presets/types';
 import { FMT_PRESETS } from '../presets/fmt';
 import { logger } from '../utils/logger';
-import { resolvePreset } from '../utils/errors';
+import { PresetNotFoundError } from '../utils/errors';
 import { generateAllFmt } from '../generators/fmt';
 import {
    detectPackageManager,
@@ -23,16 +24,10 @@ import {
    applyLocalFmtPreset,
    resolveLocalDeps,
    InvalidPackageJsonError,
+   filterScripts,
+   isValidCustomPreset,
+   listCustomPresets,
 } from '../core/local-preset';
-
-/** Strip inline stylelint segments from script values when stylelint is not enabled */
-function filterStylelintScripts(scripts: Record<string, string>): Record<string, string> {
-   const filtered: Record<string, string> = {};
-   for (const [key, value] of Object.entries(scripts)) {
-      filtered[key] = value.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
-   }
-   return filtered;
-}
 
 /** Check if a dependency is NOT stylelint-related */
 function isNotStylelintDep(dep: string): boolean {
@@ -68,8 +63,14 @@ export function registerFmtCommand(program: Command) {
                reset?: boolean;
             },
          ) => {
-            const preset = resolvePreset(FMT_PRESETS, presetName);
-            if (!preset) return;
+            const builtinPreset = FMT_PRESETS.find(p => p.name === presetName);
+            const isBuiltin = builtinPreset !== undefined;
+
+            // --reset + custom preset: warn and abort
+            if (options.reset && !isBuiltin) {
+               logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
+               return;
+            }
 
             const cwd = process.cwd();
 
@@ -85,16 +86,28 @@ export function registerFmtCommand(program: Command) {
                }
             }
 
-            if (options.reset) {
-               resetLocalPreset('fmt', presetName);
-            }
+            if (isBuiltin) {
+               // Builtin path
+               if (options.reset) {
+                  resetLocalPreset('fmt', presetName);
+               }
 
-            const useLocal = localPresetExists('fmt', presetName);
-
-            if (useLocal) {
+               const useLocal = localPresetExists('fmt', presetName);
+               if (useLocal) {
+                  await executeLocalPath(cwd, presetName, options);
+               } else {
+                  await executeBuiltinPath(cwd, presetName, builtinPreset, options);
+               }
+            } else if (isValidCustomPreset(presetName)) {
+               // Custom preset path
                await executeLocalPath(cwd, presetName, options);
             } else {
-               await executeBuiltinPath(cwd, presetName, preset, options);
+               // Not found: error with fuzzy match against all names
+               const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
+               const customNames = listCustomPresets().filter(n => !builtinNames.has(n));
+               const allNames = [...builtinNames, ...customNames];
+               const err = new PresetNotFoundError(presetName, allNames);
+               logger.error(err.message);
             }
          },
       );
@@ -102,8 +115,15 @@ export function registerFmtCommand(program: Command) {
    fmt.command('list')
       .description('List available fmt presets')
       .action(() => {
+         const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
+
          for (const p of FMT_PRESETS) {
             console.log(`${p.name.padEnd(12)} ${p.description}`);
+         }
+
+         const customs = listCustomPresets().filter(name => !builtinNames.has(name));
+         for (const name of customs) {
+            console.log(`${name.padEnd(12)} ${chalk.yellow('(custom)')}`);
          }
       });
 }
@@ -259,8 +279,9 @@ async function executeBuiltinPath(
       return;
    }
 
-   const scripts =
-      opts.noStylelint && preset.scripts ? filterStylelintScripts(preset.scripts) : preset.scripts;
+   const scripts = preset.scripts
+      ? filterScripts(preset.scripts, opts.noStylelint, opts.noEditorconfig)
+      : undefined;
 
    if (scripts) {
       await injectScripts(scripts, opts, pm);

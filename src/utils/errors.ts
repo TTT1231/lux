@@ -1,5 +1,3 @@
-import chalk from 'chalk';
-
 export class CliError extends Error {
    code: string;
    suggestion?: string;
@@ -62,13 +60,5 @@ interface Named {
 
 export function resolvePreset<T extends Named>(presets: T[], name: string): T | undefined {
    const found = presets.find(p => p.name === name);
-   if (!found) {
-      const err = new PresetNotFoundError(
-         name,
-         presets.map(p => p.name),
-      );
-      console.error(chalk.red(err.message));
-      process.exit(1);
-   }
    return found;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fuzzyMatchPreset } from '../../src/utils/errors';
+import { fuzzyMatchPreset, resolvePreset } from '../../src/utils/errors';
 
 describe('fuzzyMatchPreset', () => {
    const available = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest'];
@@ -24,5 +24,27 @@ describe('fuzzyMatchPreset', () => {
    it('is case-insensitive', () => {
       expect(fuzzyMatchPreset('Web-vue', available)).toBe('web-vue');
       expect(fuzzyMatchPreset('NODE', available)).toBe('node');
+   });
+});
+
+describe('resolvePreset', () => {
+   const presets = [
+      { name: 'web-vue', description: 'Vue 3' },
+      { name: 'node', description: 'Node.js' },
+   ];
+
+   it('returns matching preset', () => {
+      const result = resolvePreset(presets, 'web-vue');
+      expect(result).toEqual({ name: 'web-vue', description: 'Vue 3' });
+   });
+
+   it('returns undefined for unknown preset (no process.exit)', () => {
+      const result = resolvePreset(presets, 'nonexistent');
+      expect(result).toBeUndefined();
+   });
+
+   it('returns undefined for empty presets array', () => {
+      const result = resolvePreset([], 'anything');
+      expect(result).toBeUndefined();
    });
 });

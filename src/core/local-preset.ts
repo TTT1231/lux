@@ -56,8 +56,38 @@ export function getLocalPresetDir(type: PresetType, presetName: string): string 
    return path.join(getLuxDir(), 'preset', type, presetName);
 }
 
-function isValidPresetName(name: string): boolean {
+export function isValidPresetName(name: string): boolean {
    return name.length > 0 && !name.includes('/') && !name.includes('\\') && !name.includes('..');
+}
+
+export function listCustomPresets(): string[] {
+   const fmtDir = path.join(getLuxDir(), 'preset', 'fmt');
+   if (!fs.existsSync(fmtDir)) return [];
+
+   const entries = fs.readdirSync(fmtDir, { withFileTypes: true });
+   const result: string[] = [];
+
+   for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      if (!isValidPresetName(entry.name)) continue;
+
+      const pkgPath = path.join(fmtDir, entry.name, 'package.json');
+      if (fs.existsSync(pkgPath)) {
+         result.push(entry.name);
+      }
+   }
+
+   return result;
+}
+
+export function isValidCustomPreset(name: string): boolean {
+   if (!isValidPresetName(name)) return false;
+
+   const presetDir = path.join(getLuxDir(), 'preset', 'fmt', name);
+   if (!fs.existsSync(presetDir)) return false;
+
+   const pkgPath = path.join(presetDir, 'package.json');
+   return fs.existsSync(pkgPath);
 }
 
 export function localPresetExists(type: PresetType, presetName: string): boolean {
@@ -353,12 +383,14 @@ function mergeTemplateIntoProject(
       const existingScripts = (merged.scripts ?? {}) as Record<string, string>;
       const newScripts = { ...existingScripts };
 
-      for (const [key, value] of Object.entries(templatePkg.scripts)) {
-         let resolved = value.replace(/<pm>/g, prefix);
+      const filteredScripts = filterScripts(
+         templatePkg.scripts,
+         opts.noStylelint,
+         opts.noEditorconfig,
+      );
 
-         if (opts.noStylelint) {
-            resolved = resolved.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
-         }
+      for (const [key, value] of Object.entries(filteredScripts)) {
+         const resolved = value.replace(/<pm>/g, prefix);
 
          if (existingScripts[key] !== undefined && !opts.force) {
             result.scriptsSkipped++;
@@ -399,6 +431,27 @@ function filterStylelintSettings(settings: Record<string, unknown>): Record<stri
       const actions = { ...(filtered['editor.codeActionsOnSave'] as Record<string, unknown>) };
       delete actions['source.fixAll.stylelint'];
       filtered['editor.codeActionsOnSave'] = actions;
+   }
+
+   return filtered;
+}
+
+export function filterScripts(
+   scripts: Record<string, string>,
+   noStylelint: boolean,
+   noEditorconfig: boolean,
+): Record<string, string> {
+   const filtered: Record<string, string> = {};
+
+   for (const [key, value] of Object.entries(scripts)) {
+      if (noStylelint && key.includes('stylelint')) continue;
+      if (noEditorconfig && key.includes('editorconfig')) continue;
+
+      let resolved = value;
+      if (noStylelint) {
+         resolved = resolved.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
+      }
+      filtered[key] = resolved;
    }
 
    return filtered;
