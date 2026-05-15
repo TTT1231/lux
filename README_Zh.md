@@ -49,6 +49,8 @@ lux fmt web-vue                # 配置 ESLint + Prettier
 lux fmt web-vue --stylelint    # + Stylelint
 lux fmt web-vue --editorconfig # + EditorConfig
 lux fmt web-vue --cspell       # + CSpell
+lux fmt web-vue --lint-staged  # + lint-staged（自动启用 --husky）
+lux fmt web-vue --husky        # + 仅 husky（不包含 lint-staged）
 
 # VSCode 配置（可选，全局已配置可跳过）
 lux vscode web-vue             # 生成 .vscode/settings.json + extensions.json
@@ -118,6 +120,8 @@ lux fmt <preset> [options]
   --dry-run       预览模式，不写入任何文件
   --stylelint     包含 Stylelint 配置（按需启用）
   --editorconfig  包含 EditorConfig 配置（按需启用）
+  --husky        初始化 husky Git hooks（按需启用）
+  --lint-staged   配置 lint-staged（自动启用 --husky，按需启用）
   --cspell        包含 CSpell 配置（按需启用）
   --reset         重置本地预设，从内置默认值重新创建
 
@@ -152,7 +156,7 @@ lux fmt <preset> [options]
        └── 未找到 ──► 模糊匹配所有可用预设（内置 + 自定义）并报错
        │
        ▼
-  --stylelint / --editorconfig / --cspell 过滤（自定义预设无对应配置时 warning）
+  --stylelint / --editorconfig / --cspell / --husky / --lint-staged 过滤（自定义预设无对应配置时 warning）
        │
        ▼
   遍历每个配置文件：
@@ -211,7 +215,7 @@ npm uninstall -g @luxkit/cli
 | 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`）                |
 | 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                      |
 | 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                    |
-| flag 无效果             | 自定义预设需包含对应的配置文件和依赖，`--stylelint`/`--cspell`/`--editorconfig` 才能生效 |
+| flag 无效果             | 自定义预设需包含对应的配置文件和依赖，`--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` 才能生效 |
 
 <br />
 

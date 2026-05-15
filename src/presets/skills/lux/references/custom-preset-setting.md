@@ -23,6 +23,7 @@ Presets are stored at `~/.lux/preset/` (i.e. `os.homedir()/.lux/preset/`). Overr
 | `.stylelintignore`     | Stylelint ignore rules                        |
 | `cspell.json`          | CSpell dictionary config                      |
 | `.editorconfig`        | EditorConfig config                           |
+| `.lintstagedrc.json`   | lint-staged config (enables `--lint-staged`)  |
 | `package.json`         | Template with `devDependencies` and `scripts` |
 
 ### vscode preset
@@ -57,7 +58,9 @@ mkdir -p ~/.lux/preset/fmt/[your-custom-fmt-preset-name]
 #    Recommended: include ALL tool configs so --stylelint / --cspell / --editorconfig flags can take effect
 #    Config files: eslint.config.mjs, .prettierrc, .prettierignore,
 #                  stylelint.config.mjs, .stylelintignore,
-#                  cspell.json, .editorconfig, etc.
+#    Config files: eslint.config.mjs, .prettierrc, .prettierignore,
+#                  stylelint.config.mjs, .stylelintignore,
+#                  cspell.json, .editorconfig, .lintstagedrc.json, etc.
 #
 #    ⚠️ Only configs present in the preset can be controlled by flags. See "Flag-based filtering" below.
 ```
@@ -93,7 +96,7 @@ Notes:
 - `lux fmt <name> --reset` warns and aborts for custom presets — there is no built-in source to restore
 - Unknown preset names fuzzy-match against all available presets (builtin + custom combined)
 - `lux fmt` returns exit code **1** when a preset is not found (safe for CI/CD)
-- `lux fmt <name> --stylelint/--editorconfig/--cspell` warns when the flag has no effect (preset has no matching config or dependencies)
+- `lux fmt <name> --stylelint/--editorconfig/--cspell/--husky/--lint-staged` warns when the flag has no effect (preset has no matching config or dependencies)
 
 > For general flag behavior (`--force`, `--dry-run`, `--no-install`, `--reset`), see `skill.md`. The sections below only cover behaviors specific to custom preset interaction.
 
@@ -129,9 +132,9 @@ Use `<latest>` placeholder for `devDependencies` and `dependencies` to get the l
 }
 ```
 
-## Flag-based filtering (`--stylelint`, `--cspell`, `--editorconfig`)
+## Flag-based filtering (`--stylelint`, `--cspell`, `--editorconfig`, `--husky`, `--lint-staged`)
 
-The `--stylelint`/`--cspell`/`--editorconfig` flags control **strip/inject** behavior. For these flags to work with your custom preset, you must include **all** relevant config files and dependencies in the preset directory — lux can only strip what already exists; it cannot inject what is missing.
+The `--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` flags control **strip/inject** behavior. For these flags to work with your custom preset, you must include **all** relevant config files and dependencies in the preset directory — lux can only strip what already exists; it cannot inject what is missing.
 
 ### Three-layer filtering
 
@@ -139,8 +142,8 @@ When a flag is **not** passed (default), lux skips the corresponding files, deps
 
 | Layer         | Matching rule                                                                                                                  | Examples                                                     |
 | :------------ | :----------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------- |
-| **Files**     | Exact filename match                                                                                                           | `stylelint.config.mjs`, `.stylelintignore`, `cspell.json`, `.editorconfig` |
-| **Deps**      | stylelint: predefined set match; editorconfig: `includes('editorconfig')`; cspell: `dep === 'cspell'` exact match              | `stylelint`, `postcss-html`, `cspell`, `editorconfig-checker` |
+| **Files**     | Exact filename match                                                                                                           | `stylelint.config.mjs`, `.stylelintignore`, `cspell.json`, `.editorconfig`, `.lintstagedrc.json` |
+| **Deps**      | stylelint: predefined set match; editorconfig: `includes('editorconfig')`; cspell: `dep === 'cspell'`; husky: `dep === 'husky'`; lint-staged: `dep === 'lint-staged'` | `stylelint`, `postcss-html`, `cspell`, `editorconfig-checker`, `husky`, `lint-staged` |
 | **Script keys** | **Case-sensitive** `key.includes(keyword)` match + inline command segment stripping                                           | See detailed rules below                                     |
 
 ### Script naming convention (important)
@@ -162,6 +165,7 @@ The same rules apply to `cspell` and `editorconfig`:
 | `stylelint`     | `stylelint:check`, `stylelint` | `Stylelint:*`, `style:*`        |
 | `cspell`        | `cspell`, `cspell:check`      | `Cspell:*`, `spell:*`           |
 | `editorconfig`  | `editorconfig:check`          | `Editorconfig:*`, `editor:*`    |
+| `lint-staged`   | `lint-staged`, `lint-staged:check` | `Lint-staged:*` (case-sensitive) |
 
 **Non-matching script keys are copied as-is** to the target project — lux does not process them.
 
@@ -185,7 +189,7 @@ Inline stripping matches `&& stylelint "..."` and `&& cspell ...` patterns in co
 
 ### Full custom preset example (all flags supported)
 
-To make `--stylelint`, `--cspell`, and `--editorconfig` all functional, your custom preset should include configs for **every tool**:
+To make `--stylelint`, `--cspell`, `--editorconfig`, `--husky`, and `--lint-staged` all functional, your custom preset should include configs for **every tool**:
 
 ```
 ~/.lux/preset/fmt/my-full-preset/
@@ -196,6 +200,7 @@ To make `--stylelint`, `--cspell`, and `--editorconfig` all functional, your cus
 ├── .stylelintignore           # ← enables --stylelint
 ├── cspell.json                # ← enables --cspell
 ├── .editorconfig              # ← enables --editorconfig
+├── .lintstagedrc.json         # ← enables --lint-staged
 └── package.json               # with all devDependencies and scripts
 ```
 
@@ -212,7 +217,11 @@ The `package.json` should include corresponding deps and scripts:
       "stylelint-order": "<latest>",
       "postcss-html": "<latest>",
       // ← enables --cspell
-      "cspell": "<latest>"
+      "cspell": "<latest>",
+      // ← enables --husky
+      "husky": "<latest>",
+      // ← enables --lint-staged
+      "lint-staged": "<latest>"
    },
    "scripts": {
       "lint": "<pm> eslint .",
@@ -220,7 +229,9 @@ The `package.json` should include corresponding deps and scripts:
       // ← key contains "stylelint", controllable by --stylelint
       "stylelint:check": "<pm> stylelint \"src/**/*.{css,scss,vue}\"",
       // ← key contains "cspell", controllable by --cspell
-      "cspell": "<pm> cspell \"**\""
+      "cspell": "<pm> cspell \"**\"",
+      // ← key contains "lint-staged", controllable by --lint-staged
+      "lint-staged": "lint-staged"
    }
 }
 ```
@@ -231,5 +242,7 @@ Usage:
 lux fmt my-full-preset                          # ESLint + Prettier only
 lux fmt my-full-preset --stylelint              # + Stylelint
 lux fmt my-full-preset --stylelint --cspell     # + Stylelint + CSpell
-lux fmt my-full-preset --stylelint --cspell --editorconfig  # all tools
+lux fmt my-full-preset --stylelint --cspell --editorconfig  # + Stylelint + CSpell + EditorConfig
+lux fmt my-full-preset --lint-staged                        # + lint-staged + husky
+lux fmt my-full-preset --stylelint --cspell --lint-staged   # all tools
 ```

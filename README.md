@@ -49,6 +49,8 @@ lux fmt web-vue                # ESLint + Prettier
 lux fmt web-vue --stylelint    # + Stylelint
 lux fmt web-vue --editorconfig # + EditorConfig
 lux fmt web-vue --cspell       # + CSpell
+lux fmt web-vue --lint-staged  # + lint-staged (implies --husky)
+lux fmt web-vue --husky        # + husky only (no lint-staged)
 
 # VSCode config (optional, skip if already configured globally)
 lux vscode web-vue             # Generate .vscode/settings.json + extensions.json
@@ -118,6 +120,8 @@ lux fmt <preset> [options]
   --dry-run       Preview mode, write nothing
   --stylelint     Include Stylelint config (opt-in)
   --editorconfig  Include EditorConfig config (opt-in)
+  --husky        Initialize husky for Git hooks (opt-in)
+  --lint-staged   Set up lint-staged (implies --husky, opt-in)
   --cspell        Include CSpell config (opt-in)
   --reset         Reset local preset and re-create from built-in defaults
 
@@ -152,7 +156,7 @@ lux fmt <preset> [options]
        └── Not found ──► Fuzzy match against all presets (built-in + custom), show error
        │
        ▼
-  --stylelint / --editorconfig / --cspell filtering (warns if custom preset lacks matching config)
+  --stylelint / --editorconfig / --cspell / --husky / --lint-staged filtering (warns if custom preset lacks matching config)
        │
        ▼
   For each config file:
@@ -211,7 +215,7 @@ npm uninstall -g @luxkit/cli
 | Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`) |
 | Skip dependency install | Use `--no-install` to only write to `package.json`, install manually |
 | Preview before applying | Use `--dry-run` to see all operations without writing |
-| Flags have no effect | Custom presets must include the corresponding config files and deps for `--stylelint`/`--cspell`/`--editorconfig` to work |
+| Flags have no effect | Custom presets must include the corresponding config files and deps for `--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` to work |
 
 <br />
 
