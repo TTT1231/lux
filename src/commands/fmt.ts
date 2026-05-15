@@ -42,6 +42,11 @@ function isNotEditorconfigDep(dep: string): boolean {
    return !dep.includes('editorconfig');
 }
 
+/** Check if a dependency is NOT cspell */
+function isNotCspellDep(dep: string): boolean {
+   return dep !== 'cspell';
+}
+
 export function registerFmtCommand(program: Command) {
    const fmt = program.command('fmt').description('Initialize formatting config with preset');
 
@@ -51,6 +56,7 @@ export function registerFmtCommand(program: Command) {
       .option('--dry-run', 'Preview without writing files')
       .option('--stylelint', 'Include Stylelint config generation')
       .option('--editorconfig', 'Include EditorConfig config generation')
+      .option('--cspell', 'Include CSpell config generation')
       .option('--reset', 'Reset local preset and re-materialize from built-in')
       .action(
          async (
@@ -61,6 +67,7 @@ export function registerFmtCommand(program: Command) {
                dryRun?: boolean;
                stylelint?: boolean;
                editorconfig?: boolean;
+               cspell?: boolean;
                reset?: boolean;
             },
          ) => {
@@ -139,6 +146,7 @@ async function executeLocalPath(
       dryRun?: boolean;
       stylelint?: boolean;
       editorconfig?: boolean;
+      cspell?: boolean;
    },
 ): Promise<void> {
    logger.log('Using local custom preset');
@@ -154,6 +162,11 @@ async function executeLocalPath(
          '--editorconfig has no effect: this custom preset has no editorconfig config or dependencies',
       );
    }
+   if (options.cspell && !caps.hasCspell) {
+      logger.warn(
+         '--cspell has no effect: this custom preset has no cspell config or dependencies',
+      );
+   }
 
    const opts: GenerateOptions = {
       cwd,
@@ -161,6 +174,7 @@ async function executeLocalPath(
       dryRun: options.dryRun ?? false,
       noStylelint: options.stylelint !== true,
       noEditorconfig: options.editorconfig !== true,
+      noCspell: options.cspell !== true,
    };
 
    let result: Awaited<ReturnType<typeof applyLocalFmtPreset>>;
@@ -202,6 +216,7 @@ async function executeLocalPath(
       Object.keys(templatePkg.devDependencies),
       opts.noStylelint,
       opts.noEditorconfig,
+      opts.noCspell,
    );
 
    const projectPkgPath = path.join(cwd, 'package.json');
@@ -262,6 +277,7 @@ async function executeBuiltinPath(
       dryRun?: boolean;
       stylelint?: boolean;
       editorconfig?: boolean;
+      cspell?: boolean;
    },
 ): Promise<void> {
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
@@ -271,6 +287,7 @@ async function executeBuiltinPath(
       dryRun: options.dryRun ?? false,
       noStylelint: options.stylelint !== true,
       noEditorconfig: options.editorconfig !== true,
+      noCspell: options.cspell !== true,
       lockfile: pm ? getLockfileName(pm) : undefined,
    };
 
@@ -294,7 +311,7 @@ async function executeBuiltinPath(
    }
 
    const scripts = preset.scripts
-      ? filterScripts(preset.scripts, opts.noStylelint, opts.noEditorconfig)
+      ? filterScripts(preset.scripts, opts.noStylelint, opts.noEditorconfig, opts.noCspell)
       : undefined;
 
    if (scripts) {
@@ -307,7 +324,13 @@ async function executeBuiltinPath(
       ? preset.dependencies.dev.filter(isNotStylelintDep)
       : preset.dependencies.dev;
 
-   const finalDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
+   const editorconfigFiltered = opts.noEditorconfig
+      ? devDeps.filter(isNotEditorconfigDep)
+      : devDeps;
+
+   const finalDeps = opts.noCspell
+      ? editorconfigFiltered.filter(isNotCspellDep)
+      : editorconfigFiltered;
 
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${finalDeps.join(', ')}`);
@@ -339,11 +362,17 @@ async function executeBuiltinPath(
    }
 }
 
-/** Filter deps by stylelint and editorconfig flags */
-function filterDeps(deps: string[], noStylelint: boolean, noEditorconfig: boolean): string[] {
+/** Filter deps by stylelint, editorconfig, and cspell flags */
+function filterDeps(
+   deps: string[],
+   noStylelint: boolean,
+   noEditorconfig: boolean,
+   noCspell: boolean,
+): string[] {
    let filtered = deps;
    if (noStylelint) filtered = filtered.filter(isNotStylelintDep);
    if (noEditorconfig) filtered = filtered.filter(isNotEditorconfigDep);
+   if (noCspell) filtered = filtered.filter(isNotCspellDep);
    return filtered;
 }
 

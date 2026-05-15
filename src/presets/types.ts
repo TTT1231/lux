@@ -12,6 +12,7 @@ export interface GenerateOptions {
    dryRun: boolean;
    noStylelint: boolean;
    noEditorconfig: boolean;
+   noCspell: boolean;
    lockfile?: string;
 }
 
