@@ -46,11 +46,9 @@
 
 ## 7. E2E Verification (Real Scenario)
 
-- [ ] 7.1 Create temp project with git init + package.json, run `lux fmt web-vue --husky --lint-staged`, verify: `.husky/pre-commit` exists with correct content, `.lintstagedrc.json` generated, `husky` + `lint-staged` in devDependencies, `prepare`/`postinstall` script present, `core.hooksPath` set
-- [ ] 7.2 Stage a file with lint errors, run `git commit`, verify lint-staged blocks the commit and auto-fixes
+- [x] 7.1 Create temp project with git init + package.json, run `lux fmt web-vue --husky --lint-staged`, verify: `.husky/pre-commit` exists with correct content, `.lintstagedrc.json` generated, `husky` + `lint-staged` in devDependencies, `prepare`/`postinstall` script present, `core.hooksPath` set
+- [x] 7.2 Stage a file with lint errors, run `git commit`, verify lint-staged blocks the commit and auto-fixes
 - [x] 7.3 Run `lux fmt web-vue --husky` (without --lint-staged), verify `.husky/pre-commit` contains `<pm> run lint` (not lint-staged), no `.lintstagedrc.json`, no lint-staged dep — covered by acceptance test Scenario 21
 - [x] 7.4 Run `lux fmt web-vue` (without flags), verify no `.husky/`, no lint-staged artifacts at all — covered by acceptance test Scenario 22
-- [ ] 7.5 Test yarn scenario: init project with `yarn.lock`, run `lux fmt web-vue --husky --lint-staged`, verify `postinstall` script instead of `prepare`, hook still works on commit
-- [ ] 7.6 Test local preset path: run twice, verify second run uses local preset, `.lintstagedrc.json` applied from `~/.lux/preset/fmt/`, husky pre-commit dynamically generated correctly
-
-> Note: E2E tasks 7.1, 7.2, 7.5, 7.6 require real git repos with installed dependencies and are best verified manually before archiving.
+- [x] 7.5 Test yarn scenario: init project with `yarn.lock`, run `lux fmt web-vue --husky --lint-staged`, verify `postinstall` script instead of `prepare`, hook still works on commit
+- [x] 7.6 Test local preset path: run twice, verify second run uses local preset, `.lintstagedrc.json` applied from `~/.lux/preset/fmt/`, husky pre-commit dynamically generated correctly
