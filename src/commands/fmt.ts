@@ -427,7 +427,7 @@ async function executeBuiltinPath(
    }
 }
 
-/** Filter deps by stylelint, editorconfig, cspell, husky, and lint-staged flags */
+/** Filter deps by opt-in flags */
 function filterDeps(
    deps: string[],
    noStylelint: boolean,
@@ -608,8 +608,13 @@ async function initHusky(
       return;
    }
 
-   ensureDir(huskyDir);
-   writeFile(preCommitPath, `${hookCommand}\n`);
+   if (fileExists(preCommitPath) && !opts.force) {
+      logger.log('Skipped .husky/pre-commit (already exists)');
+   } else {
+      ensureDir(huskyDir);
+      writeFile(preCommitPath, `${hookCommand}\n`);
+      fs.chmodSync(preCommitPath, 0o755);
+   }
 
    // 2. Inject init script into package.json
    const scripts = (pkg.scripts ?? {}) as Record<string, string>;
