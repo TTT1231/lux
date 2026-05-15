@@ -63,6 +63,7 @@ function materializeAllPresets(): void {
       dryRun: false,
       noStylelint: false,
       noEditorconfig: false,
+      noCspell: false,
    };
 
    for (const preset of FMT_PRESETS) {

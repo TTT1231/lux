@@ -15,6 +15,7 @@ import {
    isValidCustomPreset,
    isValidPresetName,
    filterScripts,
+   detectPresetCapabilities,
 } from '../../src/core/local-preset';
 import type { FmtPreset, GenerateOptions } from '../../src/presets/types';
 
@@ -49,6 +50,7 @@ const baseOpts: GenerateOptions = {
    dryRun: false,
    noStylelint: false,
    noEditorconfig: false,
+   noCspell: false,
 };
 
 const basePreset: FmtPreset = {
@@ -451,6 +453,34 @@ describe('applyLocalFmtPreset', () => {
       expect(result.created).not.toContain('.editorconfig');
    });
 
+   it('filters cspell file and inline cspell segments when noCspell is true', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         'cspell.json': '{"words":["test"]}',
+         'package.json': JSON.stringify({
+            devDependencies: { eslint: '<latest>', cspell: '<latest>' },
+            scripts: {
+               lint: 'eslint . && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
+            },
+         }),
+      });
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test' }));
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         noCspell: true,
+      });
+
+      expect(result.created).toContain('eslint.config.mjs');
+      expect(result.created).not.toContain('cspell.json');
+
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.devDependencies['cspell']).toBeUndefined();
+      expect(pkg.scripts['lint']).toBe('eslint .');
+   });
+
    it('handles incomplete preset — copies only available files', () => {
       tmpDir = createTempDir();
       setupLocalPreset({
@@ -752,7 +782,7 @@ describe('filterScripts', () => {
          'stylelint:check': 'stylelint "src/**"',
          'editorconfig:check': 'editorconfig-checker',
       };
-      const result = filterScripts(scripts, false, false);
+      const result = filterScripts(scripts, false, false, false);
       expect(result).toEqual(scripts);
    });
 
@@ -761,7 +791,7 @@ describe('filterScripts', () => {
          lint: 'eslint .',
          'stylelint:check': 'stylelint "src/**"',
       };
-      const result = filterScripts(scripts, true, false);
+      const result = filterScripts(scripts, true, false, false);
       expect(result).toEqual({ lint: 'eslint .' });
    });
 
@@ -770,7 +800,7 @@ describe('filterScripts', () => {
          lint: 'eslint .',
          'editorconfig:check': 'editorconfig-checker',
       };
-      const result = filterScripts(scripts, false, true);
+      const result = filterScripts(scripts, false, true, false);
       expect(result).toEqual({ lint: 'eslint .' });
    });
 
@@ -779,7 +809,7 @@ describe('filterScripts', () => {
          lint: 'eslint . && stylelint "src/**/*.{css,scss,vue}" --cache',
          'lint:fix': 'eslint . --fix && stylelint "src/**/*.{css,scss,vue}" --fix',
       };
-      const result = filterScripts(scripts, true, false);
+      const result = filterScripts(scripts, true, false, false);
       expect(result).toEqual({
          lint: 'eslint .',
          'lint:fix': 'eslint . --fix',
@@ -793,7 +823,7 @@ describe('filterScripts', () => {
          'stylelint:check': 'stylelint "src/**"',
          'editorconfig:check': 'editorconfig-checker',
       };
-      const result = filterScripts(scripts, true, true);
+      const result = filterScripts(scripts, true, true, false);
       expect(result).toEqual({
          lint: 'eslint .',
          format: 'prettier --write .',
@@ -805,7 +835,7 @@ describe('filterScripts', () => {
          lint: 'eslint .',
          'Stylelint:check': 'stylelint "src/**"',
       };
-      const result = filterScripts(scripts, true, false);
+      const result = filterScripts(scripts, true, false, false);
       expect(result['Stylelint:check']).toBe('stylelint "src/**"');
    });
 
@@ -814,7 +844,7 @@ describe('filterScripts', () => {
          lint: 'eslint .',
          'Editorconfig:check': 'editorconfig-checker',
       };
-      const result = filterScripts(scripts, false, true);
+      const result = filterScripts(scripts, false, true, false);
       expect(result['Editorconfig:check']).toBe('editorconfig-checker');
    });
 
@@ -822,7 +852,88 @@ describe('filterScripts', () => {
       const scripts = {
          'stylelint:check': 'stylelint "src/**"',
       };
-      const result = filterScripts(scripts, true, false);
+      const result = filterScripts(scripts, true, false, false);
       expect(result).toEqual({});
+   });
+
+   // ─── CSpell filtering ────────────────────────────────────────────
+
+   it('removes entire entry when key contains cspell and noCspell is true', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'cspell:check': 'cspell --gitignore "src/**/*"',
+      };
+      const result = filterScripts(scripts, false, false, true);
+      expect(result).toEqual({ lint: 'eslint .' });
+   });
+
+   it('strips inline cspell fragments from remaining entries when noCspell is true', () => {
+      const scripts = {
+         lint: 'eslint . && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit',
+         'lint:fix':
+            'eslint . --fix && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
+      };
+      const result = filterScripts(scripts, false, false, true);
+      expect(result).toEqual({
+         lint: 'eslint . && tsc --noEmit',
+         'lint:fix': 'eslint . --fix',
+      });
+   });
+
+   it('is case-sensitive for cspell key matching', () => {
+      const scripts = {
+         lint: 'eslint .',
+         'Cspell:check': 'cspell "src/**"',
+      };
+      const result = filterScripts(scripts, false, false, true);
+      expect(result['Cspell:check']).toBe('cspell "src/**"');
+   });
+
+   it('handles noCspell combined with other flags', () => {
+      const scripts = {
+         lint: 'eslint . && stylelint "src/**" && cspell --cache "src/**/*"',
+         'stylelint:check': 'stylelint "src/**"',
+         'cspell:check': 'cspell "src/**/*"',
+         'editorconfig:check': 'editorconfig-checker',
+      };
+      const result = filterScripts(scripts, true, true, true);
+      expect(result).toEqual({
+         lint: 'eslint .',
+      });
+   });
+});
+
+describe('detectPresetCapabilities', () => {
+   function setupPresetDir(name: string, files: Record<string, string>): void {
+      const presetDir = path.join(luxHome, 'preset', 'fmt', name);
+      fs.mkdirSync(presetDir, { recursive: true });
+      for (const [fileName, content] of Object.entries(files)) {
+         fs.writeFileSync(path.join(presetDir, fileName), content);
+      }
+   }
+
+   it('detects cspell capability from cspell.json file', () => {
+      setupPresetDir('cap-test', {
+         'cspell.json': '{"words":[]}',
+         'package.json': JSON.stringify({ devDependencies: {} }),
+      });
+      const caps = detectPresetCapabilities('cap-test');
+      expect(caps.hasCspell).toBe(true);
+   });
+
+   it('detects cspell capability from cspell dependency', () => {
+      setupPresetDir('cap-test2', {
+         'package.json': JSON.stringify({ devDependencies: { cspell: '^8.0.0' } }),
+      });
+      const caps = detectPresetCapabilities('cap-test2');
+      expect(caps.hasCspell).toBe(true);
+   });
+
+   it('returns false for cspell when neither file nor dep exists', () => {
+      setupPresetDir('cap-test3', {
+         'package.json': JSON.stringify({ devDependencies: { eslint: '^9.0.0' } }),
+      });
+      const caps = detectPresetCapabilities('cap-test3');
+      expect(caps.hasCspell).toBe(false);
    });
 });

@@ -25,6 +25,7 @@ const CONFIG_GETTERS: ReadonlyArray<{
 
 const STYLELINT_FILES = new Set(['stylelint.config.mjs', '.stylelintignore']);
 const EDITORCONFIG_FILE = '.editorconfig';
+const CSPELL_FILE = 'cspell.json';
 
 const STYLELINT_SETTINGS_PREFIXES = [
    'stylelint.',
@@ -214,6 +215,7 @@ export function applyLocalFmtPreset(
    for (const filename of entries) {
       if (opts.noStylelint && STYLELINT_FILES.has(filename)) continue;
       if (opts.noEditorconfig && filename === EDITORCONFIG_FILE) continue;
+      if (opts.noCspell && filename === CSPELL_FILE) continue;
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);
@@ -371,6 +373,7 @@ function mergeTemplateIntoProject(
       for (const [dep, version] of Object.entries(templatePkg.devDependencies)) {
          if (opts.noStylelint && STYLELINT_DEPS.has(dep)) continue;
          if (opts.noEditorconfig && dep.includes('editorconfig')) continue;
+         if (opts.noCspell && dep === 'cspell') continue;
 
          if (existingDeps[dep] === undefined && version !== '<latest>') {
             newDeps[dep] = version;
@@ -387,6 +390,7 @@ function mergeTemplateIntoProject(
          templatePkg.scripts,
          opts.noStylelint,
          opts.noEditorconfig,
+         opts.noCspell,
       );
 
       for (const [key, value] of Object.entries(filteredScripts)) {
@@ -440,16 +444,26 @@ export function filterScripts(
    scripts: Record<string, string>,
    noStylelint: boolean,
    noEditorconfig: boolean,
+   noCspell: boolean,
 ): Record<string, string> {
    const filtered: Record<string, string> = {};
 
    for (const [key, value] of Object.entries(scripts)) {
       if (noStylelint && key.includes('stylelint')) continue;
       if (noEditorconfig && key.includes('editorconfig')) continue;
+      if (noCspell && key.includes('cspell')) continue;
 
       let resolved = value;
       if (noStylelint) {
          resolved = resolved.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
+      }
+      if (noCspell) {
+         // Strip " && cspell ..." segment from chain scripts.
+         // cspell may appear mid-chain (e.g. before tsc/stylelint), so we must
+         // stop at the next "&&" rather than consuming to end-of-line.
+         resolved = resolved.replace(/\s*&&\s*cspell\s+[^&]*/g, '');
+         // Clean up any malformed "cmd&&" (missing space before &&) after strip
+         resolved = resolved.replace(/(\S)&&/g, '$1 &&');
       }
       filtered[key] = resolved;
    }
@@ -460,6 +474,7 @@ export function filterScripts(
 export function detectPresetCapabilities(presetName: string): {
    hasStylelint: boolean;
    hasEditorconfig: boolean;
+   hasCspell: boolean;
 } {
    const presetDir = path.join(getLuxDir(), 'preset', 'fmt', presetName);
    const entries = fs.readdirSync(presetDir);
@@ -477,9 +492,15 @@ export function detectPresetCapabilities(presetName: string): {
       ? Object.keys(pkg.devDependencies).some(d => !isNotEditorconfigDep(d))
       : false;
 
+   const hasCspellFile = entries.includes(CSPELL_FILE);
+   const hasCspellDep = pkg?.devDependencies
+      ? Object.keys(pkg.devDependencies).some(d => d === 'cspell')
+      : false;
+
    return {
       hasStylelint: hasStylelintFile || hasStylelintDep,
       hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
+      hasCspell: hasCspellFile || hasCspellDep,
    };
 }
 

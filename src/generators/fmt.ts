@@ -64,6 +64,7 @@ export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): Genera
    for (const { filename, getContent } of CONFIG_FILES) {
       if (opts.noStylelint && filename.includes('stylelint')) continue;
       if (opts.noEditorconfig && filename === '.editorconfig') continue;
+      if (opts.noCspell && filename.includes('cspell')) continue;
 
       const content = getContent(preset);
       if (content === undefined) continue;

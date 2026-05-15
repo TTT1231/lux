@@ -80,6 +80,7 @@ function executeVscodeLocalPath(
       dryRun: options.dryRun ?? false,
       noStylelint: options.stylelint !== true,
       noEditorconfig: false,
+      noCspell: false,
    };
 
    const result = applyLocalVscodePreset(cwd, presetName, opts);
@@ -110,6 +111,7 @@ function executeVscodeBuiltinPath(
       dryRun: options.dryRun ?? false,
       noStylelint: options.stylelint !== true,
       noEditorconfig: false,
+      noCspell: false,
    };
 
    const result = generateAllVscode(preset, opts);
