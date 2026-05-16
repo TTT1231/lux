@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.41
+
+- Fixed Chinese README filename casing (`README_Zh.md` → `README_ZH.md`) in published npm package
+- Improved pre-commit hook reliability and project documentation
+
 ## 1.1.4
 
 - `lux fmt` now supports `--cspell` opt-in flag for CSpell config generation — consistent with existing `--stylelint` and `--editorconfig` opt-in pattern
