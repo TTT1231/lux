@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.44
+
+- Merged English and Chinese README into a single file with in-page anchor switching
+- Removed standalone `README_ZH.md` — no longer need to maintain two separate documents
+
 ## 1.1.43
 
 - Fixed language switcher links in README pointing to npm 404 — now uses GitHub absolute URLs
