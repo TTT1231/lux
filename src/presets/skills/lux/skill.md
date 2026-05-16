@@ -1,6 +1,6 @@
 ---
 name: lux
-description: Use when setting up ESLint, Prettier, CSpell, Stylelint, EditorConfig, VSCode workspace settings, proxy env
+description: Use it only when users want to configure lint, ESLint, Prettier,Husky etc, and VSCode with lux.
 ---
 
 ## fmt — generate lint/format configs
@@ -73,9 +73,19 @@ lux vpn bash      # copy Bash proxy commands
 
 ```bash
 lux set https_proxy=http://127.0.0.1:7890
-lux unset         # clear all proxy config
-lux show env      # show stored proxy env
+lux unset         # clear all config
+lux show env      # show stored config
 ```
+
+## package manager — global override
+
+```bash
+lux set lux_package_manager=pnpm    # force pnpm globally (auto, bun, pnpm, yarn, npm)
+lux set lux_package_manager=auto     # revert to lockfile detection
+lux unset                            # clear all config (reverts to auto)
+```
+
+By default lux detects the package manager from lockfile (`bun.lock`, `pnpm-lock.yaml`, `yarn.lock`, `package-lock.json`). Setting `lux_package_manager` overrides this globally — lux will use the configured PM for all projects, with a warning if the project's lockfile doesn't match.
 
 ## update — self-update
 

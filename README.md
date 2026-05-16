@@ -95,22 +95,22 @@ lux fmt list
 
 ### 📖CLI Commands
 
-| Command                     | Description                                                       |
-| :-------------------------- | :---------------------------------------------------------------- |
-| `lux fmt <preset>`          | Generate lint configs                                             |
-| `lux fmt list`              | List available lint presets                                       |
-| `lux vscode <preset>`       | Generate VSCode config (per-project)                              |
-| `lux vscode list`           | List available VSCode presets                                     |
-| `lux init`                  | Initialize Skill files to AI Agent                                |
-| `lux init --preset`         | Initialize all built-in presets to `~/.lux/preset/`               |
-| `lux set <key=value> [...]` | Persist proxy env vars (e.g. `https_proxy=http://127.0.0.1:7890`) |
-| `lux unset`                 | Clear all stored proxy configuration                              |
-| `lux show env`              | Display stored proxy environment variables                        |
-| `lux vpn cmd`               | Copy CMD proxy commands to clipboard                              |
-| `lux vpn pw`                | Copy PowerShell proxy commands to clipboard                       |
-| `lux vpn bash`              | Copy Bash proxy commands to clipboard                             |
-| `lux update`                | Update `@luxkit/cli` to the latest version                        |
-| `lux update --check`        | Check for available updates without installing                    |
+| Command                     | Description                                                                        |
+| :-------------------------- | :--------------------------------------------------------------------------------- |
+| `lux fmt <preset>`          | Generate lint configs                                                              |
+| `lux fmt list`              | List available lint presets                                                        |
+| `lux vscode <preset>`       | Generate VSCode config (per-project)                                               |
+| `lux vscode list`           | List available VSCode presets                                                      |
+| `lux init`                  | Initialize Skill files to AI Agent                                                 |
+| `lux init --preset`         | Initialize all built-in presets to `~/.lux/preset/`                                |
+| `lux set <key=value> [...]` | Set config values (proxy, global lux package management`lux_package_manager=pnpm`) |
+| `lux unset`                 | Clear all stored configuration                                                     |
+| `lux show env`              | Display stored configuration                                                       |
+| `lux vpn cmd`               | Copy CMD proxy commands to clipboard                                               |
+| `lux vpn pw`                | Copy PowerShell proxy commands to clipboard                                        |
+| `lux vpn bash`              | Copy Bash proxy commands to clipboard                                              |
+| `lux update`                | Update `@luxkit/cli` to the latest version                                         |
+| `lux update --check`        | Check for available updates without installing                                     |
 
 <br />
 
@@ -216,7 +216,7 @@ npm uninstall -g @luxkit/cli
 | :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `package.json` errors          | Ensure a valid `package.json` exists in the project root                                                                                            |
 | Preset not found               | Run `lux fmt list` to see all available presets — lux auto-suggests via fuzzy matching                                                              |
-| Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`)                                                                    |
+| Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`), or set globally: `lux set lux_package_manager=pnpm`               |
 | Skip dependency install        | Use `--no-install` to only write to `package.json`, install manually                                                                                |
 | Preview before applying        | Use `--dry-run` to see all operations without writing                                                                                               |
 | Flags have no effect           | Custom presets must include the corresponding config files and deps for `--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` to work |
@@ -340,22 +340,22 @@ lux fmt list
 
 ## 📖命令参考
 
-| 命令                        | 说明                                                         |
-| :-------------------------- | :----------------------------------------------------------- |
-| `lux fmt <preset>`          | 生成 Lint 配置                                               |
-| `lux fmt list`              | 列出可用的 Lint 预设                                         |
-| `lux vscode <preset>`       | 生成 VSCode 配置（项目内）                                   |
-| `lux vscode list`           | 列出可用的 VSCode 预设                                       |
-| `lux init`                  | 初始化 Skill 文件到 AI Agent                                 |
-| `lux init --preset`         | 初始化所有内置预设到 `~/.lux/preset/`                        |
-| `lux set <key=value> [...]` | 设置代理环境变量（如 `https_proxy="http://127.0.0.1:7890"`） |
-| `lux unset`                 | 清除所有代理配置                                             |
-| `lux show env`              | 显示已配置的代理环境变量                                     |
-| `lux vpn cmd`               | 复制 CMD 代理命令到剪贴板                                    |
-| `lux vpn pw`                | 复制 PowerShell 代理命令到剪贴板                             |
-| `lux vpn bash`              | 复制 Bash 代理命令到剪贴板                                   |
-| `lux update`                | 更新 `@luxkit/cli` 到最新版本                                |
-| `lux update --check`        | 检查可用更新，不执行安装                                     |
+| 命令                        | 说明                                                        |
+| :-------------------------- | :---------------------------------------------------------- |
+| `lux fmt <preset>`          | 生成 Lint 配置                                              |
+| `lux fmt list`              | 列出可用的 Lint 预设                                        |
+| `lux vscode <preset>`       | 生成 VSCode 配置（项目内）                                  |
+| `lux vscode list`           | 列出可用的 VSCode 预设                                      |
+| `lux init`                  | 初始化 Skill 文件到 AI Agent                                |
+| `lux init --preset`         | 初始化所有内置预设到 `~/.lux/preset/`                       |
+| `lux set <key=value> [...]` | 设置配置值（代理、全局lux包管理`lux_package_manager=pnpm`） |
+| `lux unset`                 | 清除所有已存储的配置                                        |
+| `lux show env`              | 显示已存储的配置                                            |
+| `lux vpn cmd`               | 复制 CMD 代理命令到剪贴板                                   |
+| `lux vpn pw`                | 复制 PowerShell 代理命令到剪贴板                            |
+| `lux vpn bash`              | 复制 Bash 代理命令到剪贴板                                  |
+| `lux update`                | 更新 `@luxkit/cli` 到最新版本                               |
+| `lux update --check`        | 检查可用更新，不执行安装                                    |
 
 <br />
 
@@ -457,14 +457,14 @@ npm uninstall -g @luxkit/cli
 
 ## 🔍故障排查
 
-| 问题                    | 解决方案                                                                                                           |
-| :---------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| `package.json` 相关错误 | 确保项目根目录存在合法的 `package.json`                                                                            |
-| 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议                                                       |
-| 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`）                                          |
-| 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                                                |
-| 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                                              |
-| flag 无效果             | 自定义预设需包含对应的配置文件和依赖，`--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` 才能生效 |
+| 问题                    | 解决方案                                                                                                                  |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `package.json` 相关错误 | 确保项目根目录存在合法的 `package.json`                                                                                   |
+| 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议                                                              |
+| 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`），或全局指定：`lux set lux_package_manager=pnpm` |
+| 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                                                       |
+| 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                                                     |
+| flag 无效果             | 自定义预设需包含对应的配置文件和依赖，`--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` 才能生效        |
 
 <br />
 
