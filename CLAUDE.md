@@ -51,15 +51,19 @@ src/
 └── index.ts          # CLI 入口 (commander)
 openspec/
 ├── config.yaml       # openspec 配置
-├── changes/
-│   ├── <change-name>/  # 活跃变更：design.md, tasks.md, specs/, proposal.md
-│   └── archive/        # 已归档变更 (YYYY-MM-DD-<name>)，仅历史回溯用
-└── specs/              # 已同步的主 spec（每个 capability 一个目录）
+├── changes/archive/  # 已归档变更 (YYYY-MM-DD-<name>)，仅历史回溯用
+└── specs/            # 每个 capability 的权威 spec（含设计决策、边界条件、需求场景）
 tests/
 ├── **/*.test.ts      # 单元测试 (并行, 快速超时)
 ├── **/*.spec.ts      # 验收测试 (串行, 进程池, 30s 超时)
 └── helpers/          # 测试辅助工具 (.ts)
 ```
+
+### OpenSpec：事实来源（agent 必读）
+
+`openspec/specs/<capability>/spec.md` 是本项目的单一事实来源，记录了每个功能模块的需求场景、边界条件和设计决策。`openspec/changes/archive/` 保留了历史变更的设计动机与方案取舍。
+
+当任务涉及**修 Bug、重构、功能变更或架构调整**时，必须先查阅对应 spec，理解设计意图和约束后再改代码。纯格式调整、变量重命名等不影响行为的改动除外。
 
 ## 架构数据流图
 

@@ -58,6 +58,10 @@ lux vscode web-vue             # 生成 .vscode/settings.json + extensions.json
 # 查看可用预设
 lux fmt list
 lux vscode list
+
+# 下一步：
+# 🎨 自定义内置fmt lint预设，例如web-vue（可选）
+# 🧩 自定义你自己的预设，例如fmt <your-lint-preset-name>（可选）
 ```
 
 <br />
@@ -208,13 +212,13 @@ npm uninstall -g @luxkit/cli
 
 ## 🔍故障排查
 
-| 问题                    | 解决方案                                                                                 |
-| :---------------------- | :--------------------------------------------------------------------------------------- |
-| `package.json` 相关错误 | 确保项目根目录存在合法的 `package.json`                                                  |
-| 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议                             |
-| 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`）                |
-| 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                      |
-| 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                    |
+| 问题                    | 解决方案                                                                                                           |
+| :---------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| `package.json` 相关错误 | 确保项目根目录存在合法的 `package.json`                                                                            |
+| 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议                                                       |
+| 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`）                                          |
+| 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                                                |
+| 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                                              |
 | flag 无效果             | 自定义预设需包含对应的配置文件和依赖，`--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` 才能生效 |
 
 <br />

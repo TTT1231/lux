@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6.svg)](https://www.typescriptlang.org/)
 [![ESM Only](https://img.shields.io/badge/ESM-only-F7DF1E.svg)](https://nodejs.org/api/esm.html)
 
-**English** | [中文](./README_Zh.md)
+**English** | [中文](./README_ZH.md)
 
 </div>
 
@@ -58,6 +58,10 @@ lux vscode web-vue             # Generate .vscode/settings.json + extensions.jso
 # List available presets
 lux fmt list
 lux vscode list
+
+# Next Steps:
+# 🎨 Customize built-in fmt lint presets, e.g. web-vue (Optional)
+# 🧩 Create your own custom presets, e.g. fmt <your-lint-preset-name> (Optional)
 ```
 
 <br />
@@ -208,14 +212,14 @@ npm uninstall -g @luxkit/cli
 
 ### 🔍Troubleshooting
 
-| Issue | Solution |
-| :---- | :------- |
-| `package.json` errors | Ensure a valid `package.json` exists in the project root |
-| Preset not found | Run `lux fmt list` to see all available presets — lux auto-suggests via fuzzy matching |
-| Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`) |
-| Skip dependency install | Use `--no-install` to only write to `package.json`, install manually |
-| Preview before applying | Use `--dry-run` to see all operations without writing |
-| Flags have no effect | Custom presets must include the corresponding config files and deps for `--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` to work |
+| Issue                          | Solution                                                                                                                                            |
+| :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package.json` errors          | Ensure a valid `package.json` exists in the project root                                                                                            |
+| Preset not found               | Run `lux fmt list` to see all available presets — lux auto-suggests via fuzzy matching                                                              |
+| Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`)                                                                    |
+| Skip dependency install        | Use `--no-install` to only write to `package.json`, install manually                                                                                |
+| Preview before applying        | Use `--dry-run` to see all operations without writing                                                                                               |
+| Flags have no effect           | Custom presets must include the corresponding config files and deps for `--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` to work |
 
 <br />
 
