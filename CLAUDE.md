@@ -49,21 +49,30 @@ src/
 │   └── skills/       # init 命令复制到目标项目的技能文件源
 ├── utils/            # 工具函数 (deps, fs, logger, version, config等)
 └── index.ts          # CLI 入口 (commander)
+docs/
+└── superpowers/
+    ├── specs/        # 轻量级功能设计文档（中小功能的需求动机、架构决策、数据流）
+    └── plans/        # 对应实现计划（task 拆分、代码片段、执行步骤）
 openspec/
 ├── config.yaml       # openspec 配置
-├── changes/archive/  # 已归档变更 (YYYY-MM-DD-<name>)，仅历史回溯用
-└── specs/            # 每个 capability 的权威 spec（含设计决策、边界条件、需求场景）
+├── changes/archive/  # 已归档变更 (YYYY-MM-DD-<name>)，历史变更的设计动机、方案、架构等，仅历史回溯用
+└── specs/            # 每个 capability 的权威 spec（含设计决策、边界条件、需求场景），记录了每个功能模块的需求场景、边界条件和设计决策（当前系统的部分功能设计说明书，有些小功能等没有添加进来）
 tests/
 ├── unit/             # 单元测试 (并行, 快速超时)
 ├── acceptance/       # 验收测试 (串行, 进程池, 30s 超时)
 └── helpers/          # 测试辅助工具 (.ts)
 ```
 
-### OpenSpec：事实来源（agent 必读）
+### 设计文档参考（agent 必读）
 
-`openspec/specs/<capability>/spec.md` 是本项目的单一事实来源，记录了每个功能模块的需求场景、边界条件和设计决策。`openspec/changes/archive/` 保留了历史变更的设计动机与方案取舍。
+当任务涉及**重构、架构调整、功能扩展**等影响设计意图的改动时，先按文件名匹配相关文档，理解当初的设计决策和方案取舍后再改代码。复杂功能查阅 OpenSpec，中小功能查阅 Superpowers docs，小改动无需查阅。
 
-当任务涉及**修 Bug、重构、功能变更或架构调整**时，必须先查阅对应 spec，理解设计意图和约束后再改代码。纯格式调整、变量重命名等不影响行为的改动除外。
+- `openspec/specs/<capability>/spec.md` — 功能模块权威 spec（需求场景、边界条件）
+- `openspec/changes/archive/` — 历史变更记录（设计动机、方案取舍）
+- `docs/superpowers/specs/` — 轻量级功能设计文档（架构决策、数据流）
+- `docs/superpowers/plans/` — 实现计划（task 拆分、执行步骤）
+
+小 bug 修复、格式调整等局部改动无需查阅。
 
 ## 架构数据流图
 
