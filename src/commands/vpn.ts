@@ -3,7 +3,8 @@ import type { Command } from 'commander';
 import { logger } from '../utils/logger';
 import { clearEnvConfig, getEnvConfig, setEnvConfig } from '../utils/config';
 
-const ALLOWED_KEYS = ['https_proxy', 'http_proxy', 'all_proxy'] as const;
+const ALLOWED_KEYS = ['https_proxy', 'http_proxy', 'all_proxy', 'lux_package_manager'] as const;
+const VALID_PM_VALUES = ['auto', 'bun', 'pnpm', 'yarn', 'npm'] as const;
 type ProxyKey = (typeof ALLOWED_KEYS)[number];
 
 export type Shell = 'cmd' | 'pw' | 'bash';
@@ -77,6 +78,16 @@ export function handleSet(args: string[]): void {
 
       if (!isValidKey(key)) {
          logger.error(`Invalid key: "${key}". Allowed keys: ${ALLOWED_KEYS.join(', ')}`);
+         return;
+      }
+
+      if (
+         key === 'lux_package_manager' &&
+         !VALID_PM_VALUES.includes(value as (typeof VALID_PM_VALUES)[number])
+      ) {
+         logger.error(
+            `Invalid package manager: "${value}". Allowed values: ${VALID_PM_VALUES.join(', ')}`,
+         );
          return;
       }
 
