@@ -21,13 +21,16 @@ registerUpdateCommand(program);
 
 program
    .command('set')
-   .description('Set proxy env vars using key=value pairs')
-   .argument('[args...]', 'key=value pairs (e.g. https_proxy=http://127.0.0.1:7890)')
+   .description('Set config values using key=value pairs (proxy, lux_package_manager)')
+   .argument(
+      '[args...]',
+      'key=value pairs (e.g. https_proxy=http://127.0.0.1:7890, lux_package_manager=pnpm)',
+   )
    .action((args: string[]) => handleSet(args));
 
 program
    .command('unset')
-   .description('Clear stored proxy configuration')
+   .description('Clear stored configuration')
    .action(() => handleUnset());
 
 program.parse();
