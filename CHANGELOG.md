@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.45
+
+- Added global package manager override: `lux set lux_package_manager=pnpm` forces a specific package manager across all projects
+- Supports `auto`, `bun`, `pnpm`, `yarn`, `npm` values — `auto` (default) uses lockfile detection as before
+- Warns when global config conflicts with a project's existing lockfile
+
 ## 1.1.44
 
 - Merged English and Chinese README into a single file with in-page anchor switching
