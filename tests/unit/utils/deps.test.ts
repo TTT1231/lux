@@ -1,16 +1,22 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { detectPackageManager, getRunPrefix, addDepsToManifest } from '../../../src/utils/deps';
 
 vi.mock('../../../src/utils/execFileNoThrow', () => ({
    execFileNoThrow: vi.fn(),
 }));
 
+vi.mock('../../../src/utils/config', () => ({
+   getEnvConfig: vi.fn(),
+}));
+
 import { execFileNoThrow } from '../../../src/utils/execFileNoThrow';
+import { getEnvConfig } from '../../../src/utils/config';
 
 const mockExecFileNoThrow = vi.mocked(execFileNoThrow);
+const mockGetEnvConfig = vi.mocked(getEnvConfig);
 
 describe('getRunPrefix', () => {
    it('returns correct prefix for each package manager', () => {
@@ -23,6 +29,10 @@ describe('getRunPrefix', () => {
 
 describe('detectPackageManager', () => {
    let tmpDir = '';
+
+   beforeEach(() => {
+      mockGetEnvConfig.mockReturnValue({});
+   });
 
    afterEach(() => {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -70,6 +80,53 @@ describe('detectPackageManager', () => {
       fs.writeFileSync(path.join(tmpDir, 'pnpm-lock.yaml'), '');
       fs.writeFileSync(path.join(tmpDir, 'yarn.lock'), '');
       expect(detectPackageManager(tmpDir)).toBe('pnpm');
+   });
+});
+
+describe('detectPackageManager — global config override', () => {
+   let tmpDir = '';
+
+   beforeEach(() => {
+      mockGetEnvConfig.mockReturnValue({});
+   });
+
+   afterEach(() => {
+      mockGetEnvConfig.mockReturnValue({});
+      vi.restoreAllMocks();
+      if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   it('uses global config when set', () => {
+      mockGetEnvConfig.mockReturnValue({ lux_package_manager: 'pnpm' });
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-config-'));
+      // No lockfiles — but global config says pnpm
+      expect(detectPackageManager(tmpDir)).toBe('pnpm');
+   });
+
+   it('falls back to lockfile when config is auto', () => {
+      mockGetEnvConfig.mockReturnValue({ lux_package_manager: 'auto' });
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-config-'));
+      fs.writeFileSync(path.join(tmpDir, 'bun.lock'), '');
+      expect(detectPackageManager(tmpDir)).toBe('bun');
+   });
+
+   it('falls back to lockfile when config is unset', () => {
+      mockGetEnvConfig.mockReturnValue({});
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-config-'));
+      fs.writeFileSync(path.join(tmpDir, 'pnpm-lock.yaml'), '');
+      expect(detectPackageManager(tmpDir)).toBe('pnpm');
+   });
+
+   it('warns when global PM mismatches lockfile', () => {
+      mockGetEnvConfig.mockReturnValue({ lux_package_manager: 'pnpm' });
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-config-'));
+      fs.writeFileSync(path.join(tmpDir, 'bun.lock'), '');
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      expect(detectPackageManager(tmpDir)).toBe('pnpm');
+      expect(warnSpy).toHaveBeenCalledWith(
+         expect.stringContaining('Global config is pnpm but detected bun lockfile'),
+      );
+      warnSpy.mockRestore();
    });
 });
 

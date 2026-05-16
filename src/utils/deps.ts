@@ -2,15 +2,44 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileExists, readJson, writeJson } from './fs';
 import { execFileNoThrow } from './execFileNoThrow';
+import { getEnvConfig } from './config';
+import { logger } from './logger';
 
 export type PackageManager = 'bun' | 'pnpm' | 'yarn' | 'npm';
 
-/** Detect package manager from lockfile in the given directory */
-export function detectPackageManager(cwd: string): PackageManager {
+const PM_LOCKFILE_MAP: Record<PackageManager, string[]> = {
+   bun: ['bun.lockb', 'bun.lock'],
+   pnpm: ['pnpm-lock.yaml'],
+   yarn: ['yarn.lock'],
+   npm: ['package-lock.json'],
+};
+
+function detectFromLockfile(cwd: string): PackageManager {
    if (fileExists(`${cwd}/bun.lockb`) || fileExists(`${cwd}/bun.lock`)) return 'bun';
    if (fileExists(`${cwd}/pnpm-lock.yaml`)) return 'pnpm';
    if (fileExists(`${cwd}/yarn.lock`)) return 'yarn';
    return 'npm';
+}
+
+/** Detect package manager from global config or lockfile in the given directory */
+export function detectPackageManager(cwd: string): PackageManager {
+   const env = getEnvConfig();
+   const configured = env.lux_package_manager;
+
+   if (configured && configured !== 'auto') {
+      const pm = configured as PackageManager;
+      const lockfiles = PM_LOCKFILE_MAP[pm] ?? [];
+      const hasMatch = lockfiles.some(f => fileExists(`${cwd}/${f}`));
+      if (!hasMatch) {
+         const detected = detectFromLockfile(cwd);
+         if (detected !== 'npm') {
+            logger.warn(`Global config is ${pm} but detected ${detected} lockfile`);
+         }
+      }
+      return pm;
+   }
+
+   return detectFromLockfile(cwd);
 }
 
 /** Get the lockfile filename for a given package manager */
