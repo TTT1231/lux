@@ -8,7 +8,7 @@
    },
    "files": [
       "dist",
-      "README_Zh.md"
+      "README_ZH.md"
    ],
    "publishConfig": {
       "access": "public"
