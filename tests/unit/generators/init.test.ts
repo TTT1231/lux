@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { generateInitSkills } from '../../src/generators/init';
+import { generateInitSkills } from '../../../src/generators/init';
 
 describe('generateInitSkills', () => {
    let tmpDir: string;

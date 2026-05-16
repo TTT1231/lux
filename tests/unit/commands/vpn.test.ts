@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCommands } from '../../src/commands/vpn';
+import { buildCommands } from '../../../src/commands/vpn';
 
 describe('buildCommands', () => {
    const fullEnv = {

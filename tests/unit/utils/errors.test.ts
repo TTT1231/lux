@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fuzzyMatchPreset, resolvePreset } from '../../src/utils/errors';
+import { fuzzyMatchPreset, resolvePreset } from '../../../src/utils/errors';
 
 describe('fuzzyMatchPreset', () => {
    const available = ['web-vue', 'electron-vue', 'uniapp', 'node', 'nest'];

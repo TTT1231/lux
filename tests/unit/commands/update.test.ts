@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { detectGlobalPackageManager, fetchLatestVersion } from '../../src/commands/update';
+import { detectGlobalPackageManager, fetchLatestVersion } from '../../../src/commands/update';
 
-vi.mock('../../src/utils/execFileNoThrow', () => ({
+vi.mock('../../../src/utils/execFileNoThrow', () => ({
    execFileNoThrow: vi.fn(),
 }));
 
@@ -42,7 +42,7 @@ describe('update command internals', () => {
 
    describe('fetchLatestVersion', () => {
       it('returns version from npm view', async () => {
-         const { execFileNoThrow } = await import('../../src/utils/execFileNoThrow');
+         const { execFileNoThrow } = await import('../../../src/utils/execFileNoThrow');
          (execFileNoThrow as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             stdout: '2.0.0',
             stderr: '',
@@ -54,7 +54,7 @@ describe('update command internals', () => {
       });
 
       it('takes last non-empty line from multi-line output', async () => {
-         const { execFileNoThrow } = await import('../../src/utils/execFileNoThrow');
+         const { execFileNoThrow } = await import('../../../src/utils/execFileNoThrow');
          (execFileNoThrow as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             stdout: '\nnpm warning ...\n2.1.0\n',
             stderr: '',
@@ -66,7 +66,7 @@ describe('update command internals', () => {
       });
 
       it('throws on non-zero exit code', async () => {
-         const { execFileNoThrow } = await import('../../src/utils/execFileNoThrow');
+         const { execFileNoThrow } = await import('../../../src/utils/execFileNoThrow');
          (execFileNoThrow as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
             stdout: '',
             stderr: 'E404',

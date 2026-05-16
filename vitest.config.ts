@@ -14,14 +14,14 @@ export default defineConfig({
          {
             test: {
                name: 'unit',
-               include: ['tests/**/*.test.ts'],
+               include: ['tests/unit/**/*.test.ts'],
             },
          },
          // 验收测试：串行、长超时（涉及真实文件系统和进程）,串行
          {
             test: {
                name: 'acceptance',
-               include: ['tests/**/*.spec.ts'],
+               include: ['tests/acceptance/**/*.spec.ts'],
                pool: 'forks',
                fileParallelism: false,
                testTimeout: 30_000,

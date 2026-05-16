@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeVscodeSettings } from '../../src/core/merge-settings';
+import { mergeVscodeSettings } from '../../../src/core/merge-settings';
 
 describe('mergeVscodeSettings', () => {
    it('adds keys only in preset', () => {

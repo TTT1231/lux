@@ -16,8 +16,8 @@ import {
    isValidPresetName,
    filterScripts,
    detectPresetCapabilities,
-} from '../../src/core/local-preset';
-import type { FmtPreset, GenerateOptions } from '../../src/presets/types';
+} from '../../../src/core/local-preset';
+import type { FmtPreset, GenerateOptions } from '../../../src/presets/types';
 
 function createTempDir(): string {
    return fs.mkdtempSync(path.join(os.tmpdir(), 'lux-local-preset-test-'));

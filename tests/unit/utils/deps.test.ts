@@ -2,13 +2,13 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { detectPackageManager, getRunPrefix, addDepsToManifest } from '../../src/utils/deps';
+import { detectPackageManager, getRunPrefix, addDepsToManifest } from '../../../src/utils/deps';
 
-vi.mock('../../src/utils/execFileNoThrow', () => ({
+vi.mock('../../../src/utils/execFileNoThrow', () => ({
    execFileNoThrow: vi.fn(),
 }));
 
-import { execFileNoThrow } from '../../src/utils/execFileNoThrow';
+import { execFileNoThrow } from '../../../src/utils/execFileNoThrow';
 
 const mockExecFileNoThrow = vi.mocked(execFileNoThrow);
 

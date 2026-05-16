@@ -54,8 +54,8 @@ openspec/
 ├── changes/archive/  # 已归档变更 (YYYY-MM-DD-<name>)，仅历史回溯用
 └── specs/            # 每个 capability 的权威 spec（含设计决策、边界条件、需求场景）
 tests/
-├── **/*.test.ts      # 单元测试 (并行, 快速超时)
-├── **/*.spec.ts      # 验收测试 (串行, 进程池, 30s 超时)
+├── unit/             # 单元测试 (并行, 快速超时)
+├── acceptance/       # 验收测试 (串行, 进程池, 30s 超时)
 └── helpers/          # 测试辅助工具 (.ts)
 ```
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { createTestContext } from './helpers/cli-runner';
+import { createTestContext } from '../helpers/cli-runner';
 
 /**
  * Acceptance Tests — lux CLI

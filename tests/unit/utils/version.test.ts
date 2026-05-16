@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PACKAGE_NAME, getCurrentVersion } from '../../src/utils/version';
+import { PACKAGE_NAME, getCurrentVersion } from '../../../src/utils/version';
 
 describe('getCurrentVersion', () => {
    it('returns a semver string', () => {

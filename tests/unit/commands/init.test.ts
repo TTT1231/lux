@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
-import { registerInitCommand } from '../../src/commands/init';
+import { registerInitCommand } from '../../../src/commands/init';
 
 vi.mock('@clack/prompts', () => ({
    select: vi.fn(),

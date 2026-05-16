@@ -4,7 +4,7 @@ import {
    getEnvConfigPath,
    setEnvConfig,
    clearEnvConfig,
-} from '../../src/utils/config';
+} from '../../../src/utils/config';
 import fs from 'node:fs';
 
 describe('config utilities', () => {

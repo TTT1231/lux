@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { FMT_PRESETS } from '../../src/presets/fmt';
-import { listCustomPresets } from '../../src/core/local-preset';
+import { FMT_PRESETS } from '../../../src/presets/fmt';
+import { listCustomPresets } from '../../../src/core/local-preset';
 
 function createTempDir(): string {
    return fs.mkdtempSync(path.join(os.tmpdir(), 'lux-fmt-list-test-'));

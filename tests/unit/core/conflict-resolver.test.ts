@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { resolveConflict } from '../../src/core/conflict-resolver';
-import type { FmtPreset } from '../../src/presets/types';
+import { resolveConflict } from '../../../src/core/conflict-resolver';
+import type { FmtPreset } from '../../../src/presets/types';
 
 const basePreset: FmtPreset = {
    name: 'test',

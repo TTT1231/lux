@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INIT_TOOLS } from '../../src/presets/init';
+import { INIT_TOOLS } from '../../../src/presets/init';
 
 describe('INIT_TOOLS', () => {
    it('contains exactly 2 tools', () => {
