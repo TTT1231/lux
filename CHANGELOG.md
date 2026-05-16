@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.43
+
+- Fixed language switcher links in README pointing to npm 404 — now uses GitHub absolute URLs
+
 ## 1.1.42
 
 - Added `CHANGELOG.md` to published npm package

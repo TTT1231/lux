@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6.svg)](https://www.typescriptlang.org/)
 [![ESM Only](https://img.shields.io/badge/ESM-only-F7DF1E.svg)](https://nodejs.org/api/esm.html)
 
-**English** | [中文](./README_ZH.md)
+**English** | [中文](https://github.com/TTT1231/lux/blob/main/README_ZH.md)
 
 </div>
 
@@ -239,4 +239,4 @@ Bug reports, feature suggestions, and code contributions are welcome!
 
 <br />
 
-<p align="right"><a href="./README_Zh.md">切换到中文 →</a></p>
+<p align="right"><a href="https://github.com/TTT1231/lux/blob/main/README_ZH.md">切换到中文 →</a></p>
