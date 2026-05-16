@@ -3,6 +3,7 @@
 ## 1.1.41
 
 - Fixed Chinese README filename casing (`README_Zh.md` → `README_ZH.md`) in published npm package
+- Added `CHANGELOG.md` to published npm package
 - Improved pre-commit hook reliability and project documentation
 
 ## 1.1.4
