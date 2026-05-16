@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { getEnvConfig, getEnvConfigPath } from '../../../src/utils/config';
 
 describe('getEnvConfig', () => {
@@ -15,6 +15,10 @@ describe('getEnvConfig', () => {
       if (savedExisted) {
          savedContent = fs.readFileSync(envPath, 'utf-8');
       }
+   });
+
+   afterEach(() => {
+      removeEnvFile();
    });
 
    afterAll(() => {
