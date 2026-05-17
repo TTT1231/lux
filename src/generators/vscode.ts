@@ -1,15 +1,9 @@
+import path from 'node:path';
 import type { VscodePreset, GenerateOptions, GenerateResult } from '../presets/types';
 import { mergeVscodeSettings } from '../core/merge-settings';
 import { writeJson, readJson, fileExists, writeFile } from '../utils/fs';
 import { logger } from '../utils/logger';
-
-const STYLELINT_SETTINGS_PREFIXES = [
-   'stylelint.',
-   'css.validate',
-   'less.validate',
-   'scss.validate',
-];
-const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
+import { STYLELINT_SETTINGS_PREFIXES, STYLELINT_EXTENSION, filterStylelintSettings } from '../core/shared';
 
 /**
  * Generate .vscode/settings.json from a vscode preset.
@@ -19,7 +13,7 @@ export function generateVscodeSettings(
    preset: VscodePreset,
    opts: GenerateOptions,
 ): 'created' | 'overwritten' | null {
-   const settingsPath = `${opts.cwd}/.vscode/settings.json`;
+   const settingsPath = path.join(opts.cwd, '.vscode', 'settings.json');
 
    if (opts.dryRun) {
       const existingSettings = readJson<Record<string, unknown>>(settingsPath);
@@ -31,7 +25,7 @@ export function generateVscodeSettings(
    const existingSettings = readJson<Record<string, unknown>>(settingsPath);
 
    if (existingSettings) {
-      const backupPath = `${settingsPath}.bak`;
+      const backupPath = settingsPath + '.bak';
       if (!fileExists(backupPath)) {
          try {
             writeFile(backupPath, JSON.stringify(existingSettings, null, 2) + '\n');
@@ -79,7 +73,7 @@ export function generateVscodeExtensions(
       : preset.extensions();
 
    try {
-      writeJson(`${opts.cwd}/.vscode/extensions.json`, { recommendations: extensions });
+      writeJson(path.join(opts.cwd, '.vscode', 'extensions.json'), { recommendations: extensions });
    } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       logger.error(`Failed to write .vscode/extensions.json: ${msg}`);
@@ -103,24 +97,4 @@ export function generateAllVscode(preset: VscodePreset, opts: GenerateOptions): 
    if (extAction === 'created') result.created.push('.vscode/extensions.json');
 
    return result;
-}
-
-/** Remove stylelint-related settings keys and clean up codeActionsOnSave */
-function filterStylelintSettings(settings: Record<string, unknown>): Record<string, unknown> {
-   const filtered = Object.fromEntries(
-      Object.entries(settings).filter(
-         ([key]) => !STYLELINT_SETTINGS_PREFIXES.some(prefix => key.startsWith(prefix)),
-      ),
-   );
-
-   if (
-      typeof filtered['editor.codeActionsOnSave'] === 'object' &&
-      filtered['editor.codeActionsOnSave'] !== null
-   ) {
-      const actions = { ...(filtered['editor.codeActionsOnSave'] as Record<string, unknown>) };
-      delete actions['source.fixAll.stylelint'];
-      filtered['editor.codeActionsOnSave'] = actions;
-   }
-
-   return filtered;
 }
