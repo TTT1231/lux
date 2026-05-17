@@ -105,7 +105,7 @@ Also replace `fs.existsSync` → `fileExists` and `fs.readFileSync` (non-JSON) �
 
 ### 8. `resolvePreset` from `utils/errors.ts`
 
-`resolvePreset` (errors.ts:61-64) is a trivial `Array.find` wrapper in the wrong module. Only caller is `commands/vscode.ts:33`. Move to `utils/preset.ts` or inline at the call site.
+`resolvePreset` (errors.ts:61-64) is a trivial `Array.find` wrapper in the wrong module. Only caller is `commands/vscode.ts:33`. Inline at the call site — `resolvePreset(VSCODE_PRESETS, presetName)` becomes `VSCODE_PRESETS.find(p => p.name === presetName)`. Not worth a separate module for one trivial call.
 
 ## Files Touched
 
