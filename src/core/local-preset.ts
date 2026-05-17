@@ -3,53 +3,27 @@ import os from 'node:os';
 import path from 'node:path';
 import type { FmtPreset, GenerateOptions, VscodePreset } from '../presets/types';
 import { mergeVscodeSettings } from './merge-settings';
-import { fileExists, ensureDir, writeFile, readJson, writeJson } from '../utils/fs';
+import { fileExists, ensureDir, writeFile, readFile, readJson, writeJson } from '../utils/fs';
 import { logger } from '../utils/logger';
 import { detectPackageManager, getRunPrefix } from '../utils/deps';
 import type { PackageManager } from '../utils/deps';
+import {
+   CONFIG_GETTERS,
+   STYLELINT_FILES,
+   EDITORCONFIG_FILE,
+   CSPELL_FILE,
+   LINTSTAGED_FILE,
+   STYLELINT_DEPS,
+   HUSKY_DEPS,
+   LINTSTAGED_DEPS,
+   STYLELINT_EXTENSION,
+   filterStylelintSettings,
+   isNotStylelintDep,
+   isNotEditorconfigDep,
+   isNotLintStagedDep,
+} from './shared';
 
 type PresetType = 'fmt' | 'vscode';
-
-const CONFIG_GETTERS: ReadonlyArray<{
-   filename: string;
-   getContent: (preset: FmtPreset) => string | undefined;
-}> = [
-   { filename: 'eslint.config.mjs', getContent: p => p.eslint?.() },
-   { filename: '.prettierrc', getContent: p => p.prettier?.() },
-   { filename: '.prettierignore', getContent: p => p.prettierIgnore?.() },
-   { filename: 'stylelint.config.mjs', getContent: p => p.stylelint?.() },
-   { filename: '.stylelintignore', getContent: p => p.stylelintIgnore?.() },
-   { filename: 'cspell.json', getContent: p => p.cspell?.() },
-   { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
-   { filename: '.lintstagedrc.json', getContent: p => p.lintStaged?.() },
-];
-
-const STYLELINT_FILES = new Set(['stylelint.config.mjs', '.stylelintignore']);
-const EDITORCONFIG_FILE = '.editorconfig';
-const CSPELL_FILE = 'cspell.json';
-const LINTSTAGED_FILE = '.lintstagedrc.json';
-
-const STYLELINT_SETTINGS_PREFIXES = [
-   'stylelint.',
-   'css.validate',
-   'less.validate',
-   'scss.validate',
-];
-
-const STYLELINT_DEPS = new Set([
-   'stylelint',
-   'stylelint-config-standard-scss',
-   'stylelint-order',
-   'stylelint-scss',
-   '@stylistic/stylelint-plugin',
-   'postcss-html',
-   'postcss-scss',
-]);
-
-const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
-
-const HUSKY_DEPS = new Set(['husky']);
-const LINTSTAGED_DEPS = new Set(['lint-staged']);
 
 function getLuxDir(): string {
    return process.env.LUX_HOME || path.join(os.homedir(), '.lux');
@@ -68,7 +42,7 @@ export function isValidPresetName(name: string): boolean {
 
 export function listCustomPresets(): string[] {
    const fmtDir = path.join(getLuxDir(), 'preset', 'fmt');
-   if (!fs.existsSync(fmtDir)) return [];
+   if (!fileExists(fmtDir)) return [];
 
    const entries = fs.readdirSync(fmtDir, { withFileTypes: true });
    const result: string[] = [];
@@ -78,7 +52,7 @@ export function listCustomPresets(): string[] {
       if (!isValidPresetName(entry.name)) continue;
 
       const pkgPath = path.join(fmtDir, entry.name, 'package.json');
-      if (fs.existsSync(pkgPath)) {
+      if (fileExists(pkgPath)) {
          result.push(entry.name);
       }
    }
@@ -90,20 +64,20 @@ export function isValidCustomPreset(name: string): boolean {
    if (!isValidPresetName(name)) return false;
 
    const presetDir = path.join(getLuxDir(), 'preset', 'fmt', name);
-   if (!fs.existsSync(presetDir)) return false;
+   if (!fileExists(presetDir)) return false;
 
    const pkgPath = path.join(presetDir, 'package.json');
-   return fs.existsSync(pkgPath);
+   return fileExists(pkgPath);
 }
 
 export function localPresetExists(type: PresetType, presetName: string): boolean {
    const dir = getLocalPresetDir(type, presetName);
-   return fs.existsSync(dir);
+   return fileExists(dir);
 }
 
 export function resetLocalPreset(type: PresetType, presetName: string): void {
    const dir = getLocalPresetDir(type, presetName);
-   if (fs.existsSync(dir)) {
+   if (fileExists(dir)) {
       fs.rmSync(dir, { recursive: true, force: true });
       logger.log(`Reset local preset: ${dir}`);
    }
@@ -144,15 +118,15 @@ export function materializeVscodePreset(cwd: string, presetName: string): void {
    ensureDir(presetDir);
 
    const settingsSrc = path.join(cwd, '.vscode', 'settings.json');
-   if (fileExists(settingsSrc)) {
-      const content = fs.readFileSync(settingsSrc, 'utf-8');
-      writeFile(path.join(presetDir, 'settings.json'), content);
+   const settingsContent = readFile(settingsSrc);
+   if (settingsContent !== null) {
+      writeFile(path.join(presetDir, 'settings.json'), settingsContent);
    }
 
    const extensionsSrc = path.join(cwd, '.vscode', 'extensions.json');
-   if (fileExists(extensionsSrc)) {
-      const content = fs.readFileSync(extensionsSrc, 'utf-8');
-      writeFile(path.join(presetDir, 'extensions.json'), content);
+   const extensionsContent = readFile(extensionsSrc);
+   if (extensionsContent !== null) {
+      writeFile(path.join(presetDir, 'extensions.json'), extensionsContent);
    }
 
    logger.log(`Local preset created at ${presetDir}`);
@@ -199,16 +173,15 @@ export function applyLocalFmtPreset(
    };
 
    const presetDir = getLocalPresetDir('fmt', presetName);
-   if (!fs.existsSync(presetDir)) {
+   if (!fileExists(presetDir)) {
       logger.warn(`Local preset not found at ${presetDir}`);
       return result;
    }
 
    const projectPkgPath = path.join(cwd, 'package.json');
    if (fileExists(projectPkgPath)) {
-      try {
-         JSON.parse(fs.readFileSync(projectPkgPath, 'utf-8'));
-      } catch {
+      const parsed = readJson(projectPkgPath);
+      if (parsed === null) {
          throw new InvalidPackageJsonError(projectPkgPath);
       }
    }
@@ -240,9 +213,11 @@ export function applyLocalFmtPreset(
          continue;
       }
 
-      const content = fs.readFileSync(path.join(presetDir, filename), 'utf-8');
-      writeFile(destPath, content);
-      (exists ? result.overwritten : result.created).push(filename);
+      const content = readFile(path.join(presetDir, filename));
+      if (content !== null) {
+         writeFile(destPath, content);
+         (exists ? result.overwritten : result.created).push(filename);
+      }
    }
 
    const templatePkg = readJson<{
@@ -277,7 +252,7 @@ export function applyLocalVscodePreset(
    };
 
    const presetDir = getLocalPresetDir('vscode', presetName);
-   if (!fs.existsSync(presetDir)) {
+   if (!fileExists(presetDir)) {
       logger.warn(`Local preset not found at ${presetDir}`);
       return result;
    }
@@ -430,25 +405,6 @@ function mergeTemplateIntoProject(
    return merged;
 }
 
-function filterStylelintSettings(settings: Record<string, unknown>): Record<string, unknown> {
-   const filtered = Object.fromEntries(
-      Object.entries(settings).filter(
-         ([key]) => !STYLELINT_SETTINGS_PREFIXES.some(prefix => key.startsWith(prefix)),
-      ),
-   );
-
-   if (
-      typeof filtered['editor.codeActionsOnSave'] === 'object' &&
-      filtered['editor.codeActionsOnSave'] !== null
-   ) {
-      const actions = { ...(filtered['editor.codeActionsOnSave'] as Record<string, unknown>) };
-      delete actions['source.fixAll.stylelint'];
-      filtered['editor.codeActionsOnSave'] = actions;
-   }
-
-   return filtered;
-}
-
 export function filterScripts(
    scripts: Record<string, string>,
    noStylelint: boolean,
@@ -520,20 +476,6 @@ export function detectPresetCapabilities(presetName: string): {
       hasCspell: hasCspellFile || hasCspellDep,
       hasLintStaged: hasLintStagedFile || hasLintStagedDep,
    };
-}
-
-function isNotStylelintDep(dep: string): boolean {
-   if (dep.includes('stylelint')) return false;
-   if (dep === 'postcss-html' || dep === 'postcss-scss') return false;
-   return true;
-}
-
-function isNotEditorconfigDep(dep: string): boolean {
-   return !dep.includes('editorconfig');
-}
-
-function isNotLintStagedDep(dep: string): boolean {
-   return dep !== 'lint-staged';
 }
 
 export function resolveLocalDeps(deps: Record<string, string>): string[] {
