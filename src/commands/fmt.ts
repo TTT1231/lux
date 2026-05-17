@@ -30,32 +30,24 @@ import {
    listCustomPresets,
    detectPresetCapabilities,
 } from '../core/local-preset';
+import {
+   isNotStylelintDep,
+   isNotEditorconfigDep,
+   isNotCspellDep,
+   isNotHuskyDep,
+   isNotLintStagedDep,
+} from '../core/shared';
 
-/** Check if a dependency is NOT stylelint-related */
-function isNotStylelintDep(dep: string): boolean {
-   if (dep.includes('stylelint')) return false;
-   if (dep === 'postcss-html' || dep === 'postcss-scss') return false;
-   return true;
-}
-
-/** Check if a dependency is NOT editorconfig-related */
-function isNotEditorconfigDep(dep: string): boolean {
-   return !dep.includes('editorconfig');
-}
-
-/** Check if a dependency is NOT cspell */
-function isNotCspellDep(dep: string): boolean {
-   return dep !== 'cspell';
-}
-
-/** Check if a dependency is NOT husky */
-function isNotHuskyDep(dep: string): boolean {
-   return dep !== 'husky';
-}
-
-/** Check if a dependency is NOT lint-staged */
-function isNotLintStagedDep(dep: string): boolean {
-   return dep !== 'lint-staged';
+interface FmtCommandOptions {
+   force?: boolean;
+   install?: boolean;
+   dryRun?: boolean;
+   stylelint?: boolean;
+   editorconfig?: boolean;
+   cspell?: boolean;
+   husky?: boolean;
+   lintStaged?: boolean;
+   reset?: boolean;
 }
 
 export function registerFmtCommand(program: Command) {
@@ -71,70 +63,51 @@ export function registerFmtCommand(program: Command) {
       .option('--husky', 'Initialize husky for Git hooks')
       .option('--lint-staged', 'Set up lint-staged (implies --husky)')
       .option('--reset', 'Reset local preset and re-materialize from built-in')
-      .action(
-         async (
-            presetName: string,
-            options: {
-               force?: boolean;
-               install?: boolean;
-               dryRun?: boolean;
-               stylelint?: boolean;
-               editorconfig?: boolean;
-               cspell?: boolean;
-               husky?: boolean;
-               lintStaged?: boolean;
-               reset?: boolean;
-            },
-         ) => {
-            const builtinPreset = FMT_PRESETS.find(p => p.name === presetName);
-            const isBuiltin = builtinPreset !== undefined;
+      .action(async (presetName: string, options: FmtCommandOptions) => {
+         const builtinPreset = FMT_PRESETS.find(p => p.name === presetName);
+         const isBuiltin = builtinPreset !== undefined;
 
-            // --reset + custom preset: warn and abort
-            if (options.reset && !isBuiltin) {
-               logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
-               return;
+         // --reset + custom preset: warn and abort
+         if (options.reset && !isBuiltin) {
+            logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
+            return;
+         }
+
+         const cwd = process.cwd();
+
+         const pkgPath = path.join(cwd, 'package.json');
+         if (fileExists(pkgPath) && readJson(pkgPath) === null) {
+            logger.error(
+               'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
+            );
+            return;
+         }
+
+         if (isBuiltin) {
+            // Builtin path
+            if (options.reset) {
+               resetLocalPreset('fmt', presetName);
             }
 
-            const cwd = process.cwd();
-
-            const pkgPath = path.join(cwd, 'package.json');
-            if (fileExists(pkgPath)) {
-               try {
-                  JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-               } catch {
-                  logger.error(
-                     'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
-                  );
-                  return;
-               }
-            }
-
-            if (isBuiltin) {
-               // Builtin path
-               if (options.reset) {
-                  resetLocalPreset('fmt', presetName);
-               }
-
-               const useLocal = localPresetExists('fmt', presetName);
-               if (useLocal) {
-                  await executeLocalPath(cwd, presetName, options);
-               } else {
-                  await executeBuiltinPath(cwd, presetName, builtinPreset, options);
-               }
-            } else if (isValidCustomPreset(presetName)) {
-               // Custom preset path
+            const useLocal = localPresetExists('fmt', presetName);
+            if (useLocal) {
                await executeLocalPath(cwd, presetName, options);
             } else {
-               // Not found: error with fuzzy match against all names
-               const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
-               const customNames = listCustomPresets().filter(n => !builtinNames.has(n));
-               const allNames = [...builtinNames, ...customNames];
-               const err = new PresetNotFoundError(presetName, allNames);
-               logger.error(err.message);
-               process.exitCode = 1;
+               await executeBuiltinPath(cwd, presetName, builtinPreset, options);
             }
-         },
-      );
+         } else if (isValidCustomPreset(presetName)) {
+            // Custom preset path
+            await executeLocalPath(cwd, presetName, options);
+         } else {
+            // Not found: error with fuzzy match against all names
+            const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
+            const customNames = listCustomPresets().filter(n => !builtinNames.has(n));
+            const allNames = [...builtinNames, ...customNames];
+            const err = new PresetNotFoundError(presetName, allNames);
+            logger.error(err.message);
+            process.exitCode = 1;
+         }
+      });
 
    fmt.command('list')
       .description('List available fmt presets')
@@ -142,12 +115,12 @@ export function registerFmtCommand(program: Command) {
          const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
 
          for (const p of FMT_PRESETS) {
-            console.log(`${p.name.padEnd(12)} ${p.description}`);
+            logger.log(`${p.name.padEnd(12)} ${p.description}`);
          }
 
          const customs = listCustomPresets().filter(name => !builtinNames.has(name));
          for (const name of customs) {
-            console.log(`${name.padEnd(12)} ${chalk.yellow('(custom)')}`);
+            logger.log(`${name.padEnd(12)} ${chalk.yellow('(custom)')}`);
          }
       });
 }
@@ -155,16 +128,7 @@ export function registerFmtCommand(program: Command) {
 async function executeLocalPath(
    cwd: string,
    presetName: string,
-   options: {
-      force?: boolean;
-      install?: boolean;
-      dryRun?: boolean;
-      stylelint?: boolean;
-      editorconfig?: boolean;
-      cspell?: boolean;
-      husky?: boolean;
-      lintStaged?: boolean;
-   },
+   options: FmtCommandOptions,
 ): Promise<void> {
    logger.log('Using local custom preset');
 
@@ -311,16 +275,7 @@ async function executeBuiltinPath(
    cwd: string,
    presetName: string,
    preset: FmtPreset,
-   options: {
-      force?: boolean;
-      install?: boolean;
-      dryRun?: boolean;
-      stylelint?: boolean;
-      editorconfig?: boolean;
-      cspell?: boolean;
-      husky?: boolean;
-      lintStaged?: boolean;
-   },
+   options: FmtCommandOptions,
 ): Promise<void> {
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
    const noHusky = options.husky !== true && options.lintStaged !== true;
@@ -348,7 +303,7 @@ async function executeBuiltinPath(
    logGenerationResult(result, opts.dryRun);
 
    if (!opts.dryRun) {
-      materializeFmtPreset(presetName, preset as never, opts);
+      materializeFmtPreset(presetName, preset, opts);
    }
 
    if (!pm) {

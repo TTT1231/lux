@@ -38,3 +38,15 @@ export function writeJson(filePath: string, data: unknown): void {
    const content = JSON.stringify(data, null, 2) + '\n';
    writeFile(filePath, content);
 }
+
+/** Read file content as string, return null if not exists. Logs IO errors. */
+export function readFile(filePath: string): string | null {
+   try {
+      return fs.readFileSync(filePath, 'utf-8');
+   } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(`Failed to read ${path.basename(filePath)}: ${message}`);
+      return null;
+   }
+}

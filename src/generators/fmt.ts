@@ -3,21 +3,7 @@ import type { FmtPreset, GenerateOptions, GenerateResult } from '../presets/type
 import { resolveConflict } from '../core/conflict-resolver';
 import { writeFile, fileExists } from '../utils/fs';
 import { logger } from '../utils/logger';
-
-/** Maps config filenames to their content getter on a FmtPreset */
-const CONFIG_FILES: ReadonlyArray<{
-   filename: string;
-   getContent: (preset: FmtPreset) => string | undefined;
-}> = [
-   { filename: 'eslint.config.mjs', getContent: p => p.eslint?.() },
-   { filename: '.prettierrc', getContent: p => p.prettier?.() },
-   { filename: '.prettierignore', getContent: p => p.prettierIgnore?.() },
-   { filename: 'stylelint.config.mjs', getContent: p => p.stylelint?.() },
-   { filename: '.stylelintignore', getContent: p => p.stylelintIgnore?.() },
-   { filename: 'cspell.json', getContent: p => p.cspell?.() },
-   { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
-   { filename: '.lintstagedrc.json', getContent: p => p.lintStaged?.() },
-];
+import { CONFIG_GETTERS } from '../core/shared';
 
 type FileAction = 'created' | 'overwritten' | 'skipped';
 
@@ -62,7 +48,7 @@ function generateConfigFile(
 export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): GenerateResult {
    const result: GenerateResult = { created: [], overwritten: [], skipped: [] };
 
-   for (const { filename, getContent } of CONFIG_FILES) {
+   for (const { filename, getContent } of CONFIG_GETTERS) {
       if (opts.noStylelint && filename.includes('stylelint')) continue;
       if (opts.noEditorconfig && filename === '.editorconfig') continue;
       if (opts.noCspell && filename.includes('cspell')) continue;
