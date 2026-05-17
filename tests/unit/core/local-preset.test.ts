@@ -79,8 +79,8 @@ const basePreset: FmtPreset = {
       lint: 'eslint .',
       format: 'prettier --write "src/**/*.{ts,js}"',
       stylelint: 'stylelint "src/**/*.{css,scss}"',
-      'code:check': '<pm> lint && <pm> format:check',
-      'code:check:all': '<pm> lint && <pm> stylelint',
+      'format:check': '<pm> prettier --check "src/**/*.{ts,js}"',
+      stylelint: 'stylelint "src/**/*.{css,scss}"',
    },
 };
 
@@ -188,7 +188,7 @@ describe('materializeFmtPreset', () => {
       expect(pkg.devDependencies['stylelint']).toBe('<latest>');
       expect(pkg.devDependencies['postcss-html']).toBe('<latest>');
       expect(pkg.scripts['stylelint']).toBe('stylelint "src/**/*.{css,scss}"');
-      expect(pkg.scripts['code:check']).toBe('<pm> lint && <pm> format:check');
+      expect(pkg.scripts['format:check']).toBe('<pm> prettier --check "src/**/*.{ts,js}"');
    });
 
    it('resolves <lockfile> placeholders in generated files', () => {
@@ -393,7 +393,7 @@ describe('applyLocalFmtPreset', () => {
          'eslint.config.mjs': 'export default []',
          'package.json': JSON.stringify({
             devDependencies: {},
-            scripts: { 'code:check': '<pm> lint && <pm> format:check' },
+            scripts: { 'format:check': '<pm> prettier --check "src/**/*.{ts,js}"' },
          }),
       });
 
@@ -403,7 +403,7 @@ describe('applyLocalFmtPreset', () => {
       });
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
-      expect(pkg.scripts['code:check']).toBe('bun run lint && bun run format:check');
+      expect(pkg.scripts['format:check']).toBe('bun run prettier --check "src/**/*.{ts,js}"');
    });
 
    it('filters stylelint files and inline stylelint segments when noStylelint is true', () => {

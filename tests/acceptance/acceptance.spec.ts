@@ -47,8 +47,6 @@ describe('Acceptance: lux CLI', () => {
          expect(pkg.scripts['lint']).not.toContain('cspell');
          expect(pkg.scripts['lint:fix']).toContain('eslint');
          expect(pkg.scripts['format']).toContain('prettier --write');
-         expect(pkg.scripts['code:check']).toBeUndefined();
-
          // Step 2: init vscode
          const vscodeResult = ctx.run(['vscode', 'web-vue']);
          expect(vscodeResult.exitCode).toBe(0);

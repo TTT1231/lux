@@ -7,15 +7,21 @@
       "browserslistrc",
       "dbaeumer",
       "dtos",
+      "enoent",
+      "eperm",
+      "errno",
       "firsttris",
+      "gbrain",
       "gopls",
       "kohler",
+      "lintstagedrc",
+      "luxrc",
       "mrmlnc",
+      "slint",
       "usernamehw",
       "vueuse",
       "yoavbls",
-      "bunx",
-      "lintstagedrc"
+      "bunx"
    ],
    "ignorePaths": [
       "/node_modules/",
