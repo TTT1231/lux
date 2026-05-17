@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import chalk from 'chalk';
 import { select, isCancel, cancel, outro } from '@clack/prompts';
 import { INIT_TOOLS } from '../presets/init';
 import { FMT_PRESETS } from '../presets/fmt';
@@ -43,16 +44,12 @@ export function registerInitCommand(program: Command): void {
          const cwd = process.cwd();
          const result = generateInitSkills(tool.targetDir, cwd);
 
-         if (result.copiedFiles.length === 0) {
+         if (result.skillNames.length === 0) {
             logger.warn('No skill files were copied.');
             return;
          }
 
-         for (const file of result.copiedFiles) {
-            logger.log(`  ${file}`);
-         }
-
-         outro(`Skills installed to ${tool.targetDir}/`);
+         outro(chalk.green(`Success installed lux skills to ${tool.targetDir}`));
       });
 }
 
