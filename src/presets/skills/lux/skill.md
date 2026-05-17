@@ -72,7 +72,7 @@ lux vpn bash      # copy Bash proxy commands
 ## env — proxy env management
 
 ```bash
-lux set https_proxy=http://127.0.0.1:7890
+lux set https_proxy="http://127.0.0.1:7890"
 lux unset         # clear all config
 lux show env      # show stored config
 ```
@@ -97,3 +97,7 @@ lux update --check
 ## Custom presets
 
 To customize preset rules, see `references/custom-preset-setting.md`.
+
+## Troubleshooting
+
+If `lux` commands fail or behave unexpectedly, see `references/troubleshooting.md` for common issues and fixes.

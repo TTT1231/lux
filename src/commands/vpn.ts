@@ -67,7 +67,7 @@ export function handleSet(args: string[]): void {
    for (const arg of args) {
       if (!arg.includes('=')) {
          logger.error(
-            `Invalid format: "${arg}". Use key=value (e.g. https_proxy=http://127.0.0.1:7890)`,
+            `Invalid format: "${arg}". Use key=value (e.g. https_proxy="http://127.0.0.1:7890")`,
          );
          return;
       }

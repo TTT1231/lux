@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.46
+
+- Fixed `lux init` listing all files in target directory instead of only copied skills
+- Simplified init output to a concise success message
+- Added troubleshooting reference to lux skill for common error diagnosis
+
 ## 1.1.45
 
 - Added global package manager override: `lux set lux_package_manager=pnpm` forces a specific package manager across all projects

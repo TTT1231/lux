@@ -24,7 +24,7 @@ program
    .description('Set config values using key=value pairs (proxy, lux_package_manager)')
    .argument(
       '[args...]',
-      'key=value pairs (e.g. https_proxy=http://127.0.0.1:7890, lux_package_manager=pnpm)',
+      'key=value pairs (e.g. https_proxy="http://127.0.0.1:7890", lux_package_manager=pnpm)',
    )
    .action((args: string[]) => handleSet(args));
 
