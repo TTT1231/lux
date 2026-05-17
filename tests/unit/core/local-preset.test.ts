@@ -78,7 +78,6 @@ const basePreset: FmtPreset = {
    scripts: {
       lint: 'eslint .',
       format: 'prettier --write "src/**/*.{ts,js}"',
-      stylelint: 'stylelint "src/**/*.{css,scss}"',
       'format:check': '<pm> prettier --check "src/**/*.{ts,js}"',
       stylelint: 'stylelint "src/**/*.{css,scss}"',
    },

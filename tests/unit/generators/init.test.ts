@@ -28,7 +28,7 @@ describe('generateInitSkills', () => {
       const targetDir = '.claude/skills';
       const result = generateInitSkills(targetDir, tmpDir);
 
-      expect(result.copiedFiles).toContain('.claude/skills/lux/skill.md');
+      expect(result.skillNames).toContain('lux');
       expect(fs.existsSync(path.join(tmpDir, '.claude', 'skills', 'lux', 'skill.md'))).toBe(true);
    });
 
@@ -38,7 +38,7 @@ describe('generateInitSkills', () => {
          process.argv = ['node', path.join(emptyTmpDir, 'index.js')];
 
          const result = generateInitSkills('.claude/skills', emptyTmpDir);
-         expect(result.copiedFiles).toHaveLength(0);
+         expect(result.skillNames).toHaveLength(0);
       } finally {
          fs.rmSync(emptyTmpDir, { recursive: true, force: true });
       }
@@ -55,7 +55,7 @@ describe('generateInitSkills', () => {
 
       const content = fs.readFileSync(path.join(existingTarget, 'skill.md'), 'utf-8');
       expect(content).toBe('# Lux Skill');
-      expect(result.copiedFiles.length).toBeGreaterThan(0);
+      expect(result.skillNames.length).toBeGreaterThan(0);
    });
 
    it('creates nested directory structure', () => {
@@ -66,8 +66,8 @@ describe('generateInitSkills', () => {
 
       const result = generateInitSkills('.claude/skills', tmpDir);
 
-      expect(result.copiedFiles).toContain('.claude/skills/lux/skill.md');
-      expect(result.copiedFiles).toContain('.claude/skills/nested/deep/file.md');
+      expect(result.skillNames).toContain('lux');
+      expect(result.skillNames).toContain('nested');
    });
 
    it('returns targetDir in result', () => {
