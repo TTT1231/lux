@@ -2,7 +2,7 @@ import type { FmtPreset } from '../presets/types';
 
 // --- VSCode stylelint constants ---
 
-export const STYLELINT_SETTINGS_PREFIXES = [
+const STYLELINT_SETTINGS_PREFIXES = [
    'stylelint.',
    'css.validate',
    'less.validate',
