@@ -32,7 +32,7 @@
       "cli-lint",
       "agent-lint",
       "custom-lint",
-      "eslint"
+      "eslint",
       "prettier",
       "stylelint",
       "cspell",
