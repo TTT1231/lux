@@ -30,32 +30,24 @@ import {
    listCustomPresets,
    detectPresetCapabilities,
 } from '../core/local-preset';
+import {
+   isNotStylelintDep,
+   isNotEditorconfigDep,
+   isNotCspellDep,
+   isNotHuskyDep,
+   isNotLintStagedDep,
+} from '../core/shared';
 
-/** Check if a dependency is NOT stylelint-related */
-function isNotStylelintDep(dep: string): boolean {
-   if (dep.includes('stylelint')) return false;
-   if (dep === 'postcss-html' || dep === 'postcss-scss') return false;
-   return true;
-}
-
-/** Check if a dependency is NOT editorconfig-related */
-function isNotEditorconfigDep(dep: string): boolean {
-   return !dep.includes('editorconfig');
-}
-
-/** Check if a dependency is NOT cspell */
-function isNotCspellDep(dep: string): boolean {
-   return dep !== 'cspell';
-}
-
-/** Check if a dependency is NOT husky */
-function isNotHuskyDep(dep: string): boolean {
-   return dep !== 'husky';
-}
-
-/** Check if a dependency is NOT lint-staged */
-function isNotLintStagedDep(dep: string): boolean {
-   return dep !== 'lint-staged';
+interface FmtCommandOptions {
+   force?: boolean;
+   install?: boolean;
+   dryRun?: boolean;
+   stylelint?: boolean;
+   editorconfig?: boolean;
+   cspell?: boolean;
+   husky?: boolean;
+   lintStaged?: boolean;
+   reset?: boolean;
 }
 
 export function registerFmtCommand(program: Command) {
@@ -74,17 +66,7 @@ export function registerFmtCommand(program: Command) {
       .action(
          async (
             presetName: string,
-            options: {
-               force?: boolean;
-               install?: boolean;
-               dryRun?: boolean;
-               stylelint?: boolean;
-               editorconfig?: boolean;
-               cspell?: boolean;
-               husky?: boolean;
-               lintStaged?: boolean;
-               reset?: boolean;
-            },
+            options: FmtCommandOptions,
          ) => {
             const builtinPreset = FMT_PRESETS.find(p => p.name === presetName);
             const isBuiltin = builtinPreset !== undefined;
@@ -98,15 +80,11 @@ export function registerFmtCommand(program: Command) {
             const cwd = process.cwd();
 
             const pkgPath = path.join(cwd, 'package.json');
-            if (fileExists(pkgPath)) {
-               try {
-                  JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-               } catch {
-                  logger.error(
-                     'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
-                  );
-                  return;
-               }
+            if (fileExists(pkgPath) && readJson(pkgPath) === null) {
+               logger.error(
+                  'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
+               );
+               return;
             }
 
             if (isBuiltin) {
@@ -142,12 +120,12 @@ export function registerFmtCommand(program: Command) {
          const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
 
          for (const p of FMT_PRESETS) {
-            console.log(`${p.name.padEnd(12)} ${p.description}`);
+            logger.log(`${p.name.padEnd(12)} ${p.description}`);
          }
 
          const customs = listCustomPresets().filter(name => !builtinNames.has(name));
          for (const name of customs) {
-            console.log(`${name.padEnd(12)} ${chalk.yellow('(custom)')}`);
+            logger.log(`${name.padEnd(12)} ${chalk.yellow('(custom)')}`);
          }
       });
 }
@@ -155,16 +133,7 @@ export function registerFmtCommand(program: Command) {
 async function executeLocalPath(
    cwd: string,
    presetName: string,
-   options: {
-      force?: boolean;
-      install?: boolean;
-      dryRun?: boolean;
-      stylelint?: boolean;
-      editorconfig?: boolean;
-      cspell?: boolean;
-      husky?: boolean;
-      lintStaged?: boolean;
-   },
+   options: FmtCommandOptions,
 ): Promise<void> {
    logger.log('Using local custom preset');
 
@@ -311,16 +280,7 @@ async function executeBuiltinPath(
    cwd: string,
    presetName: string,
    preset: FmtPreset,
-   options: {
-      force?: boolean;
-      install?: boolean;
-      dryRun?: boolean;
-      stylelint?: boolean;
-      editorconfig?: boolean;
-      cspell?: boolean;
-      husky?: boolean;
-      lintStaged?: boolean;
-   },
+   options: FmtCommandOptions,
 ): Promise<void> {
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
    const noHusky = options.husky !== true && options.lintStaged !== true;
@@ -348,7 +308,7 @@ async function executeBuiltinPath(
    logGenerationResult(result, opts.dryRun);
 
    if (!opts.dryRun) {
-      materializeFmtPreset(presetName, preset as never, opts);
+      materializeFmtPreset(presetName, preset, opts);
    }
 
    if (!pm) {
