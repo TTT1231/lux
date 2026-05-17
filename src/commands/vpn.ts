@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import type { Command } from 'commander';
 import { logger } from '../utils/logger';
 import { clearEnvConfig, getEnvConfig, setEnvConfig } from '../utils/config';
+import { getPlatform, type Platform } from '../utils/platform';
 
 const ALLOWED_KEYS = ['https_proxy', 'http_proxy', 'all_proxy', 'lux_package_manager'] as const;
 const VALID_PM_VALUES = ['auto', 'bun', 'pnpm', 'yarn', 'npm'] as const;
@@ -23,8 +24,15 @@ export function buildCommands(shell: Shell, env: Record<string, string>): string
    return entries.map(([k, v]) => `$env:${k}="${v}"`).join(' ; ');
 }
 
-function copyToClipboard(text: string): boolean {
-   const result = spawnSync('clip', [], { input: text, stdio: ['pipe', 'ignore', 'ignore'] });
+const CLIPBOARD_COMMANDS: Record<Platform, string> = {
+   win32: 'clip',
+   darwin: 'pbcopy',
+   linux: 'xclip',
+};
+
+export function copyToClipboard(text: string): boolean {
+   const cmd = CLIPBOARD_COMMANDS[getPlatform()];
+   const result = spawnSync(cmd, [], { input: text, stdio: ['pipe', 'ignore', 'ignore'] });
    return result.status === 0;
 }
 

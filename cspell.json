@@ -21,7 +21,9 @@
       "usernamehw",
       "vueuse",
       "yoavbls",
-      "bunx"
+      "bunx",
+      "pbcopy",
+      "xclip"
    ],
    "ignorePaths": [
       "/node_modules/",
