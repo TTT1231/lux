@@ -2,7 +2,7 @@ import type { Command } from 'commander';
 import type { GenerateOptions, VscodePreset } from '../presets/types';
 import { VSCODE_PRESETS } from '../presets/vscode';
 import { logger } from '../utils/logger';
-import { resolvePreset, PresetNotFoundError } from '../utils/errors';
+import { PresetNotFoundError } from '../utils/errors';
 import { generateAllVscode } from '../generators/vscode';
 import {
    localPresetExists,
@@ -10,6 +10,13 @@ import {
    materializeVscodePreset,
    applyLocalVscodePreset,
 } from '../core/local-preset';
+
+interface VscodeCommandOptions {
+   force?: boolean;
+   dryRun?: boolean;
+   stylelint?: boolean;
+   reset?: boolean;
+}
 
 export function registerVscodeCommand(program: Command) {
    const vscode = program.command('vscode').description('Initialize VSCode config with preset');
@@ -23,14 +30,9 @@ export function registerVscodeCommand(program: Command) {
       .action(
          async (
             presetName: string,
-            options: {
-               force?: boolean;
-               dryRun?: boolean;
-               stylelint?: boolean;
-               reset?: boolean;
-            },
+            options: VscodeCommandOptions,
          ) => {
-            const preset = resolvePreset(VSCODE_PRESETS, presetName);
+            const preset = VSCODE_PRESETS.find(p => p.name === presetName);
             if (!preset) {
                const err = new PresetNotFoundError(
                   presetName,
@@ -62,7 +64,7 @@ export function registerVscodeCommand(program: Command) {
       .description('List available vscode presets')
       .action(() => {
          for (const p of VSCODE_PRESETS) {
-            console.log(`${p.name.padEnd(12)} ${p.description}`);
+            logger.log(`${p.name.padEnd(12)} ${p.description}`);
          }
       });
 }
@@ -70,7 +72,7 @@ export function registerVscodeCommand(program: Command) {
 function executeVscodeLocalPath(
    cwd: string,
    presetName: string,
-   options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
+   options: VscodeCommandOptions,
 ): void {
    logger.log('Using local custom preset');
 
@@ -105,7 +107,7 @@ function executeVscodeBuiltinPath(
    cwd: string,
    presetName: string,
    preset: VscodePreset,
-   options: { force?: boolean; dryRun?: boolean; stylelint?: boolean },
+   options: VscodeCommandOptions,
 ): void {
    const opts: GenerateOptions = {
       cwd,

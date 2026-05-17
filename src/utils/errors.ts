@@ -39,7 +39,7 @@ export function fuzzyMatchPreset(input: string, available: string[]): string | n
 function levenshtein(a: string, b: string): number {
    const m = a.length;
    const n = b.length;
-   const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0) as number[]);
+   const dp = Array.from({ length: m + 1 }, () => Array.from({ length: n + 1 }, () => 0));
 
    for (let i = 0; i <= m; i++) dp[i][0] = i;
    for (let j = 0; j <= n; j++) dp[0][j] = j;
@@ -52,13 +52,4 @@ function levenshtein(a: string, b: string): number {
    }
 
    return dp[m][n];
-}
-
-interface Named {
-   name: string;
-}
-
-export function resolvePreset<T extends Named>(presets: T[], name: string): T | undefined {
-   const found = presets.find(p => p.name === name);
-   return found;
 }
