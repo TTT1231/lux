@@ -63,56 +63,51 @@ export function registerFmtCommand(program: Command) {
       .option('--husky', 'Initialize husky for Git hooks')
       .option('--lint-staged', 'Set up lint-staged (implies --husky)')
       .option('--reset', 'Reset local preset and re-materialize from built-in')
-      .action(
-         async (
-            presetName: string,
-            options: FmtCommandOptions,
-         ) => {
-            const builtinPreset = FMT_PRESETS.find(p => p.name === presetName);
-            const isBuiltin = builtinPreset !== undefined;
+      .action(async (presetName: string, options: FmtCommandOptions) => {
+         const builtinPreset = FMT_PRESETS.find(p => p.name === presetName);
+         const isBuiltin = builtinPreset !== undefined;
 
-            // --reset + custom preset: warn and abort
-            if (options.reset && !isBuiltin) {
-               logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
-               return;
+         // --reset + custom preset: warn and abort
+         if (options.reset && !isBuiltin) {
+            logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
+            return;
+         }
+
+         const cwd = process.cwd();
+
+         const pkgPath = path.join(cwd, 'package.json');
+         if (fileExists(pkgPath) && readJson(pkgPath) === null) {
+            logger.error(
+               'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
+            );
+            return;
+         }
+
+         if (isBuiltin) {
+            // Builtin path
+            if (options.reset) {
+               resetLocalPreset('fmt', presetName);
             }
 
-            const cwd = process.cwd();
-
-            const pkgPath = path.join(cwd, 'package.json');
-            if (fileExists(pkgPath) && readJson(pkgPath) === null) {
-               logger.error(
-                  'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
-               );
-               return;
-            }
-
-            if (isBuiltin) {
-               // Builtin path
-               if (options.reset) {
-                  resetLocalPreset('fmt', presetName);
-               }
-
-               const useLocal = localPresetExists('fmt', presetName);
-               if (useLocal) {
-                  await executeLocalPath(cwd, presetName, options);
-               } else {
-                  await executeBuiltinPath(cwd, presetName, builtinPreset, options);
-               }
-            } else if (isValidCustomPreset(presetName)) {
-               // Custom preset path
+            const useLocal = localPresetExists('fmt', presetName);
+            if (useLocal) {
                await executeLocalPath(cwd, presetName, options);
             } else {
-               // Not found: error with fuzzy match against all names
-               const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
-               const customNames = listCustomPresets().filter(n => !builtinNames.has(n));
-               const allNames = [...builtinNames, ...customNames];
-               const err = new PresetNotFoundError(presetName, allNames);
-               logger.error(err.message);
-               process.exitCode = 1;
+               await executeBuiltinPath(cwd, presetName, builtinPreset, options);
             }
-         },
-      );
+         } else if (isValidCustomPreset(presetName)) {
+            // Custom preset path
+            await executeLocalPath(cwd, presetName, options);
+         } else {
+            // Not found: error with fuzzy match against all names
+            const builtinNames = new Set(FMT_PRESETS.map(p => p.name));
+            const customNames = listCustomPresets().filter(n => !builtinNames.has(n));
+            const allNames = [...builtinNames, ...customNames];
+            const err = new PresetNotFoundError(presetName, allNames);
+            logger.error(err.message);
+            process.exitCode = 1;
+         }
+      });
 
    fmt.command('list')
       .description('List available fmt presets')

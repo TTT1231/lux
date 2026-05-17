@@ -55,7 +55,9 @@ export const CONFIG_GETTERS: ReadonlyArray<{
 
 // --- Shared functions ---
 
-export function filterStylelintSettings(settings: Record<string, unknown>): Record<string, unknown> {
+export function filterStylelintSettings(
+   settings: Record<string, unknown>,
+): Record<string, unknown> {
    const filtered = Object.fromEntries(
       Object.entries(settings).filter(
          ([key]) => !STYLELINT_SETTINGS_PREFIXES.some(prefix => key.startsWith(prefix)),

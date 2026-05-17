@@ -27,37 +27,32 @@ export function registerVscodeCommand(program: Command) {
       .option('--dry-run', 'Preview without writing files')
       .option('--stylelint', 'Include Stylelint settings and extension')
       .option('--reset', 'Reset local preset and re-materialize from built-in')
-      .action(
-         async (
-            presetName: string,
-            options: VscodeCommandOptions,
-         ) => {
-            const preset = VSCODE_PRESETS.find(p => p.name === presetName);
-            if (!preset) {
-               const err = new PresetNotFoundError(
-                  presetName,
-                  VSCODE_PRESETS.map(p => p.name),
-               );
-               logger.error(err.message);
-               process.exitCode = 1;
-               return;
-            }
+      .action(async (presetName: string, options: VscodeCommandOptions) => {
+         const preset = VSCODE_PRESETS.find(p => p.name === presetName);
+         if (!preset) {
+            const err = new PresetNotFoundError(
+               presetName,
+               VSCODE_PRESETS.map(p => p.name),
+            );
+            logger.error(err.message);
+            process.exitCode = 1;
+            return;
+         }
 
-            const cwd = process.cwd();
+         const cwd = process.cwd();
 
-            if (options.reset) {
-               resetLocalPreset('vscode', presetName);
-            }
+         if (options.reset) {
+            resetLocalPreset('vscode', presetName);
+         }
 
-            const useLocal = localPresetExists('vscode', presetName);
+         const useLocal = localPresetExists('vscode', presetName);
 
-            if (useLocal) {
-               executeVscodeLocalPath(cwd, presetName, options);
-            } else {
-               executeVscodeBuiltinPath(cwd, presetName, preset, options);
-            }
-         },
-      );
+         if (useLocal) {
+            executeVscodeLocalPath(cwd, presetName, options);
+         } else {
+            executeVscodeBuiltinPath(cwd, presetName, preset, options);
+         }
+      });
 
    vscode
       .command('list')

@@ -3,7 +3,7 @@ import type { VscodePreset, GenerateOptions, GenerateResult } from '../presets/t
 import { mergeVscodeSettings } from '../core/merge-settings';
 import { writeJson, readJson, fileExists, writeFile } from '../utils/fs';
 import { logger } from '../utils/logger';
-import { STYLELINT_SETTINGS_PREFIXES, STYLELINT_EXTENSION, filterStylelintSettings } from '../core/shared';
+import { STYLELINT_EXTENSION, filterStylelintSettings } from '../core/shared';
 
 /**
  * Generate .vscode/settings.json from a vscode preset.
