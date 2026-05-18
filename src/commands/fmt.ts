@@ -151,6 +151,17 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
       lockfile: pm ? getLockfileName(pm) : undefined,
    };
 
+   // Read hook content from materialized preset
+   const hookTemplatePath = path.join(getLocalPresetDir('fmt', presetName), '.husky', 'pre-commit');
+   let hookContent: string | undefined;
+   if (opts.husky && fileExists(hookTemplatePath)) {
+      hookContent = readFile(hookTemplatePath) ?? undefined;
+      // Strip lint-staged from hook content if --lint-staged is not passed
+      if (hookContent && !opts.lintStaged) {
+         hookContent = hookContent.replace(/<pmx>\s*lint-staged/g, '<pm> lint');
+      }
+   }
+
    let result: Awaited<ReturnType<typeof applyLocalFmtPreset>>;
    try {
       result = applyLocalFmtPreset(cwd, presetName, opts);
@@ -203,7 +214,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
 
    if (missing.length === 0) {
       if (opts.husky) {
-         await initHusky(cwd, pm, opts);
+         await initHusky(cwd, pm, opts, hookContent);
       }
       return;
    }
@@ -211,7 +222,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
       if (opts.husky) {
-         await initHusky(cwd, pm, opts);
+         await initHusky(cwd, pm, opts, hookContent);
       }
       return;
    }
@@ -229,7 +240,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
       if (opts.husky) {
-         await initHusky(cwd, pm, opts);
+         await initHusky(cwd, pm, opts, hookContent);
       }
       return;
    }
@@ -245,7 +256,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
 
    // Husky initialization
    if (opts.husky) {
-      await initHusky(cwd, pm, opts);
+      await initHusky(cwd, pm, opts, hookContent);
    }
 }
 
