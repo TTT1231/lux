@@ -17,10 +17,7 @@ export function getCurrentVersion(): string {
 
    // Bundled: dist/index.js → ../package.json
    // Source:  src/utils/version.ts → ../../package.json
-   const candidates = [
-      join(__dirname, '..', 'package.json'),
-      join(__dirname, '..', '..', 'package.json'),
-   ];
+   const candidates = [join(__dirname, '..', 'package.json'), join(__dirname, '..', '..', 'package.json')];
 
    const pkgPath = candidates.find(p => existsSync(p));
    if (!pkgPath) {

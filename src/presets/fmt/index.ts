@@ -8,11 +8,4 @@ export * from './web-vue';
 import type { FmtPreset } from '../types';
 import { webVueFmt, webReactFmt, electronVueFmt, uniappFmt, nodeFmt, nestFmt } from '.';
 
-export const FMT_PRESETS: FmtPreset[] = [
-   webVueFmt,
-   webReactFmt,
-   electronVueFmt,
-   uniappFmt,
-   nodeFmt,
-   nestFmt,
-];
+export const FMT_PRESETS: FmtPreset[] = [webVueFmt, webReactFmt, electronVueFmt, uniappFmt, nodeFmt, nestFmt];

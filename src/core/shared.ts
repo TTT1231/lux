@@ -5,12 +5,7 @@ import type { FmtPreset } from '../presets/types';
 
 // --- VSCode stylelint constants ---
 
-const STYLELINT_SETTINGS_PREFIXES = [
-   'stylelint.',
-   'css.validate',
-   'less.validate',
-   'scss.validate',
-];
+const STYLELINT_SETTINGS_PREFIXES = ['stylelint.', 'css.validate', 'less.validate', 'scss.validate'];
 
 export const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
 
@@ -39,19 +34,12 @@ export const CONFIG_GETTERS: ReadonlyArray<{
 
 // --- Shared functions ---
 
-export function filterStylelintSettings(
-   settings: Record<string, unknown>,
-): Record<string, unknown> {
+export function filterStylelintSettings(settings: Record<string, unknown>): Record<string, unknown> {
    const filtered = Object.fromEntries(
-      Object.entries(settings).filter(
-         ([key]) => !STYLELINT_SETTINGS_PREFIXES.some(prefix => key.startsWith(prefix)),
-      ),
+      Object.entries(settings).filter(([key]) => !STYLELINT_SETTINGS_PREFIXES.some(prefix => key.startsWith(prefix))),
    );
 
-   if (
-      typeof filtered['editor.codeActionsOnSave'] === 'object' &&
-      filtered['editor.codeActionsOnSave'] !== null
-   ) {
+   if (typeof filtered['editor.codeActionsOnSave'] === 'object' && filtered['editor.codeActionsOnSave'] !== null) {
       const actions = { ...(filtered['editor.codeActionsOnSave'] as Record<string, unknown>) };
       delete actions['source.fixAll.stylelint'];
       filtered['editor.codeActionsOnSave'] = actions;
@@ -66,9 +54,7 @@ export function loadDepsJson(presetDir: string): DepsRegistry {
    const depsPath = path.join(presetDir, 'deps.json');
 
    if (!fs.existsSync(depsPath)) {
-      throw new Error(
-         `deps.json not found in "${presetDir}". Run with --reset to re-materialize the preset.`,
-      );
+      throw new Error(`deps.json not found in "${presetDir}". Run with --reset to re-materialize the preset.`);
    }
 
    try {
@@ -108,10 +94,7 @@ export interface DepsFilterFlags {
    lintStaged: boolean;
 }
 
-export function collectDepsFromRegistry(
-   registry: DepsRegistry,
-   flags: DepsFilterFlags,
-): Record<string, string> {
+export function collectDepsFromRegistry(registry: DepsRegistry, flags: DepsFilterFlags): Record<string, string> {
    const deps: Record<string, string> = {};
 
    // Always collect top-level custom deps (not gated by flags)

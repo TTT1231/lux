@@ -7,13 +7,7 @@ import { FMT_PRESETS } from '../presets/fmt';
 import { logger } from '../utils/logger';
 import { PresetNotFoundError } from '../utils/errors';
 import { generateAllFmt } from '../generators/fmt';
-import {
-   detectPackageManager,
-   getLockfileName,
-   getRunPrefix,
-   installDevDeps,
-   addDepsToManifest,
-} from '../utils/deps';
+import { detectPackageManager, getLockfileName, getRunPrefix, installDevDeps, addDepsToManifest } from '../utils/deps';
 import type { PackageManager } from '../utils/deps';
 import { execFileNoThrow } from '../utils/execFileNoThrow';
 import { fileExists, readJson, writeJson, ensureDir, writeFile } from '../utils/fs';
@@ -70,9 +64,7 @@ export function registerFmtCommand(program: Command) {
 
          const pkgPath = path.join(cwd, 'package.json');
          if (fileExists(pkgPath) && readJson(pkgPath) === null) {
-            logger.error(
-               'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
-            );
+            logger.error('package.json exists but is not valid JSON. Fix it first, then re-run this command.');
             return;
          }
 
@@ -118,33 +110,21 @@ export function registerFmtCommand(program: Command) {
       });
 }
 
-async function executeLocalPath(
-   cwd: string,
-   presetName: string,
-   options: FmtCommandOptions,
-): Promise<void> {
+async function executeLocalPath(cwd: string, presetName: string, options: FmtCommandOptions): Promise<void> {
    logger.log('Using local custom preset');
 
    const caps = detectPresetCapabilities(presetName);
    if (options.stylelint && !caps.hasStylelint) {
-      logger.warn(
-         '--stylelint has no effect: this custom preset has no stylelint config or dependencies',
-      );
+      logger.warn('--stylelint has no effect: this custom preset has no stylelint config or dependencies');
    }
    if (options.editorconfig && !caps.hasEditorconfig) {
-      logger.warn(
-         '--editorconfig has no effect: this custom preset has no editorconfig config or dependencies',
-      );
+      logger.warn('--editorconfig has no effect: this custom preset has no editorconfig config or dependencies');
    }
    if (options.cspell && !caps.hasCspell) {
-      logger.warn(
-         '--cspell has no effect: this custom preset has no cspell config or dependencies',
-      );
+      logger.warn('--cspell has no effect: this custom preset has no cspell config or dependencies');
    }
    if (options.lintStaged && !caps.hasLintStaged) {
-      logger.warn(
-         '--lint-staged has no effect: this custom preset has no lint-staged config or dependencies',
-      );
+      logger.warn('--lint-staged has no effect: this custom preset has no lint-staged config or dependencies');
    }
 
    const husky = options.husky === true || options.lintStaged === true;
@@ -166,9 +146,7 @@ async function executeLocalPath(
       result = applyLocalFmtPreset(cwd, presetName, opts);
    } catch (error) {
       if (error instanceof InvalidPackageJsonError) {
-         logger.error(
-            'package.json exists but is not valid JSON. Fix it first, then re-run this command.',
-         );
+         logger.error('package.json exists but is not valid JSON. Fix it first, then re-run this command.');
          return;
       }
       throw error;
@@ -410,18 +388,12 @@ function logGenerationResult(
       );
    }
    if (result.skipped.length > 0) {
-      logger.log(
-         `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
-      );
+      logger.log(`Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`);
    }
 }
 
 /** Log apply local preset results */
-function logApplyResult(result: {
-   created: string[];
-   overwritten: string[];
-   skipped: string[];
-}): void {
+function logApplyResult(result: { created: string[]; overwritten: string[]; skipped: string[] }): void {
    if (result.created.length > 0) {
       logger.log(
          `Created ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''} from local preset`,
@@ -433,9 +405,7 @@ function logApplyResult(result: {
       );
    }
    if (result.skipped.length > 0) {
-      logger.log(
-         `Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`,
-      );
+      logger.log(`Skipped ${result.skipped.length} file${result.skipped.length > 1 ? 's' : ''} (already exists)`);
    }
 }
 
@@ -572,8 +542,6 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions)
       }
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.warn(
-         `Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`,
-      );
+      logger.warn(`Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`);
    }
 }

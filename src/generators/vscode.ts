@@ -9,10 +9,7 @@ import { STYLELINT_EXTENSION, filterStylelintSettings } from '../core/shared';
  * Generate .vscode/settings.json from a vscode preset.
  * Always uses layered merge with backup.
  */
-export function generateVscodeSettings(
-   preset: VscodePreset,
-   opts: GenerateOptions,
-): 'created' | 'overwritten' | null {
+export function generateVscodeSettings(preset: VscodePreset, opts: GenerateOptions): 'created' | 'overwritten' | null {
    const settingsPath = path.join(opts.cwd, '.vscode', 'settings.json');
 
    if (opts.dryRun) {
@@ -32,9 +29,7 @@ export function generateVscodeSettings(
             logger.log('Backed up .vscode/settings.json → settings.json.bak');
          } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            logger.warn(
-               `Failed to backup .vscode/settings.json: ${message}. Continuing without backup.`,
-            );
+            logger.warn(`Failed to backup .vscode/settings.json: ${message}. Continuing without backup.`);
          }
       }
 
@@ -62,10 +57,7 @@ export function generateVscodeSettings(
 /**
  * Generate .vscode/extensions.json from a vscode preset.
  */
-export function generateVscodeExtensions(
-   preset: VscodePreset,
-   opts: GenerateOptions,
-): 'created' | null {
+export function generateVscodeExtensions(preset: VscodePreset, opts: GenerateOptions): 'created' | null {
    if (opts.dryRun) return 'created';
 
    const extensions = !opts.stylelint

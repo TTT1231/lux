@@ -121,11 +121,7 @@ export async function addDepsToManifest(packages: string[], cwd: string): Promis
 }
 
 /** Install devDependencies using the detected package manager (latest versions) */
-export async function installDevDeps(
-   packages: string[],
-   cwd: string,
-   pm?: PackageManager,
-): Promise<void> {
+export async function installDevDeps(packages: string[], cwd: string, pm?: PackageManager): Promise<void> {
    const manager = pm ?? detectPackageManager(cwd);
 
    const pkg = readJson<Record<string, unknown>>(path.join(cwd, 'package.json'));

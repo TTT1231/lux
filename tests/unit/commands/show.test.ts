@@ -1,10 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import {
-   getEnvConfig,
-   getEnvConfigPath,
-   setEnvConfig,
-   clearEnvConfig,
-} from '../../../src/utils/config';
+import { getEnvConfig, getEnvConfigPath, setEnvConfig, clearEnvConfig } from '../../../src/utils/config';
 import fs from 'node:fs';
 
 describe('config utilities', () => {
@@ -45,11 +40,7 @@ describe('config utilities', () => {
    });
 
    it('skips blank lines and comments when reading', () => {
-      fs.writeFileSync(
-         configPath,
-         '# comment\nhttps_proxy=http://test:9999\n\nhttp_proxy=http://test:9999\n',
-         'utf-8',
-      );
+      fs.writeFileSync(configPath, '# comment\nhttps_proxy=http://test:9999\n\nhttp_proxy=http://test:9999\n', 'utf-8');
 
       const config = getEnvConfig();
       expect(config).toEqual({

@@ -64,11 +64,7 @@ export function registerVscodeCommand(program: Command) {
       });
 }
 
-function executeVscodeLocalPath(
-   cwd: string,
-   presetName: string,
-   options: VscodeCommandOptions,
-): void {
+function executeVscodeLocalPath(cwd: string, presetName: string, options: VscodeCommandOptions): void {
    logger.log('Using local custom preset');
 
    const opts: GenerateOptions = {

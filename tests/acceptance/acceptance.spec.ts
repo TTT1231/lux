@@ -60,9 +60,7 @@ describe('Acceptance: lux CLI', () => {
          expect(settings['editor.defaultFormatter']).toBe('esbenp.prettier-vscode');
          expect(settings['editor.tabSize']).toBe(2);
 
-         const extensions = ctx.readJsonFile<{ recommendations: string[] }>(
-            '.vscode/extensions.json',
-         )!;
+         const extensions = ctx.readJsonFile<{ recommendations: string[] }>('.vscode/extensions.json')!;
          expect(extensions.recommendations).toContain('vue.volar');
          expect(extensions.recommendations).toContain('esbenp.prettier-vscode');
 
@@ -162,9 +160,7 @@ describe('Acceptance: lux CLI', () => {
          expect(settings['editor.formatOnSave']).toBe(true);
          expect(settings['editor.defaultFormatter']).toBe('esbenp.prettier-vscode');
 
-         const extensions = ctx.readJsonFile<{ recommendations: string[] }>(
-            '.vscode/extensions.json',
-         )!;
+         const extensions = ctx.readJsonFile<{ recommendations: string[] }>('.vscode/extensions.json')!;
          // React preset should NOT contain Vue extensions
          expect(extensions.recommendations).not.toContain('vue.volar');
          expect(extensions.recommendations).toContain('esbenp.prettier-vscode');
@@ -353,15 +349,7 @@ describe('Acceptance: lux CLI', () => {
          const result = ctx.run(['vscode', 'list']);
 
          expect(result.exitCode).toBe(0);
-         for (const name of [
-            'web-vue',
-            'web-react',
-            'electron-vue',
-            'uniapp',
-            'node',
-            'nest',
-            'go',
-         ]) {
+         for (const name of ['web-vue', 'web-react', 'electron-vue', 'uniapp', 'node', 'nest', 'go']) {
             expect(result.stdout).toContain(name);
          }
       });
@@ -410,15 +398,7 @@ describe('Acceptance: lux CLI', () => {
    // ─── Scenario 11: All presets produce valid output ───────────────
    describe('Scenario: each preset generates parseable, non-empty configs', () => {
       const fmtPresets = ['web-vue', 'web-react', 'electron-vue', 'uniapp', 'node', 'nest'];
-      const vscodePresets = [
-         'web-vue',
-         'web-react',
-         'electron-vue',
-         'uniapp',
-         'node',
-         'nest',
-         'go',
-      ];
+      const vscodePresets = ['web-vue', 'web-react', 'electron-vue', 'uniapp', 'node', 'nest', 'go'];
 
       for (const preset of fmtPresets) {
          it(`fmt "${preset}" produces valid configs`, () => {
@@ -492,9 +472,10 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.luxFileExists('preset/fmt/web-vue/cspell.json')).toBe(true);
 
          // deps.json with <latest> placeholders
-         const depsJson = ctx.luxReadJsonFile<
-            Record<string, { devDependencies: Record<string, string> }>
-         >('preset/fmt/web-vue/deps.json')!;
+         const depsJson =
+            ctx.luxReadJsonFile<Record<string, { devDependencies: Record<string, string> }>>(
+               'preset/fmt/web-vue/deps.json',
+            )!;
          expect(depsJson['eslint'].devDependencies['eslint']).toBe('<latest>');
 
          // Template package.json with scripts only
@@ -552,9 +533,10 @@ describe('Acceptance: lux CLI', () => {
          ctx.run(['fmt', 'web-vue', '--no-install']);
 
          // Edit deps.json to pin eslint version
-         const depsJson = ctx.luxReadJsonFile<
-            Record<string, { devDependencies: Record<string, string> }>
-         >('preset/fmt/web-vue/deps.json')!;
+         const depsJson =
+            ctx.luxReadJsonFile<Record<string, { devDependencies: Record<string, string> }>>(
+               'preset/fmt/web-vue/deps.json',
+            )!;
          depsJson['eslint'].devDependencies['eslint'] = '^9.0.0';
          ctx.luxWriteJsonFile('preset/fmt/web-vue/deps.json', depsJson);
 
@@ -569,9 +551,7 @@ describe('Acceptance: lux CLI', () => {
          expect(result.exitCode).toBe(0);
 
          // Verify project gets the edited version
-         const updatedPkg = ctx.readJsonFile<{ devDependencies: Record<string, string> }>(
-            'package.json',
-         )!;
+         const updatedPkg = ctx.readJsonFile<{ devDependencies: Record<string, string> }>('package.json')!;
          expect(updatedPkg.devDependencies!['eslint']).toBe('^9.0.0');
       });
    });
@@ -626,12 +606,7 @@ describe('Acceptance: lux CLI', () => {
          // Delete all generated config files
          const fs = await import('node:fs');
          const path = await import('node:path');
-         for (const file of [
-            'eslint.config.mjs',
-            '.prettierrc',
-            '.prettierignore',
-            'cspell.json',
-         ]) {
+         for (const file of ['eslint.config.mjs', '.prettierrc', '.prettierignore', 'cspell.json']) {
             const p = path.join(ctx.tmpDir, file);
             if (fs.existsSync(p)) fs.unlinkSync(p);
          }
@@ -814,12 +789,7 @@ describe('Acceptance: lux CLI', () => {
          // Delete project files for clean re-run
          const fs = await import('node:fs');
          const path = await import('node:path');
-         for (const file of [
-            'eslint.config.mjs',
-            '.prettierrc',
-            '.prettierignore',
-            'cspell.json',
-         ]) {
+         for (const file of ['eslint.config.mjs', '.prettierrc', '.prettierignore', 'cspell.json']) {
             const p = path.join(ctx.tmpDir, file);
             if (fs.existsSync(p)) fs.unlinkSync(p);
          }
@@ -830,13 +800,7 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('cspell.json')).toBe(false);
 
          // Third run WITH --cspell — local preset path includes cspell
-         const resultWithCspell = ctx.run([
-            'fmt',
-            'web-vue',
-            '--no-install',
-            '--cspell',
-            '--force',
-         ]);
+         const resultWithCspell = ctx.run(['fmt', 'web-vue', '--no-install', '--cspell', '--force']);
          expect(resultWithCspell.exitCode).toBe(0);
          expect(ctx.fileExists('cspell.json')).toBe(true);
       });

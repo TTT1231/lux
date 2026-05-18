@@ -165,9 +165,7 @@ describe('materializeFmtPreset', () => {
       expect(fs.existsSync(path.join(presetDir, 'stylelint.config.mjs'))).toBe(true);
       expect(fs.existsSync(path.join(presetDir, '.stylelintignore'))).toBe(true);
       expect(fs.existsSync(path.join(presetDir, '.editorconfig'))).toBe(true);
-      expect(fs.readFileSync(path.join(presetDir, 'eslint.config.mjs'), 'utf-8')).toBe(
-         'export default []\n',
-      );
+      expect(fs.readFileSync(path.join(presetDir, 'eslint.config.mjs'), 'utf-8')).toBe('export default []\n');
    });
 
    it('writes template package.json with scripts only and writes deps.json', () => {
@@ -240,10 +238,7 @@ describe('materializeVscodePreset', () => {
       tmpDir = createTempDir();
       const vscodeDir = path.join(tmpDir, '.vscode');
       fs.mkdirSync(vscodeDir, { recursive: true });
-      fs.writeFileSync(
-         path.join(vscodeDir, 'settings.json'),
-         JSON.stringify({ 'editor.formatOnSave': true }),
-      );
+      fs.writeFileSync(path.join(vscodeDir, 'settings.json'), JSON.stringify({ 'editor.formatOnSave': true }));
       fs.writeFileSync(
          path.join(vscodeDir, 'extensions.json'),
          JSON.stringify({ recommendations: ['esbenp.prettier-vscode'] }),
@@ -294,9 +289,7 @@ describe('applyLocalFmtPreset', () => {
 
       expect(result.created).toContain('eslint.config.mjs');
       expect(result.created).toContain('.prettierrc');
-      expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe(
-         'export default []',
-      );
+      expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe('export default []');
    });
 
    it('skips existing files without --force', () => {
@@ -314,9 +307,7 @@ describe('applyLocalFmtPreset', () => {
       });
 
       expect(result.skipped).toContain('eslint.config.mjs');
-      expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe(
-         'existing content',
-      );
+      expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe('existing content');
    });
 
    it('overwrites existing files with --force', () => {
@@ -664,9 +655,7 @@ describe('applyLocalVscodePreset', () => {
       expect(result.created).toContain('.vscode/settings.json');
       expect(result.created).toContain('.vscode/extensions.json');
 
-      const settings = JSON.parse(
-         fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'),
-      );
+      const settings = JSON.parse(fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'));
       expect(settings['editor.formatOnSave']).toBe(true);
    });
 
@@ -701,9 +690,7 @@ describe('applyLocalVscodePreset', () => {
 
       expect(result.overwritten).toContain('.vscode/settings.json');
 
-      const settings = JSON.parse(
-         fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'),
-      );
+      const settings = JSON.parse(fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'));
       expect(settings['editor.cursorBlinking']).toBe('smooth');
       expect(settings['editor.formatOnSave']).toBe(true);
       expect(settings['editor.tabSize']).toBe(2);
@@ -730,15 +717,11 @@ describe('applyLocalVscodePreset', () => {
 
       expect(result.created).toContain('.vscode/settings.json');
 
-      const settings = JSON.parse(
-         fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'),
-      );
+      const settings = JSON.parse(fs.readFileSync(path.join(tmpDir, '.vscode', 'settings.json'), 'utf-8'));
       expect(settings['editor.formatOnSave']).toBe(true);
       expect(settings['stylelint.enable']).toBeUndefined();
 
-      const extensions = JSON.parse(
-         fs.readFileSync(path.join(tmpDir, '.vscode', 'extensions.json'), 'utf-8'),
-      );
+      const extensions = JSON.parse(fs.readFileSync(path.join(tmpDir, '.vscode', 'extensions.json'), 'utf-8'));
       expect(extensions.recommendations).not.toContain('stylelint.vscode-stylelint');
    });
 
@@ -988,11 +971,7 @@ describe('filterScripts', () => {
 });
 
 describe('detectPresetCapabilities', () => {
-   function setupPresetDir(
-      name: string,
-      files: Record<string, string>,
-      depsJson?: Record<string, unknown>,
-   ): void {
+   function setupPresetDir(name: string, files: Record<string, string>, depsJson?: Record<string, unknown>): void {
       const presetDir = path.join(luxHome, 'preset', 'fmt', name);
       fs.mkdirSync(presetDir, { recursive: true });
       for (const [fileName, content] of Object.entries(files)) {

@@ -123,9 +123,7 @@ describe('detectPackageManager — global config override', () => {
       fs.writeFileSync(path.join(tmpDir, 'bun.lock'), '');
       const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       expect(detectPackageManager(tmpDir)).toBe('pnpm');
-      expect(warnSpy).toHaveBeenCalledWith(
-         expect.stringContaining('Global config is pnpm but detected bun lockfile'),
-      );
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Global config is pnpm but detected bun lockfile'));
       warnSpy.mockRestore();
    });
 });
@@ -139,11 +137,7 @@ describe('addDepsToManifest', () => {
    });
 
    function createPkgJson(dir: string, devDeps?: Record<string, string>) {
-      const content = JSON.stringify(
-         { name: 'test-project', devDependencies: devDeps ?? {} },
-         null,
-         2,
-      );
+      const content = JSON.stringify({ name: 'test-project', devDependencies: devDeps ?? {} }, null, 2);
       fs.writeFileSync(path.join(dir, 'package.json'), content);
    }
 

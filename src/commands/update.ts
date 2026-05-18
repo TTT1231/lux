@@ -41,9 +41,7 @@ async function performUpdate(pm: GlobalPm): Promise<void> {
    const { exitCode, stderr } = await execFileNoThrow(command, args);
 
    if (exitCode !== 0) {
-      const hint = /EACCES|permission/i.test(stderr)
-         ? '\nTry running with elevated privileges (e.g. sudo).'
-         : '';
+      const hint = /EACCES|permission/i.test(stderr) ? '\nTry running with elevated privileges (e.g. sudo).' : '';
       throw new Error(`Update failed: ${stderr}${hint}`);
    }
 }

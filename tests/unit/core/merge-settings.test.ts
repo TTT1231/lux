@@ -32,10 +32,7 @@ describe('mergeVscodeSettings', () => {
    });
 
    it('preset wins for uncategorized keys', () => {
-      const result = mergeVscodeSettings(
-         { 'some.plugin.setting': 'new' },
-         { 'some.plugin.setting': 'old' },
-      );
+      const result = mergeVscodeSettings({ 'some.plugin.setting': 'new' }, { 'some.plugin.setting': 'old' });
       expect(result['some.plugin.setting']).toBe('new');
    });
 
@@ -50,10 +47,7 @@ describe('mergeVscodeSettings', () => {
    });
 
    it('replaces arrays with preset values', () => {
-      const result = mergeVscodeSettings(
-         { 'eslint.validate': ['ts', 'vue'] },
-         { 'eslint.validate': ['js'] },
-      );
+      const result = mergeVscodeSettings({ 'eslint.validate': ['ts', 'vue'] }, { 'eslint.validate': ['js'] });
       expect(result['eslint.validate']).toEqual(['ts', 'vue']);
    });
 });

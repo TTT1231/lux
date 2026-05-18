@@ -9,6 +9,7 @@ export interface DepsRegistry {
            dependencies?: Record<string, string>;
            devDependencies?: Record<string, string>;
         }
+      | Record<string, string>
       | undefined;
 }
 

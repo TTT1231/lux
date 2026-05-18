@@ -38,8 +38,7 @@ coverage/
    cspell: () =>
       JSON.stringify(
          {
-            $schema:
-               'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
+            $schema: 'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
             version: '0.2',
             language: 'en,en-US',
             allowCompoundWords: true,
@@ -67,10 +66,8 @@ trim_trailing_whitespace = false
    deps,
 
    scripts: {
-      eslint:
-         'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint',
-      'eslint:fix':
-         'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint --fix',
+      eslint: 'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint',
+      'eslint:fix': 'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint --fix',
       cspell: 'cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
       'type:check': 'tsc --noEmit',
       format: 'prettier --write "src/**/*.{ts,js,json}"',

@@ -4,11 +4,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { FMT_PRESETS } from '../../../src/presets/fmt';
 import { fuzzyMatchPreset, PresetNotFoundError } from '../../../src/utils/errors';
-import {
-   isValidCustomPreset,
-   listCustomPresets,
-   localPresetExists,
-} from '../../../src/core/local-preset';
+import { isValidCustomPreset, listCustomPresets, localPresetExists } from '../../../src/core/local-preset';
 
 function createTempDir(): string {
    return fs.mkdtempSync(path.join(os.tmpdir(), 'lux-fmt-dispatch-test-'));

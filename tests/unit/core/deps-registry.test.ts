@@ -5,6 +5,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { loadDepsJson, collectDepsFromRegistry, composeLintStaged } from '../../../src/core/shared';
 import type { DepsRegistry } from '../../../src/presets/types';
 
+type DepsGroup = { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+
+function getGroup(registry: DepsRegistry, tool: string): DepsGroup {
+   return registry[tool] as DepsGroup;
+}
+
 function createTempDir(): string {
    return fs.mkdtempSync(path.join(os.tmpdir(), 'lux-deps-registry-test-'));
 }
@@ -28,9 +34,9 @@ describe('loadDepsJson', () => {
 
       const result = loadDepsJson(tmpDir);
 
-      expect(result.eslint.devDependencies['eslint']).toBe('^9.0.0');
-      expect(result.eslint.devDependencies['typescript-eslint']).toBe('^8.0.0');
-      expect(result.stylelint.devDependencies['stylelint']).toBe('^16.0.0');
+      expect(getGroup(result, 'eslint').devDependencies!['eslint']).toBe('^9.0.0');
+      expect(getGroup(result, 'eslint').devDependencies!['typescript-eslint']).toBe('^8.0.0');
+      expect(getGroup(result, 'stylelint').devDependencies!['stylelint']).toBe('^16.0.0');
    });
 
    it('throws clear error when JSON is malformed', () => {
@@ -57,8 +63,8 @@ describe('loadDepsJson', () => {
 
       const result = loadDepsJson(tmpDir);
 
-      expect(result.eslint.devDependencies['eslint']).toBe('<latest>');
-      expect(result.eslint.devDependencies['prettier']).toBe('<latest>');
+      expect(getGroup(result, 'eslint').devDependencies!['eslint']).toBe('<latest>');
+      expect(getGroup(result, 'eslint').devDependencies!['prettier']).toBe('<latest>');
    });
 });
 
@@ -131,11 +137,11 @@ describe('collectDepsFromRegistry', () => {
    });
 
    it('always collects top-level devDependencies regardless of flags', () => {
-      const registryWithCustom: DepsRegistry = {
+      const registryWithCustom = {
          devDependencies: { 'my-custom-pkg': '^1.0.0' },
          eslint: { devDependencies: { eslint: '<latest>' } },
          prettier: { devDependencies: { prettier: '<latest>' } },
-      };
+      } as DepsRegistry;
 
       const result = collectDepsFromRegistry(registryWithCustom, {
          stylelint: false,
@@ -151,11 +157,11 @@ describe('collectDepsFromRegistry', () => {
    });
 
    it('always collects top-level dependencies regardless of flags', () => {
-      const registryWithRuntimeDeps: DepsRegistry = {
+      const registryWithRuntimeDeps = {
          dependencies: { 'lodash-es': '^4.17.0' },
          eslint: { devDependencies: { eslint: '<latest>' } },
          prettier: { devDependencies: { prettier: '<latest>' } },
-      };
+      } as DepsRegistry;
 
       const result = collectDepsFromRegistry(registryWithRuntimeDeps, {
          stylelint: false,
@@ -169,11 +175,11 @@ describe('collectDepsFromRegistry', () => {
    });
 
    it('resolves <latest> in top-level custom deps', () => {
-      const registryWithLatest: DepsRegistry = {
+      const registryWithLatest = {
          devDependencies: { 'some-pkg': '<latest>' },
          eslint: { devDependencies: { eslint: '<latest>' } },
          prettier: { devDependencies: { prettier: '<latest>' } },
-      };
+      } as DepsRegistry;
 
       const result = collectDepsFromRegistry(registryWithLatest, {
          stylelint: false,

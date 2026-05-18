@@ -77,11 +77,7 @@ export function resetLocalPreset(type: PresetType, presetName: string): void {
    }
 }
 
-export function materializeFmtPreset(
-   presetName: string,
-   preset: FmtPreset,
-   opts: GenerateOptions,
-): void {
+export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts: GenerateOptions): void {
    if (opts.dryRun) {
       logger.log('[dry-run] Would materialize local preset to ~/.lux/preset/fmt/' + presetName);
       return;
@@ -158,11 +154,7 @@ export class InvalidPackageJsonError extends Error {
    }
 }
 
-export function applyLocalFmtPreset(
-   cwd: string,
-   presetName: string,
-   opts: GenerateOptions,
-): ApplyLocalResult {
+export function applyLocalFmtPreset(cwd: string, presetName: string, opts: GenerateOptions): ApplyLocalResult {
    const result: ApplyLocalResult = {
       created: [],
       overwritten: [],
@@ -188,10 +180,7 @@ export function applyLocalFmtPreset(
    const entries = fs
       .readdirSync(presetDir)
       .filter(
-         name =>
-            name !== 'package.json' &&
-            name !== 'deps.json' &&
-            fs.statSync(path.join(presetDir, name)).isFile(),
+         name => name !== 'package.json' && name !== 'deps.json' && fs.statSync(path.join(presetDir, name)).isFile(),
       );
 
    for (const filename of entries) {
@@ -240,11 +229,7 @@ export function applyLocalFmtPreset(
    return result;
 }
 
-export function applyLocalVscodePreset(
-   cwd: string,
-   presetName: string,
-   opts: GenerateOptions,
-): ApplyLocalResult {
+export function applyLocalVscodePreset(cwd: string, presetName: string, opts: GenerateOptions): ApplyLocalResult {
    const result: ApplyLocalResult = {
       created: [],
       overwritten: [],
@@ -262,9 +247,7 @@ export function applyLocalVscodePreset(
    const settingsSrc = path.join(presetDir, 'settings.json');
    if (fileExists(settingsSrc)) {
       const presetSettings = readJson<Record<string, unknown>>(settingsSrc);
-      const filteredSettings = !opts.stylelint
-         ? filterStylelintSettings(presetSettings ?? {})
-         : presetSettings;
+      const filteredSettings = !opts.stylelint ? filterStylelintSettings(presetSettings ?? {}) : presetSettings;
 
       if (filteredSettings) {
          const settingsDest = path.join(cwd, '.vscode', 'settings.json');
@@ -297,9 +280,7 @@ export function applyLocalVscodePreset(
       if (extensionsData) {
          let presetRecommendations = extensionsData.recommendations ?? [];
          if (!opts.stylelint) {
-            presetRecommendations = presetRecommendations.filter(
-               ext => ext !== STYLELINT_EXTENSION,
-            );
+            presetRecommendations = presetRecommendations.filter(ext => ext !== STYLELINT_EXTENSION);
          }
 
          if (opts.dryRun) {
@@ -391,10 +372,7 @@ function mergeTemplateIntoProject(
    return merged;
 }
 
-export function filterScripts(
-   scripts: Record<string, string>,
-   flags: FilterScriptsFlags,
-): Record<string, string> {
+export function filterScripts(scripts: Record<string, string>, flags: FilterScriptsFlags): Record<string, string> {
    const filtered: Record<string, string> = {};
 
    for (const [key, value] of Object.entries(scripts)) {
@@ -435,9 +413,7 @@ export function detectPresetCapabilities(presetName: string): {
       hasLintStagedDep = 'lint-staged' in registry;
    } catch {
       // Fallback: check package.json for old format
-      const pkg = readJson<{ devDependencies?: Record<string, string> }>(
-         path.join(presetDir, 'package.json'),
-      );
+      const pkg = readJson<{ devDependencies?: Record<string, string> }>(path.join(presetDir, 'package.json'));
       if (pkg?.devDependencies) {
          const depNames = Object.keys(pkg.devDependencies);
          hasStylelintDep = depNames.some(d => d.includes('stylelint'));

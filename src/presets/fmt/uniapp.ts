@@ -76,8 +76,7 @@ unpackage/
    cspell: () =>
       JSON.stringify(
          {
-            $schema:
-               'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
+            $schema: 'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
             version: '0.2',
             language: 'en,en-US',
             allowCompoundWords: true,
