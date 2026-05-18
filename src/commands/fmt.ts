@@ -7,10 +7,17 @@ import { FMT_PRESETS } from '../presets/fmt';
 import { logger } from '../utils/logger';
 import { PresetNotFoundError } from '../utils/errors';
 import { generateAllFmt } from '../generators/fmt';
-import { detectPackageManager, getLockfileName, getRunPrefix, installDevDeps, addDepsToManifest } from '../utils/deps';
+import {
+   detectPackageManager,
+   getLockfileName,
+   getRunPrefix,
+   getExecPrefix,
+   installDevDeps,
+   addDepsToManifest,
+} from '../utils/deps';
 import type { PackageManager } from '../utils/deps';
 import { execFileNoThrow } from '../utils/execFileNoThrow';
-import { fileExists, readJson, writeJson, ensureDir, writeFile } from '../utils/fs';
+import { fileExists, readJson, writeJson, ensureDir, writeFile, readFile } from '../utils/fs';
 import {
    getLocalPresetDir,
    localPresetExists,
@@ -315,7 +322,7 @@ async function executeBuiltinPath(
 
    if (missing.length === 0) {
       if (opts.husky) {
-         await initHusky(cwd, pm, opts);
+         await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
       }
       return;
    }
@@ -323,7 +330,7 @@ async function executeBuiltinPath(
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
       if (opts.husky) {
-         await initHusky(cwd, pm, opts);
+         await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
       }
       return;
    }
@@ -341,7 +348,7 @@ async function executeBuiltinPath(
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
       if (opts.husky) {
-         await initHusky(cwd, pm, opts);
+         await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
       }
       return;
    }
@@ -357,7 +364,7 @@ async function executeBuiltinPath(
 
    // Husky initialization
    if (opts.husky) {
-      await initHusky(cwd, pm, opts);
+      await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
    }
 }
 
@@ -487,8 +494,8 @@ async function injectScripts(
    }
 }
 
-/** Initialize husky: create .husky/pre-commit, inject init script, execute once */
-async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions): Promise<void> {
+/** Initialize husky: inject init script, execute once, then write pre-commit hook */
+async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions, hookContent?: string): Promise<void> {
    const pkgPath = path.join(cwd, 'package.json');
    const pkg = readJson<Record<string, unknown>>(pkgPath);
    if (!pkg) {
@@ -496,31 +503,25 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions)
       return;
    }
 
-   const prefix = getRunPrefix(pm);
    const isYarn = pm === 'yarn';
    const initScriptName = isYarn ? 'postinstall' : 'prepare';
-   const hookCommand = opts.lintStaged ? `${prefix} lint-staged` : `${prefix} lint`;
+   const prefix = getRunPrefix(pm);
 
-   // 1. Create .husky/pre-commit
+   // Resolve hook template with tag replacement
+   const template = hookContent ?? (opts.lintStaged ? '<pmx> lint-staged\n' : '<pm> lint\n');
+   const resolvedHook = template.replace(/<pmx>/g, getExecPrefix(pm)).replace(/<pm>/g, prefix);
+
    const huskyDir = path.join(cwd, '.husky');
    const preCommitPath = path.join(huskyDir, 'pre-commit');
 
    if (opts.dryRun) {
-      logger.log(`[dry-run] Would create .husky/pre-commit with: ${hookCommand}`);
+      logger.log(`[dry-run] Would create .husky/pre-commit with: ${resolvedHook.trim()}`);
       logger.log(`[dry-run] Would inject "${initScriptName}": "husky" script`);
       logger.log(`[dry-run] Would run ${prefix} ${initScriptName}`);
       return;
    }
 
-   if (fileExists(preCommitPath) && !opts.force) {
-      logger.log('Skipped .husky/pre-commit (already exists)');
-   } else {
-      ensureDir(huskyDir);
-      writeFile(preCommitPath, `${hookCommand}\n`);
-      fs.chmodSync(preCommitPath, 0o755);
-   }
-
-   // 2. Inject init script into package.json
+   // 1. Inject init script into package.json
    const scripts = (pkg.scripts ?? {}) as Record<string, string>;
    if (scripts[initScriptName] !== undefined && !opts.force) {
       logger.log(`Skipped script "${initScriptName}" (already exists)`);
@@ -531,7 +532,7 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions)
       logger.log(`Injected "${initScriptName}" script for husky`);
    }
 
-   // 3. Execute init script once
+   // 2. Execute init script (husky creates .husky/ dir with default pre-commit)
    logger.log(`Running ${prefix} ${initScriptName} to initialize git hooks...`);
    try {
       const args = isYarn ? ['postinstall'] : ['run', initScriptName];
@@ -544,5 +545,14 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions)
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.warn(`Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`);
+   }
+
+   // 3. Overwrite .husky/pre-commit with correct content (replaces husky's default)
+   if (fileExists(preCommitPath) && !opts.force) {
+      logger.log('Skipped .husky/pre-commit (already exists)');
+   } else {
+      ensureDir(huskyDir);
+      writeFile(preCommitPath, resolvedHook);
+      fs.chmodSync(preCommitPath, 0o755);
    }
 }
