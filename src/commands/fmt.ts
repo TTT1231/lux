@@ -507,6 +507,12 @@ async function injectScripts(
 
 /** Initialize husky: inject init script, execute once, then write pre-commit hook */
 async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions, hookContent?: string): Promise<void> {
+   const gitDir = path.join(cwd, '.git');
+   if (!fileExists(gitDir)) {
+      logger.warn('Git repository not found. Husky and lint-staged require a git repo — skipping.');
+      return;
+   }
+
    const pkgPath = path.join(cwd, 'package.json');
    const pkg = readJson<Record<string, unknown>>(pkgPath);
    if (!pkg) {

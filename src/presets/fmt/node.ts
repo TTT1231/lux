@@ -90,7 +90,6 @@ coverage/
    cspell: () =>
       JSON.stringify(
          {
-            $schema: 'https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json',
             version: '0.2',
             language: 'en,en-US',
             allowCompoundWords: true,
@@ -132,7 +131,7 @@ trim_trailing_whitespace = false
       if (lintStaged) {
          return '<pmx> lint-staged\n';
       }
-      return '<pm> lint\n';
+      return '<pm> type:check\n';
    },
 
    lintStaged: ({ stylelint }) => {

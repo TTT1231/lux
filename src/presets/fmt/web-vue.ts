@@ -137,7 +137,7 @@ trim_trailing_whitespace = false
       if (lintStaged) {
          return '<pmx> lint-staged\n';
       }
-      return '<pm> lint\n';
+      return '<pm> type:check\n';
    },
 
    lintStaged: ({ stylelint }) => {

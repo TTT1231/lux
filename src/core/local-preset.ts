@@ -92,7 +92,10 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
 
       const resolved = opts.lockfile
          ? content.replace(/<lockfile>/g, opts.lockfile)
-         : content.replace(/<lockfile>\n?/g, '');
+         : content
+              .replace(/,?\s*'<lockfile>'/g, '')
+              .replace(/'<lockfile>',?\s*/g, '')
+              .replace(/<lockfile>\n?/g, '');
 
       writeFile(path.join(presetDir, filename), resolved);
    }

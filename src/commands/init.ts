@@ -6,6 +6,8 @@ import { FMT_PRESETS } from '../presets/fmt';
 import { VSCODE_PRESETS } from '../presets/vscode';
 import { generateInitSkills } from '../generators/init';
 import { materializeFmtPreset, materializeVscodePresetFromBuiltin } from '../core/local-preset';
+import { detectPackageManager, getLockfileName } from '../utils/deps';
+import { fileExists } from '../utils/fs';
 import { logger } from '../utils/logger';
 import type { GenerateOptions } from '../presets/types';
 
@@ -54,8 +56,11 @@ export function registerInitCommand(program: Command): void {
 }
 
 function materializeAllPresets(): void {
+   const cwd = process.cwd();
+   const pm = fileExists(`${cwd}/package.json`) ? detectPackageManager(cwd) : undefined;
+
    const opts: GenerateOptions = {
-      cwd: process.cwd(),
+      cwd,
       force: false,
       dryRun: false,
       stylelint: false,
@@ -63,6 +68,7 @@ function materializeAllPresets(): void {
       cspell: false,
       husky: false,
       lintStaged: false,
+      lockfile: pm ? getLockfileName(pm) : undefined,
    };
 
    for (const preset of FMT_PRESETS) {
