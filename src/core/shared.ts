@@ -91,9 +91,9 @@ function validateDepsRegistry(data: unknown): DepsRegistry {
       throw new Error('deps.json must be an object keyed by tool name');
    }
 
-   for (const [tool, entry] of Object.entries(data as Record<string, unknown>)) {
+   for (const [key, entry] of Object.entries(data as Record<string, unknown>)) {
       if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
-         throw new Error(`deps.json entry "${tool}" must be an object`);
+         throw new Error(`deps.json entry "${key}" must be an object`);
       }
    }
 
@@ -108,10 +108,23 @@ export interface DepsFilterFlags {
    lintStaged: boolean;
 }
 
+const RESERVED_TOP_KEYS = new Set(['devDependencies', 'dependencies']);
+
 export function collectDepsFromRegistry(
    registry: DepsRegistry,
    flags: DepsFilterFlags,
 ): Record<string, string> {
+   const deps: Record<string, string> = {};
+
+   // Always collect top-level custom deps (not gated by flags)
+   if (registry.devDependencies) {
+      Object.assign(deps, registry.devDependencies);
+   }
+   if (registry.dependencies) {
+      Object.assign(deps, registry.dependencies);
+   }
+
+   // Collect tool-grouped deps based on flags
    const activeTools = new Set(['eslint', 'prettier']);
 
    if (flags.stylelint) activeTools.add('stylelint');
@@ -119,8 +132,6 @@ export function collectDepsFromRegistry(
    if (flags.editorconfig) activeTools.add('editorconfig');
    if (flags.husky) activeTools.add('husky');
    if (flags.lintStaged) activeTools.add('lint-staged');
-
-   const deps: Record<string, string> = {};
 
    for (const tool of activeTools) {
       const entry = registry[tool];

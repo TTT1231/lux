@@ -129,6 +129,62 @@ describe('collectDepsFromRegistry', () => {
       expect(prettierEntries.length).toBe(1);
       expect(result['prettier']).toBe('<latest>');
    });
+
+   it('always collects top-level devDependencies regardless of flags', () => {
+      const registryWithCustom: DepsRegistry = {
+         devDependencies: { 'my-custom-pkg': '^1.0.0' },
+         eslint: { devDependencies: { eslint: '<latest>' } },
+         prettier: { devDependencies: { prettier: '<latest>' } },
+      };
+
+      const result = collectDepsFromRegistry(registryWithCustom, {
+         stylelint: false,
+         cspell: false,
+         editorconfig: false,
+         husky: false,
+         lintStaged: false,
+      });
+
+      expect(result['my-custom-pkg']).toBe('^1.0.0');
+      expect(result['eslint']).toBe('<latest>');
+      expect(result['prettier']).toBe('<latest>');
+   });
+
+   it('always collects top-level dependencies regardless of flags', () => {
+      const registryWithRuntimeDeps: DepsRegistry = {
+         dependencies: { 'lodash-es': '^4.17.0' },
+         eslint: { devDependencies: { eslint: '<latest>' } },
+         prettier: { devDependencies: { prettier: '<latest>' } },
+      };
+
+      const result = collectDepsFromRegistry(registryWithRuntimeDeps, {
+         stylelint: false,
+         cspell: false,
+         editorconfig: false,
+         husky: false,
+         lintStaged: false,
+      });
+
+      expect(result['lodash-es']).toBe('^4.17.0');
+   });
+
+   it('resolves <latest> in top-level custom deps', () => {
+      const registryWithLatest: DepsRegistry = {
+         devDependencies: { 'some-pkg': '<latest>' },
+         eslint: { devDependencies: { eslint: '<latest>' } },
+         prettier: { devDependencies: { prettier: '<latest>' } },
+      };
+
+      const result = collectDepsFromRegistry(registryWithLatest, {
+         stylelint: false,
+         cspell: false,
+         editorconfig: false,
+         husky: false,
+         lintStaged: false,
+      });
+
+      expect(result['some-pkg']).toBe('<latest>');
+   });
 });
 
 describe('composeLintStaged', () => {

@@ -1,9 +1,15 @@
 /** Per-tool dependency registry */
 export interface DepsRegistry {
-   [tool: string]: {
-      dependencies?: Record<string, string>;
-      devDependencies?: Record<string, string>;
-   };
+   /** Custom deps — always collected, not gated by flags. Supports <latest>. */
+   devDependencies?: Record<string, string>;
+   dependencies?: Record<string, string>;
+   /** Tool-grouped deps — collected based on flags */
+   [tool: string]:
+      | {
+           dependencies?: Record<string, string>;
+           devDependencies?: Record<string, string>;
+        }
+      | undefined;
 }
 
 /** Result of file generation */
