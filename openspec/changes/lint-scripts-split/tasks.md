@@ -47,37 +47,37 @@
 
 ### 7.1 数据层测试
 
-- [ ] 7.1.1 `loadDepsJson` 单元测试：正常加载返回正确结构
-- [ ] 7.1.2 `loadDepsJson` 单元测试：JSON 损坏时抛出明确错误
-- [ ] 7.1.3 `loadDepsJson` 单元测试：文件缺失时抛出明确错误
-- [ ] 7.1.4 `loadDepsJson` 单元测试：含 `<latest>` 占位符时正确透传
+- [x] 7.1.1 `loadDepsJson` 单元测试：正常加载返回正确结构
+- [x] 7.1.2 `loadDepsJson` 单元测试：JSON 损坏时抛出明确错误
+- [x] 7.1.3 `loadDepsJson` 单元测试：文件缺失时抛出明确错误
+- [x] 7.1.4 `loadDepsJson` 单元测试：含 `<latest>` 占位符时正确透传
 
 ### 7.2 filterScripts 测试
 
-- [ ] 7.2.1 按 key 删除：`stylelint` flag false 时移除 `stylelint` 和 `stylelint:fix`
-- [ ] 7.2.2 按 key 删除：`cspell` flag false 时移除 `cspell` key
-- [ ] 7.2.3 按 key 删除：多个 flag 同时 false 时正确组合
-- [ ] 7.2.4 不影响其他 key：`eslint`/`format` 等常驻脚本保留
+- [x] 7.2.1 按 key 删除：`stylelint` flag false 时移除 `stylelint` 和 `stylelint:fix`
+- [x] 7.2.2 按 key 删除：`cspell` flag false 时移除 `cspell` key
+- [x] 7.2.3 按 key 删除：多个 flag 同时 false 时正确组合
+- [x] 7.2.4 不影响其他 key：`eslint`/`format` 等常驻脚本保留
 
 ### 7.3 composeLintStaged 测试
 
-- [ ] 7.3.1 全 flag 激活：所有工具分片合并输出
-- [ ] 7.3.2 部分 flag：stylelint false 时不包含 stylelint 分片
-- [ ] 7.3.3 空 glob 清理：排除分片后空 glob key 被移除
-- [ ] 7.3.4 同 glob 合并：eslint + prettier 对 `*.{ts,js}` 的命令合并为一个数组
+- [x] 7.3.1 全 flag 激活：所有工具分片合并输出
+- [x] 7.3.2 部分 flag：stylelint false 时不包含 stylelint 分片
+- [x] 7.3.3 空 glob 清理：排除分片后空 glob key 被移除
+- [x] 7.3.4 同 glob 合并：eslint + prettier 对 `*.{ts,js}` 的命令合并为一个数组
 
 ### 7.4 collectDepsFromRegistry 测试
 
-- [ ] 7.4.1 活跃工具收集：指定 flag 对应工具的 deps 全部返回
-- [ ] 7.4.2 常驻工具：eslint + prettier deps 始终返回
-- [ ] 7.4.3 包去重：多个工具组有相同包名时只出现一次
+- [x] 7.4.1 活跃工具收集：指定 flag 对应工具的 deps 全部返回
+- [x] 7.4.2 常驻工具：eslint + prettier deps 始终返回
+- [x] 7.4.3 包去重：多个工具组有相同包名时只出现一次
 
 ### 7.5 集成 / 回归测试
 
-- [ ] 7.5.1 `mergeTemplateIntoProject` 回归：flag 翻转后依赖合并行为正确（opts.stylelint 而非 opts.noStylelint）
-- [ ] 7.5.2 `resolveLocalDeps` 回归：从 deps.json 读取后正确解析 `<latest>` 占位符
-- [ ] 7.5.3 `injectScripts` 回归：只添加不删除，用户已有 lint/lint:fix 不被触碰
-- [ ] 7.5.4 `detectPresetCapabilities` 回归：从 deps.json 工具组检测能力而非 isNotXxxDep
+- [x] 7.5.1 `mergeTemplateIntoProject` 回归：flag 翻转后依赖合并行为正确（opts.stylelint 而非 opts.noStylelint）
+- [x] 7.5.2 `resolveLocalDeps` 回归：从 deps.json 读取后正确解析 `<latest>` 占位符
+- [x] 7.5.3 `injectScripts` 回归：只添加不删除，用户已有 lint/lint:fix 不被触碰
+- [x] 7.5.4 `detectPresetCapabilities` 回归：从 deps.json 工具组检测能力而非 isNotXxxDep
 
 ### 7.6 验收测试更新
 
