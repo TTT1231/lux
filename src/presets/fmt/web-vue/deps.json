@@ -16,6 +16,7 @@
       "devDependencies": {
          "stylelint": "<latest>",
          "stylelint-config-standard-scss": "<latest>",
+         "stylelint-config-recess-order": "<latest>",
          "stylelint-order": "<latest>",
          "stylelint-scss": "<latest>",
          "@stylistic/stylelint-plugin": "<latest>",
