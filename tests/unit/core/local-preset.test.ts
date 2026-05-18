@@ -16,6 +16,7 @@ import {
    filterScripts,
    detectPresetCapabilities,
 } from '../../../src/core/local-preset';
+import { FMT_PRESETS } from '../../../src/presets/fmt';
 import type { FmtPreset, GenerateOptions } from '../../../src/presets/types';
 
 function createTempDir(): string {
@@ -1013,5 +1014,35 @@ describe('detectPresetCapabilities', () => {
       );
       const caps = detectPresetCapabilities('cap-test3');
       expect(caps.hasCspell).toBe(false);
+   });
+});
+
+describe('materializeAllPresets — custom preset protection', () => {
+   it('does not touch custom preset directories when materializing built-in presets', () => {
+      const fmtDir = path.join(luxHome, 'preset', 'fmt');
+
+      // 1. Create a custom preset with user content
+      const customDir = path.join(fmtDir, 'my-team');
+      fs.mkdirSync(customDir, { recursive: true });
+      const customEslint = '// my custom eslint rules\nexport default []\n';
+      const customPkg = JSON.stringify({ name: 'my-team', scripts: { lint: 'eslint .' } });
+      fs.writeFileSync(path.join(customDir, 'eslint.config.mjs'), customEslint);
+      fs.writeFileSync(path.join(customDir, 'package.json'), customPkg);
+
+      // 2. Simulate materializeAllPresets: iterate all built-in presets
+      for (const preset of FMT_PRESETS) {
+         materializeFmtPreset(preset.name, preset, { ...baseOpts, cwd: '' });
+      }
+
+      // 3. Custom preset should be untouched
+      expect(fs.existsSync(customDir)).toBe(true);
+      expect(fs.readFileSync(path.join(customDir, 'eslint.config.mjs'), 'utf-8')).toBe(customEslint);
+      expect(fs.readFileSync(path.join(customDir, 'package.json'), 'utf-8')).toBe(customPkg);
+
+      // 4. Built-in presets should have been materialized
+      for (const preset of FMT_PRESETS) {
+         const builtinDir = path.join(fmtDir, preset.name);
+         expect(fs.existsSync(builtinDir)).toBe(true);
+      }
    });
 });
