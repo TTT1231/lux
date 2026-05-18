@@ -49,6 +49,10 @@ export interface FmtPreset {
    scripts?: Record<string, string>;
    /** Per-tool lint-staged fragments for dynamic composition */
    lintStagedFragments?: Record<string, Record<string, string[]>>;
+   /** Husky pre-commit hook 内容模板，支持 <pm> 和 <pmx> 占位符 */
+   husky?: (flags: { lintStaged: boolean }) => string;
+   /** lint-staged 配置内容（JSON string），flags 用于决定包含哪些片段 */
+   lintStaged?: (flags: { stylelint: boolean }) => string;
    /** Files to always overwrite even without --force */
    forceOverwrite?: string[];
    /** Files to never overwrite even with --force */
