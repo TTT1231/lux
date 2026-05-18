@@ -1,4 +1,6 @@
 {
+   "devDependencies": {},
+   "dependencies": {},
    "eslint": {
       "devDependencies": {
          "eslint": "<latest>",
