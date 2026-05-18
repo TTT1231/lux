@@ -226,6 +226,46 @@ describe('materializeFmtPreset', () => {
       const presetDir = getLocalPresetDir('fmt', 'test-preset');
       expect(fs.existsSync(presetDir)).toBe(false);
    });
+
+   it('materializes .lintstagedrc.json when preset has lintStaged function', () => {
+      const presetWithLintStagedFn: FmtPreset = {
+         name: 'test-lint-staged',
+         description: 'Test',
+         eslint: () => 'export default []\n',
+         lintStaged: () => JSON.stringify({ '*.{ts}': ['eslint --fix'] }, null, 2) + '\n',
+      };
+      tmpDir = createTempDir();
+
+      materializeFmtPreset('test-lint-staged', presetWithLintStagedFn, {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      const presetDir = getLocalPresetDir('fmt', 'test-lint-staged');
+      expect(fs.existsSync(path.join(presetDir, '.lintstagedrc.json'))).toBe(true);
+      const content = JSON.parse(fs.readFileSync(path.join(presetDir, '.lintstagedrc.json'), 'utf-8'));
+      expect(content['*.{ts}']).toEqual(['eslint --fix']);
+   });
+
+   it('materializes .husky/pre-commit when preset has husky function', () => {
+      const presetWithHusky: FmtPreset = {
+         name: 'test-husky',
+         description: 'Test',
+         eslint: () => 'export default []\n',
+         husky: () => '<pmx> lint-staged\n',
+      };
+      tmpDir = createTempDir();
+
+      materializeFmtPreset('test-husky', presetWithHusky, {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      const presetDir = getLocalPresetDir('fmt', 'test-husky');
+      expect(fs.existsSync(path.join(presetDir, '.husky'))).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, '.husky', 'pre-commit'))).toBe(true);
+      expect(fs.readFileSync(path.join(presetDir, '.husky', 'pre-commit'), 'utf-8')).toBe('<pmx> lint-staged\n');
+   });
 });
 
 describe('materializeVscodePreset', () => {

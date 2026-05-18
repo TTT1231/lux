@@ -105,6 +105,20 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
    const templatePkg = buildTemplatePackageJson(preset);
    writeJson(path.join(presetDir, 'package.json'), templatePkg);
 
+   // Materialize lint-staged config (full version with all fragments)
+   if (preset.lintStaged) {
+      const lintStagedContent = preset.lintStaged({ stylelint: true });
+      writeFile(path.join(presetDir, '.lintstagedrc.json'), lintStagedContent);
+   }
+
+   // Materialize husky hook (full version with lint-staged)
+   if (preset.husky) {
+      const hookContent = preset.husky({ lintStaged: true });
+      const huskyDir = path.join(presetDir, '.husky');
+      ensureDir(huskyDir);
+      writeFile(path.join(huskyDir, 'pre-commit'), hookContent);
+   }
+
    logger.log(`Local preset created at ${presetDir}`);
 }
 
