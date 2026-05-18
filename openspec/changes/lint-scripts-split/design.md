@@ -156,6 +156,22 @@ Materialized `package.json` 只保留 `scripts`，移除 `devDependencies`。依
 
 **理由**：消除 `<latest>` 占位符系统。`resolveLocalDeps` 直接读 deps.json，不需要解析 template package.json。
 
+### D8: builtin preset deps.json 加载策略 — 静态 import 内嵌
+
+Builtin preset 通过静态 `import deps from './deps.json'` 加载依赖数据。tsup (esbuild) 编译时自动内联 JSON 到 bundle，运行时不依赖文件系统路径。
+
+Materialize 时将内嵌的 deps 对象写出到 `~/.lux/preset/fmt/<name>/deps.json`，apply 路径统一从文件系统读取。
+
+**替代方案**：运行时用 `import.meta.url` + 相对路径读源码目录下的 deps.json。拒绝——tsup 打包后 `import.meta.url` 指向 `dist/index.js`，源码相对路径失效。
+
+**理由**：消除 `import.meta.url` 路径脆弱性。静态 import 是零配置方案（项目已启用 `resolveJsonModule`，tsup 默认支持 JSON loader）。
+
+### D9: fmt 命令单 preset 按需 materialize
+
+`lux fmt <preset-name>` 仅 materialize 目标 preset，不触碰其他已固化的 preset。用户可能已手动修改其他 materialized preset 的配置，全量 materialize 会覆盖这些修改。
+
+**理由**：保护用户的本地修改。materialize 是破坏性操作（覆盖目标目录），应限定在最小范围内。
+
 ## Over-Engineering Traps
 
 - **通用工具注册系统**：不要做插件式注册表，deps.json 是数据文件不是框架，直接读取即可。
