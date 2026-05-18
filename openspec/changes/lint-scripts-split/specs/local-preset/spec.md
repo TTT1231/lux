@@ -26,17 +26,16 @@ After the existing generation pipeline completes successfully, the system SHALL 
 - **AND** cspell-related scripts SHALL appear in template `package.json`
 
 ### Requirement: Apply local fmt preset
-The system SHALL read config files from the local preset directory and copy them to the project root. Dependencies SHALL be read from `deps.json` (not template `package.json`). Scripts SHALL be read from template `package.json`.
+The system SHALL read config files from the local preset directory and copy them to the project root. Scripts SHALL be read from template `package.json`. Dependencies SHALL be handled by the command layer (`executeLocalPath`) via `addDepsToManifest`, NOT by `mergeTemplateIntoProject`.
 
 #### Scenario: Config files copied to project root
 - **WHEN** local preset exists with `eslint.config.mjs`, `.prettierrc`, `cspell.json`
 - **THEN** all files SHALL be copied to the project root directory
 
-#### Scenario: Dependencies read from deps.json
-- **WHEN** local preset has `deps.json` with `{"eslint": {"devDependencies": {"eslint": "^9.0.0"}}}`
-- **AND** `--stylelint` is active and `deps.json` has `{"stylelint": {"devDependencies": {"stylelint": "^16.0.0"}}}`
-- **THEN** eslint deps SHALL always be installed
-- **AND** stylelint deps SHALL be installed based on flag
+#### Scenario: Dependencies resolved by command layer, not mergeTemplateIntoProject
+- **WHEN** local preset has `deps.json` with `{"eslint": {"devDependencies": {"eslint": "<latest>"}}}`
+- **THEN** `mergeTemplateIntoProject` SHALL NOT write deps to project package.json
+- **AND** `executeLocalPath` SHALL collect deps via `collectDepsFromRegistry` and resolve versions via `addDepsToManifest`
 
 #### Scenario: Scripts merged from template package.json
 - **WHEN** local preset `package.json` has `scripts` section
@@ -91,10 +90,6 @@ The `mergeTemplateIntoProject` function SHALL filter entire script entries by ke
 
 ## REMOVED Requirements
 
-### Requirement: Template package.json uses placeholders
-**Reason**: deps.json is now the sole dependency source. Template package.json no longer contains devDependencies, so `<latest>` placeholders are unnecessary.
-**Migration**: Dependencies are read directly from `deps.json` tool groups instead of parsing `<latest>` placeholders in template package.json.
-
-### Requirement: `<latest>` placeholder resolved at install time
-**Reason**: `resolveLocalDeps` now reads from `deps.json` directly. The `<latest>` placeholder system is eliminated.
-**Migration**: deps.json entries contain actual version ranges (e.g. `"^9.0.0"`). The system reads and installs these directly.
+### Requirement: Template package.json uses devDependencies
+**Reason**: deps.json is now the sole dependency source. Template package.json no longer contains `devDependencies`. Dependencies are resolved by the command layer via `addDepsToManifest`, not by `mergeTemplateIntoProject`.
+**Migration**: Dependencies are read from `deps.json` tool groups and top-level keys. The `<latest>` placeholder in deps.json is resolved at install time by `addDepsToManifest`/`fetchPackageVersion`.

@@ -13,6 +13,7 @@ Aggregated lint scripts (`eslint . && cspell && tsc --noEmit && stylelint "..."`
 - Remove `isNotStylelintDep`, `isNotEditorconfigDep`, `isNotCspellDep`, `isNotHuskyDep`, `isNotLintStagedDep` functions and `STYLELINT_DEPS`, `HUSKY_DEPS`, `LINTSTAGED_DEPS` Sets.
 - Rewrite `resolveLocalDeps` to read from `deps.json` tool groups instead of template `package.json` `<latest>` placeholders.
 - Simplify materialized template `package.json` to only contain `scripts` (remove `devDependencies` section).
+- Support top-level `devDependencies` and `dependencies` in deps.json for user-defined custom deps (always collected, support `<latest>`).
 
 ## Capabilities
 
@@ -33,7 +34,7 @@ Aggregated lint scripts (`eslint . && cspell && tsc --noEmit && stylelint "..."`
 - **Core logic** (`src/core/shared.ts`, `src/core/local-preset.ts`): Remove filter functions and Sets, rewrite deps resolution.
 - **Command handler** (`src/commands/fmt.ts`): Flip `GenerateOptions` fields, simplify filterDeps and filterScripts, change injectScripts to handle new script structure.
 - **Generator** (`src/generators/fmt.ts`): `.lintstagedrc.json` generation uses composition instead of preset string.
-- **New files**: `deps.json` for each builtin preset under `src/presets/fmt/<name>/deps.json`.
+- **New files**: `deps.json` for each builtin preset under `src/presets/fmt/<name>/deps.json` (includes empty `devDependencies`/`dependencies` placeholders for user customization).
 - **Template `package.json`** in materialized presets loses `devDependencies`, gains nothing new.
 
 ## Change the overall picture
@@ -47,6 +48,7 @@ Aggregated lint scripts (`eslint . && cspell && tsc --noEmit && stylelint "..."`
   │     ├── builtin:  src/presets/fmt/<name>/deps.json                  │
   │     ├── local:    ~/.lux/preset/fmt/<name>/deps.json                │
   │     ├── 格式:     按工具分组 { eslint: { devDependencies: {...} } } │
+  │     ├── 自定义:   顶层 devDependencies/dependencies 始终收集         │
   │     └── preset 代码中 dependencies 字段完全移除                       │
   │                                                                     │
   │  2. Scripts (拆分)                                                   │
@@ -101,5 +103,9 @@ Aggregated lint scripts (`eslint . && cspell && tsc --noEmit && stylelint "..."`
   │ resolveLocalDeps              │ 改为读 deps.json                                                                │
   ├───────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────┤
   │ 模板 package.json             │ 只保留 scripts，移除 devDependencies                                            │
+  ├───────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────┤
+  │ deps.json 自定义依赖          │ 顶层 devDependencies/dependencies 始终收集，支持 <latest>                        │
+  ├───────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────┤
+  │ mergeTemplateIntoProject      │ 不处理依赖，只管 scripts + config 文件                                           │
   └───────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────┘
 ```

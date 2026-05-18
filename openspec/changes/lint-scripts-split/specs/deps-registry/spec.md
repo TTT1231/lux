@@ -97,3 +97,29 @@ Tools that are always present (eslint, prettier) SHALL have their deps installed
 #### Scenario: Prettier deps always installed
 - **WHEN** any preset is applied and `deps.json["prettier"]` exists
 - **THEN** prettier-related packages SHALL be installed (filtered against project's existing deps)
+
+### Requirement: deps.json top-level custom dependencies
+deps.json SHALL support top-level `devDependencies` and `dependencies` keys for user-defined custom deps. These keys are reserved and SHALL NOT be treated as tool group names. Their contents SHALL always be collected regardless of flags, and SHALL support `<latest>` placeholders.
+
+#### Scenario: Top-level devDependencies always collected
+- **WHEN** deps.json contains `{"devDependencies": {"my-lib": "^1.0.0"}, "eslint": {"devDependencies": {"eslint": "<latest>"}}}`
+- **THEN** `my-lib` SHALL be collected and installed alongside eslint deps, regardless of any flags
+
+#### Scenario: Top-level dependencies always collected
+- **WHEN** deps.json contains `{"dependencies": {"lodash-es": "^4.17.0"}}`
+- **THEN** `lodash-es` SHALL be collected regardless of any flags
+
+#### Scenario: <latest> in custom deps
+- **WHEN** deps.json contains `{"devDependencies": {"dayjs": "<latest>"}}`
+- **THEN** `<latest>` SHALL be resolved to the actual latest version at install time, same as tool-grouped deps
+
+#### Scenario: Top-level keys take precedence in output
+- **WHEN** deps.json has both top-level `"devDependencies": {"pkg": "^1.0.0"}` and a tool group that also includes `"pkg": "^2.0.0"`
+- **THEN** the last occurrence SHALL win (standard `Object.assign` semantics)
+
+### Requirement: deps.json includes empty custom dep placeholders
+Builtin preset deps.json files SHALL include empty `devDependencies: {}` and `dependencies: {}` at the top level. This makes the self-editing surface visible to users who edit materialized presets.
+
+#### Scenario: User sees custom dep slots
+- **WHEN** a user opens a materialized preset's deps.json
+- **THEN** top-level `devDependencies` and `dependencies` keys SHALL be present (may be empty `{}`)

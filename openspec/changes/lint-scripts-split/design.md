@@ -172,6 +172,28 @@ Materialize 时将内嵌的 deps 对象写出到 `~/.lux/preset/fmt/<name>/deps.
 
 **理由**：保护用户的本地修改。materialize 是破坏性操作（覆盖目标目录），应限定在最小范围内。
 
+### D10: deps.json 自定义依赖 — 顶层 devDependencies/dependencies
+
+deps.json 支持顶层 `devDependencies` 和 `dependencies` 保留 key，用于用户自定义依赖。这些 key 不受 flag 控制，始终被收集。
+
+```json
+{
+  "devDependencies": { "my-lib": "^1.0.0" },
+  "dependencies": {},
+  "eslint": { "devDependencies": { "eslint": "<latest>" } }
+}
+```
+
+builtin preset 的 deps.json 预置空的 `devDependencies: {}` 和 `dependencies: {}`，让用户打开文件就能看到可编辑的位置。
+
+**理由**：自定义 preset 用户最常见的操作就是加自己的依赖。如果这些 key 不存在，用户不知道往哪写；如果要用 tool group key，用户需要理解 flag 语义。顶层 key 零学习成本。
+
+### D11: mergeTemplateIntoProject 不处理依赖
+
+`mergeTemplateIntoProject` 只负责 script 合并和 config 文件复制。依赖收集和版本解析由 command 层 (`executeLocalPath`) 统一处理。
+
+**理由**：之前 `mergeTemplateIntoProject` 会把 `<latest>` 原样写入 package.json devDependencies，导致 command 层检测到包已存在而跳过版本解析。职责分离后，底层函数不碰 deps，command 层通过 `addDepsToManifest` 解析真实版本。
+
 ## Over-Engineering Traps
 
 - **通用工具注册系统**：不要做插件式注册表，deps.json 是数据文件不是框架，直接读取即可。
