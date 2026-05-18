@@ -207,7 +207,10 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
 
       const content = readFile(path.join(presetDir, filename));
       if (content !== null) {
-         writeFile(destPath, content);
+         const resolved = opts.lockfile
+            ? content.replace(/<lockfile>/g, opts.lockfile)
+            : content.replace(/<lockfile>\n?/g, '');
+         writeFile(destPath, resolved);
          (exists ? result.overwritten : result.created).push(filename);
       }
    }

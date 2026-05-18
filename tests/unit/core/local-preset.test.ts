@@ -414,6 +414,45 @@ describe('applyLocalFmtPreset', () => {
       expect(pkg.scripts['format:check']).toBe('bun run prettier --check "src/**/*.{ts,js}"');
    });
 
+   it('resolves <lockfile> placeholder in config files when lockfile is provided', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': "export default [{ ignores: ['node_modules/', '<lockfile>', 'dist/'] }]\n",
+         '.prettierignore': 'node_modules/\n<lockfile>\ndist/\n',
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         lockfile: 'bun.lock',
+      });
+
+      expect(result.created).toContain('eslint.config.mjs');
+      expect(result.created).toContain('.prettierignore');
+      expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe(
+         "export default [{ ignores: ['node_modules/', 'bun.lock', 'dist/'] }]\n",
+      );
+      expect(fs.readFileSync(path.join(tmpDir, '.prettierignore'), 'utf-8')).toBe('node_modules/\nbun.lock\ndist/\n');
+   });
+
+   it('removes <lockfile> placeholder when lockfile is not provided', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         '.prettierignore': 'node_modules/\n<lockfile>\ndist/\n',
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      expect(fs.readFileSync(path.join(tmpDir, '.prettierignore'), 'utf-8')).toBe('node_modules/\ndist/\n');
+   });
+
    it('filters stylelint files and scripts when stylelint flag is false', () => {
       tmpDir = createTempDir();
       setupLocalPreset({
