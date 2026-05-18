@@ -1,5 +1,7 @@
 {
-   "devDependencies": {},
+   "devDependencies": {
+      "typescript": "<latest>"
+   },
    "dependencies": {},
    "eslint": {
       "devDependencies": {

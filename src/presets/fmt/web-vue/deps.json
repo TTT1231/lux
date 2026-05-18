@@ -1,5 +1,8 @@
 {
-   "devDependencies": {},
+   "devDependencies": {
+      "typescript": "<latest>",
+      "vue-tsc": "<latest>"
+   },
    "dependencies": {},
    "eslint": {
       "devDependencies": {
