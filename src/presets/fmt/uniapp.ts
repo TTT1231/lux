@@ -12,6 +12,9 @@ import prettierConfig from '@vue/eslint-config-prettier/skip-formatting'
 import pluginVue from 'eslint-plugin-vue'
 
 export default [
+  {
+    ignores: ['node_modules/', '<lockfile>', 'dist/', 'unpackage/'],
+  },
   ...pluginVue.configs['flat/recommended'],
   ...withVue(),
   prettierConfig,
