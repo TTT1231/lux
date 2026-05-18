@@ -108,8 +108,6 @@ export interface DepsFilterFlags {
    lintStaged: boolean;
 }
 
-const RESERVED_TOP_KEYS = new Set(['devDependencies', 'dependencies']);
-
 export function collectDepsFromRegistry(
    registry: DepsRegistry,
    flags: DepsFilterFlags,

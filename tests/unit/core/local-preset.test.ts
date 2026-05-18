@@ -10,7 +10,6 @@ import {
    applyLocalFmtPreset,
    applyLocalVscodePreset,
    resetLocalPreset,
-   resolveLocalDeps,
    listCustomPresets,
    isValidCustomPreset,
    isValidPresetName,
@@ -758,23 +757,6 @@ describe('applyLocalVscodePreset', () => {
 
       expect(result.created).toContain('.vscode/settings.json');
       expect(fs.existsSync(path.join(tmpDir, '.vscode', 'settings.json'))).toBe(false);
-   });
-});
-
-describe('resolveLocalDeps', () => {
-   it('resolves <latest> to bare package name', () => {
-      const result = resolveLocalDeps({ eslint: '<latest>', prettier: '<latest>' });
-      expect(result).toEqual(['eslint', 'prettier']);
-   });
-
-   it('passes through pinned versions', () => {
-      const result = resolveLocalDeps({ eslint: '^9.0.0', prettier: '<latest>' });
-      expect(result).toEqual(['eslint@^9.0.0', 'prettier']);
-   });
-
-   it('returns empty array for empty deps', () => {
-      const result = resolveLocalDeps({});
-      expect(result).toEqual([]);
    });
 });
 

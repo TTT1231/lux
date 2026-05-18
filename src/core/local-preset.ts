@@ -454,15 +454,3 @@ export function detectPresetCapabilities(presetName: string): {
       hasLintStaged: hasLintStagedDep,
    };
 }
-
-export function resolveLocalDeps(deps: Record<string, string>): string[] {
-   const packages: string[] = [];
-   for (const [name, version] of Object.entries(deps)) {
-      if (version === '<latest>') {
-         packages.push(name);
-      } else {
-         packages.push(`${name}@${version}`);
-      }
-   }
-   return packages;
-}
