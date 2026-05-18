@@ -1,4 +1,7 @@
-import type { FmtPreset } from '../types';
+import type { DepsRegistry, FmtPreset } from '../types';
+import depsData from './nest/deps.json';
+
+const deps = depsData as DepsRegistry;
 
 export const nestFmt: FmtPreset = {
    name: 'nest',
@@ -61,24 +64,25 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 `,
 
-   dependencies: {
-      dev: ['prettier', 'cspell', 'husky', 'lint-staged'],
-   },
+   deps,
 
    scripts: {
-      lint: 'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit',
-      'lint:fix':
+      eslint:
+         'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint',
+      'eslint:fix':
          'eslint "{src,apps,libs,test}/**/*.ts" --cache --cache-location node_modules/.cache/eslint --fix',
+      cspell: 'cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
+      'type:check': 'tsc --noEmit',
       format: 'prettier --write "src/**/*.{ts,js,json}"',
       'lint-staged': 'lint-staged',
    },
 
-   lintStaged: () =>
-      JSON.stringify(
-         {
-            '*.{ts,js}': ['eslint --fix', 'prettier --write'],
-         },
-         null,
-         2,
-      ) + '\n',
+   lintStagedFragments: {
+      eslint: {
+         '*.{ts,js}': ['eslint --fix'],
+      },
+      prettier: {
+         '*.{ts,js}': ['prettier --write'],
+      },
+   },
 };

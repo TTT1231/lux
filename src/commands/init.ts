@@ -58,11 +58,11 @@ function materializeAllPresets(): void {
       cwd: process.cwd(),
       force: false,
       dryRun: false,
-      noStylelint: false,
-      noEditorconfig: false,
-      noCspell: false,
-      noHusky: false,
-      noLintStaged: false,
+      stylelint: false,
+      editorconfig: false,
+      cspell: false,
+      husky: false,
+      lintStaged: false,
    };
 
    for (const preset of FMT_PRESETS) {

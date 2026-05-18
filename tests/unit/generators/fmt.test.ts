@@ -13,25 +13,22 @@ const baseOpts: GenerateOptions = {
    cwd: '',
    force: false,
    dryRun: false,
-   noStylelint: false,
-   noEditorconfig: false,
-   noCspell: false,
-   noHusky: false,
-   noLintStaged: false,
+   stylelint: false,
+   editorconfig: false,
+   cspell: false,
+   husky: false,
+   lintStaged: false,
 };
 
 const presetWithLintStaged: FmtPreset = {
    name: 'test-preset',
    description: 'Test',
    eslint: () => 'export default []\n',
-   lintStaged: () =>
-      JSON.stringify(
-         {
-            '*.{ts,js}': ['eslint --fix', 'prettier --write'],
-         },
-         null,
-         2,
-      ) + '\n',
+   lintStagedFragments: {
+      eslint: {
+         '*.{ts,js}': ['eslint --fix', 'prettier --write'],
+      },
+   },
 };
 
 describe('generateAllFmt', () => {
@@ -41,13 +38,13 @@ describe('generateAllFmt', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
    });
 
-   it('generates .lintstagedrc.json when preset has lintStaged and flag is active', () => {
+   it('generates .lintstagedrc.json when preset has lintStagedFragments and lintStaged flag is true', () => {
       tmpDir = createTempDir();
 
       const result = generateAllFmt(presetWithLintStaged, {
          ...baseOpts,
          cwd: tmpDir,
-         noLintStaged: false,
+         lintStaged: true,
       });
 
       const filePath = path.join(tmpDir, '.lintstagedrc.json');
@@ -58,20 +55,20 @@ describe('generateAllFmt', () => {
       expect(content['*.{ts,js}']).toEqual(['eslint --fix', 'prettier --write']);
    });
 
-   it('skips .lintstagedrc.json when noLintStaged is true', () => {
+   it('skips .lintstagedrc.json when lintStaged flag is false', () => {
       tmpDir = createTempDir();
 
       const result = generateAllFmt(presetWithLintStaged, {
          ...baseOpts,
          cwd: tmpDir,
-         noLintStaged: true,
+         lintStaged: false,
       });
 
       expect(fs.existsSync(path.join(tmpDir, '.lintstagedrc.json'))).toBe(false);
       expect(result.created).not.toContain('.lintstagedrc.json');
    });
 
-   it('skips .lintstagedrc.json when preset has no lintStaged field', () => {
+   it('skips .lintstagedrc.json when preset has no lintStagedFragments field', () => {
       tmpDir = createTempDir();
 
       const presetNoLintStaged: FmtPreset = {
@@ -83,7 +80,7 @@ describe('generateAllFmt', () => {
       const result = generateAllFmt(presetNoLintStaged, {
          ...baseOpts,
          cwd: tmpDir,
-         noLintStaged: false,
+         lintStaged: true,
       });
 
       expect(fs.existsSync(path.join(tmpDir, '.lintstagedrc.json'))).toBe(false);

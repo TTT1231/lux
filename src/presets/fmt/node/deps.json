@@ -1,0 +1,31 @@
+{
+   "eslint": {
+      "devDependencies": {
+         "@eslint/js": "<latest>",
+         "eslint": "<latest>",
+         "typescript-eslint": "<latest>",
+         "eslint-plugin-prettier": "<latest>",
+         "eslint-config-prettier": "<latest>"
+      }
+   },
+   "prettier": {
+      "devDependencies": {
+         "prettier": "<latest>"
+      }
+   },
+   "cspell": {
+      "devDependencies": {
+         "cspell": "<latest>"
+      }
+   },
+   "husky": {
+      "devDependencies": {
+         "husky": "<latest>"
+      }
+   },
+   "lint-staged": {
+      "devDependencies": {
+         "lint-staged": "<latest>"
+      }
+   }
+}

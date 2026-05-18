@@ -12,15 +12,10 @@ import {
    STYLELINT_FILES,
    EDITORCONFIG_FILE,
    CSPELL_FILE,
-   LINTSTAGED_FILE,
-   STYLELINT_DEPS,
-   HUSKY_DEPS,
-   LINTSTAGED_DEPS,
    STYLELINT_EXTENSION,
    filterStylelintSettings,
-   isNotStylelintDep,
-   isNotEditorconfigDep,
-   isNotLintStagedDep,
+   loadDepsJson,
+   collectDepsFromRegistry,
 } from './shared';
 
 type PresetType = 'fmt' | 'vscode';
@@ -107,6 +102,11 @@ export function materializeFmtPreset(
       writeFile(path.join(presetDir, filename), resolved);
    }
 
+   // Write deps.json from preset's statically imported data
+   if (preset.deps) {
+      writeJson(path.join(presetDir, 'deps.json'), preset.deps);
+   }
+
    const templatePkg = buildTemplatePackageJson(preset);
    writeJson(path.join(presetDir, 'package.json'), templatePkg);
 
@@ -188,13 +188,17 @@ export function applyLocalFmtPreset(
 
    const entries = fs
       .readdirSync(presetDir)
-      .filter(name => name !== 'package.json' && fs.statSync(path.join(presetDir, name)).isFile());
+      .filter(
+         name =>
+            name !== 'package.json' &&
+            name !== 'deps.json' &&
+            fs.statSync(path.join(presetDir, name)).isFile(),
+      );
 
    for (const filename of entries) {
-      if (opts.noStylelint && STYLELINT_FILES.has(filename)) continue;
-      if (opts.noEditorconfig && filename === EDITORCONFIG_FILE) continue;
-      if (opts.noCspell && filename === CSPELL_FILE) continue;
-      if (opts.noLintStaged && filename === LINTSTAGED_FILE) continue;
+      if (!opts.stylelint && STYLELINT_FILES.has(filename)) continue;
+      if (!opts.editorconfig && filename === EDITORCONFIG_FILE) continue;
+      if (!opts.cspell && filename === CSPELL_FILE) continue;
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);
@@ -221,7 +225,6 @@ export function applyLocalFmtPreset(
    }
 
    const templatePkg = readJson<{
-      devDependencies?: Record<string, string>;
       scripts?: Record<string, string>;
    }>(path.join(presetDir, 'package.json'));
 
@@ -229,7 +232,7 @@ export function applyLocalFmtPreset(
 
    if (templatePkg && projectPkg) {
       const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
-      const merged = mergeTemplateIntoProject(templatePkg, projectPkg, pm, opts, result);
+      const merged = mergeTemplateIntoProject(templatePkg, presetDir, projectPkg, pm, opts, result);
       if (!opts.dryRun) {
          writeJson(projectPkgPath, merged);
       }
@@ -260,7 +263,7 @@ export function applyLocalVscodePreset(
    const settingsSrc = path.join(presetDir, 'settings.json');
    if (fileExists(settingsSrc)) {
       const presetSettings = readJson<Record<string, unknown>>(settingsSrc);
-      const filteredSettings = opts.noStylelint
+      const filteredSettings = !opts.stylelint
          ? filterStylelintSettings(presetSettings ?? {})
          : presetSettings;
 
@@ -294,7 +297,7 @@ export function applyLocalVscodePreset(
       const extensionsData = readJson<{ recommendations: string[] }>(extensionsSrc);
       if (extensionsData) {
          let presetRecommendations = extensionsData.recommendations ?? [];
-         if (opts.noStylelint) {
+         if (!opts.stylelint) {
             presetRecommendations = presetRecommendations.filter(
                ext => ext !== STYLELINT_EXTENSION,
             );
@@ -318,27 +321,25 @@ export function applyLocalVscodePreset(
 }
 
 function buildTemplatePackageJson(preset: FmtPreset): Record<string, unknown> {
-   const deps: Record<string, string> = {};
-   if (preset.dependencies?.dev) {
-      for (const dep of preset.dependencies.dev) {
-         deps[dep] = '<latest>';
-      }
-   }
-
    const scripts = preset.scripts ? { ...preset.scripts } : undefined;
 
    const result: Record<string, unknown> = {};
-   if (Object.keys(deps).length > 0) {
-      result.devDependencies = deps;
-   }
    if (scripts && Object.keys(scripts).length > 0) {
       result.scripts = scripts;
    }
    return result;
 }
 
+interface FilterScriptsFlags {
+   stylelint: boolean;
+   editorconfig: boolean;
+   cspell: boolean;
+   lintStaged: boolean;
+}
+
 function mergeTemplateIntoProject(
-   templatePkg: { devDependencies?: Record<string, string>; scripts?: Record<string, string> },
+   templatePkg: { scripts?: Record<string, string> },
+   presetDir: string,
    projectPkg: Record<string, unknown>,
    pm: PackageManager | undefined,
    opts: GenerateOptions,
@@ -347,18 +348,28 @@ function mergeTemplateIntoProject(
    const merged = { ...projectPkg };
    const prefix = pm ? getRunPrefix(pm) : '';
 
-   if (templatePkg.devDependencies) {
+   // Dependency merging from deps.json
+   let registry;
+   try {
+      registry = loadDepsJson(presetDir);
+   } catch {
+      // If deps.json is missing, skip dep merging (old preset format)
+   }
+
+   if (registry) {
+      const depsToInstall = collectDepsFromRegistry(registry, {
+         stylelint: opts.stylelint,
+         cspell: opts.cspell,
+         editorconfig: opts.editorconfig,
+         husky: opts.husky,
+         lintStaged: opts.lintStaged,
+      });
+
       const existingDeps = (merged.devDependencies ?? {}) as Record<string, string>;
       const newDeps: Record<string, string> = { ...existingDeps };
 
-      for (const [dep, version] of Object.entries(templatePkg.devDependencies)) {
-         if (opts.noStylelint && STYLELINT_DEPS.has(dep)) continue;
-         if (opts.noEditorconfig && dep.includes('editorconfig')) continue;
-         if (opts.noCspell && dep === 'cspell') continue;
-         if (opts.noHusky && HUSKY_DEPS.has(dep)) continue;
-         if (opts.noLintStaged && LINTSTAGED_DEPS.has(dep)) continue;
-
-         if (existingDeps[dep] === undefined && version !== '<latest>') {
+      for (const [dep, version] of Object.entries(depsToInstall)) {
+         if (existingDeps[dep] === undefined) {
             newDeps[dep] = version;
          }
       }
@@ -369,13 +380,12 @@ function mergeTemplateIntoProject(
       const existingScripts = (merged.scripts ?? {}) as Record<string, string>;
       const newScripts = { ...existingScripts };
 
-      const filteredScripts = filterScripts(
-         templatePkg.scripts,
-         opts.noStylelint,
-         opts.noEditorconfig,
-         opts.noCspell,
-         opts.noLintStaged,
-      );
+      const filteredScripts = filterScripts(templatePkg.scripts, {
+         stylelint: opts.stylelint,
+         editorconfig: opts.editorconfig,
+         cspell: opts.cspell,
+         lintStaged: opts.lintStaged,
+      });
 
       for (const [key, value] of Object.entries(filteredScripts)) {
          const resolved = value.replace(/<pm>/g, prefix);
@@ -407,32 +417,17 @@ function mergeTemplateIntoProject(
 
 export function filterScripts(
    scripts: Record<string, string>,
-   noStylelint: boolean,
-   noEditorconfig: boolean,
-   noCspell: boolean,
-   noLintStaged = false,
+   flags: FilterScriptsFlags,
 ): Record<string, string> {
    const filtered: Record<string, string> = {};
 
    for (const [key, value] of Object.entries(scripts)) {
-      if (noStylelint && key.includes('stylelint')) continue;
-      if (noEditorconfig && key.includes('editorconfig')) continue;
-      if (noCspell && key.includes('cspell')) continue;
-      if (noLintStaged && key.includes('lint-staged')) continue;
+      if (!flags.stylelint && key.includes('stylelint')) continue;
+      if (!flags.editorconfig && key.includes('editorconfig')) continue;
+      if (!flags.cspell && key.includes('cspell')) continue;
+      if (!flags.lintStaged && key.includes('lint-staged')) continue;
 
-      let resolved = value;
-      if (noStylelint) {
-         resolved = resolved.replace(/\s*&&\s*stylelint\s+"[^"]*".*/g, '');
-      }
-      if (noCspell) {
-         // Strip " && cspell ..." segment from chain scripts.
-         // cspell may appear mid-chain (e.g. before tsc/stylelint), so we must
-         // stop at the next "&&" rather than consuming to end-of-line.
-         resolved = resolved.replace(/\s*&&\s*cspell\s+[^&]*/g, '');
-         // Clean up any malformed "cmd&&" (missing space before &&) after strip
-         resolved = resolved.replace(/(\S)&&/g, '$1 &&');
-      }
-      filtered[key] = resolved;
+      filtered[key] = value;
    }
 
    return filtered;
@@ -448,33 +443,39 @@ export function detectPresetCapabilities(presetName: string): {
    const entries = fs.readdirSync(presetDir);
 
    const hasStylelintFile = entries.some(f => STYLELINT_FILES.has(f));
-   const pkg = readJson<{ devDependencies?: Record<string, string> }>(
-      path.join(presetDir, 'package.json'),
-   );
-   const hasStylelintDep = pkg?.devDependencies
-      ? Object.keys(pkg.devDependencies).some(d => isNotStylelintDep(d) === false)
-      : false;
-
    const hasEditorconfigFile = entries.includes(EDITORCONFIG_FILE);
-   const hasEditorconfigDep = pkg?.devDependencies
-      ? Object.keys(pkg.devDependencies).some(d => !isNotEditorconfigDep(d))
-      : false;
-
    const hasCspellFile = entries.includes(CSPELL_FILE);
-   const hasCspellDep = pkg?.devDependencies
-      ? Object.keys(pkg.devDependencies).some(d => d === 'cspell')
-      : false;
 
-   const hasLintStagedFile = entries.includes(LINTSTAGED_FILE);
-   const hasLintStagedDep = pkg?.devDependencies
-      ? Object.keys(pkg.devDependencies).some(d => isNotLintStagedDep(d) === false)
-      : false;
+   let hasStylelintDep = false;
+   let hasEditorconfigDep = false;
+   let hasCspellDep = false;
+   let hasLintStagedDep = false;
+
+   try {
+      const registry = loadDepsJson(presetDir);
+      hasStylelintDep = 'stylelint' in registry;
+      hasEditorconfigDep = 'editorconfig' in registry;
+      hasCspellDep = 'cspell' in registry;
+      hasLintStagedDep = 'lint-staged' in registry;
+   } catch {
+      // Fallback: check package.json for old format
+      const pkg = readJson<{ devDependencies?: Record<string, string> }>(
+         path.join(presetDir, 'package.json'),
+      );
+      if (pkg?.devDependencies) {
+         const depNames = Object.keys(pkg.devDependencies);
+         hasStylelintDep = depNames.some(d => d.includes('stylelint'));
+         hasEditorconfigDep = depNames.some(d => d.includes('editorconfig'));
+         hasCspellDep = depNames.includes('cspell');
+         hasLintStagedDep = depNames.includes('lint-staged');
+      }
+   }
 
    return {
       hasStylelint: hasStylelintFile || hasStylelintDep,
       hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
       hasCspell: hasCspellFile || hasCspellDep,
-      hasLintStaged: hasLintStagedFile || hasLintStagedDep,
+      hasLintStaged: hasLintStagedDep,
    };
 }
 

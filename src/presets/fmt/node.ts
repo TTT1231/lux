@@ -1,4 +1,7 @@
-import type { FmtPreset } from '../types';
+import type { DepsRegistry, FmtPreset } from '../types';
+import depsData from './node/deps.json';
+
+const deps = depsData as DepsRegistry;
 
 export const nodeFmt: FmtPreset = {
    name: 'node',
@@ -103,33 +106,23 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 `,
 
-   dependencies: {
-      dev: [
-         '@eslint/js',
-         'eslint',
-         'typescript-eslint',
-         'eslint-plugin-prettier',
-         'eslint-config-prettier',
-         'prettier',
-         'cspell',
-         'husky',
-         'lint-staged',
-      ],
-   },
+   deps,
 
    scripts: {
-      lint: 'eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit',
-      'lint:fix': 'eslint . --cache --cache-location node_modules/.cache/eslint --fix',
+      eslint: 'eslint . --cache --cache-location node_modules/.cache/eslint',
+      'eslint:fix': 'eslint . --cache --cache-location node_modules/.cache/eslint --fix',
+      cspell: 'cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
+      'type:check': 'tsc --noEmit',
       format: 'prettier --write "src/**/*.{ts,js,json}"',
       'lint-staged': 'lint-staged',
    },
 
-   lintStaged: () =>
-      JSON.stringify(
-         {
-            '*.{ts,js}': ['eslint --fix', 'prettier --write'],
-         },
-         null,
-         2,
-      ) + '\n',
+   lintStagedFragments: {
+      eslint: {
+         '*.{ts,js}': ['eslint --fix'],
+      },
+      prettier: {
+         '*.{ts,js}': ['prettier --write'],
+      },
+   },
 };

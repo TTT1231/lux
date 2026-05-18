@@ -1,0 +1,43 @@
+{
+   "eslint": {
+      "devDependencies": {
+         "eslint": "<latest>",
+         "@eslint/js": "<latest>",
+         "typescript-eslint": "<latest>",
+         "eslint-plugin-react-hooks": "<latest>",
+         "eslint-plugin-react-refresh": "<latest>",
+         "eslint-config-prettier": "<latest>",
+         "globals": "<latest>"
+      }
+   },
+   "prettier": {
+      "devDependencies": {
+         "prettier": "<latest>"
+      }
+   },
+   "stylelint": {
+      "devDependencies": {
+         "stylelint": "<latest>",
+         "stylelint-config-standard-scss": "<latest>",
+         "stylelint-order": "<latest>",
+         "stylelint-scss": "<latest>",
+         "@stylistic/stylelint-plugin": "<latest>",
+         "postcss-scss": "<latest>"
+      }
+   },
+   "cspell": {
+      "devDependencies": {
+         "cspell": "<latest>"
+      }
+   },
+   "husky": {
+      "devDependencies": {
+         "husky": "<latest>"
+      }
+   },
+   "lint-staged": {
+      "devDependencies": {
+         "lint-staged": "<latest>"
+      }
+   }
+}

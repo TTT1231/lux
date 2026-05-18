@@ -1,0 +1,22 @@
+{
+   "prettier": {
+      "devDependencies": {
+         "prettier": "<latest>"
+      }
+   },
+   "cspell": {
+      "devDependencies": {
+         "cspell": "<latest>"
+      }
+   },
+   "husky": {
+      "devDependencies": {
+         "husky": "<latest>"
+      }
+   },
+   "lint-staged": {
+      "devDependencies": {
+         "lint-staged": "<latest>"
+      }
+   }
+}

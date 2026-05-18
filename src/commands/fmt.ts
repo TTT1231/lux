@@ -30,13 +30,7 @@ import {
    listCustomPresets,
    detectPresetCapabilities,
 } from '../core/local-preset';
-import {
-   isNotStylelintDep,
-   isNotEditorconfigDep,
-   isNotCspellDep,
-   isNotHuskyDep,
-   isNotLintStagedDep,
-} from '../core/shared';
+import { collectDepsFromRegistry, loadDepsJson } from '../core/shared';
 
 interface FmtCommandOptions {
    force?: boolean;
@@ -154,18 +148,18 @@ async function executeLocalPath(
       );
    }
 
-   const noHusky = options.husky !== true && options.lintStaged !== true;
-   const noLintStaged = options.lintStaged !== true;
+   const husky = options.husky === true || options.lintStaged === true;
+   const lintStaged = options.lintStaged === true;
 
    const opts: GenerateOptions = {
       cwd,
       force: options.force ?? false,
       dryRun: options.dryRun ?? false,
-      noStylelint: options.stylelint !== true,
-      noEditorconfig: options.editorconfig !== true,
-      noCspell: options.cspell !== true,
-      noHusky,
-      noLintStaged,
+      stylelint: options.stylelint === true,
+      editorconfig: options.editorconfig === true,
+      cspell: options.cspell === true,
+      husky,
+      lintStaged,
    };
 
    let result: Awaited<ReturnType<typeof applyLocalFmtPreset>>;
@@ -196,34 +190,42 @@ async function executeLocalPath(
 
    if (!pm) return;
 
-   const templatePkgPath = path.join(getLocalPresetDir('fmt', presetName), 'package.json');
-   const templatePkg = readJson<{
-      devDependencies?: Record<string, string>;
-   }>(templatePkgPath);
+   const presetDir = getLocalPresetDir('fmt', presetName);
+   let registry;
+   try {
+      registry = loadDepsJson(presetDir);
+   } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error(message);
+      return;
+   }
 
-   if (!templatePkg?.devDependencies) return;
-
-   const depsToInstall = filterDeps(
-      Object.keys(templatePkg.devDependencies),
-      opts.noStylelint,
-      opts.noEditorconfig,
-      opts.noCspell,
-      opts.noHusky,
-      opts.noLintStaged,
-   );
+   const depsToInstall = collectDepsFromRegistry(registry, {
+      stylelint: opts.stylelint,
+      cspell: opts.cspell,
+      editorconfig: opts.editorconfig,
+      husky: opts.husky,
+      lintStaged: opts.lintStaged,
+   });
 
    const projectPkgPath = path.join(cwd, 'package.json');
    const projectPkg = readJson<Record<string, unknown>>(projectPkgPath);
    if (!projectPkg) return;
 
    const existingDeps = (projectPkg.devDependencies ?? {}) as Record<string, string>;
-   const missing = depsToInstall.filter(dep => !existingDeps[dep]);
+   const depNames = Object.keys(depsToInstall);
+   const missing = depNames.filter(dep => !existingDeps[dep]);
 
-   if (missing.length === 0) return;
+   if (missing.length === 0) {
+      if (opts.husky) {
+         await initHusky(cwd, pm, opts);
+      }
+      return;
+   }
 
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
-      if (!opts.noHusky) {
+      if (opts.husky) {
          await initHusky(cwd, pm, opts);
       }
       return;
@@ -231,11 +233,7 @@ async function executeLocalPath(
 
    if (options.install === false) {
       try {
-         const filteredTemplateDeps = Object.fromEntries(
-            Object.entries(templatePkg.devDependencies).filter(([k]) => missing.includes(k)),
-         );
-         const resolved = resolveLocalDeps(filteredTemplateDeps);
-         const added = await addDepsToManifest(resolved, cwd);
+         const added = await addDepsToManifest(missing, cwd);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
          } else {
@@ -245,7 +243,7 @@ async function executeLocalPath(
          const message = error instanceof Error ? error.message : String(error);
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
-      if (!opts.noHusky) {
+      if (opts.husky) {
          await initHusky(cwd, pm, opts);
       }
       return;
@@ -253,12 +251,7 @@ async function executeLocalPath(
 
    try {
       logger.log(`Installing dependencies with ${pm}...`);
-      const resolved = resolveLocalDeps(
-         Object.fromEntries(
-            Object.entries(templatePkg.devDependencies).filter(([k]) => missing.includes(k)),
-         ),
-      );
-      await installDevDeps(resolved, cwd, pm);
+      await installDevDeps(missing, cwd, pm);
       logger.success('Dependencies installed successfully');
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -266,7 +259,7 @@ async function executeLocalPath(
    }
 
    // Husky initialization
-   if (!opts.noHusky) {
+   if (opts.husky) {
       await initHusky(cwd, pm, opts);
    }
 }
@@ -278,17 +271,17 @@ async function executeBuiltinPath(
    options: FmtCommandOptions,
 ): Promise<void> {
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
-   const noHusky = options.husky !== true && options.lintStaged !== true;
-   const noLintStaged = options.lintStaged !== true;
+   const husky = options.husky === true || options.lintStaged === true;
+   const lintStaged = options.lintStaged === true;
    const opts: GenerateOptions = {
       cwd,
       force: options.force ?? false,
       dryRun: options.dryRun ?? false,
-      noStylelint: options.stylelint !== true,
-      noEditorconfig: options.editorconfig !== true,
-      noCspell: options.cspell !== true,
-      noHusky,
-      noLintStaged,
+      stylelint: options.stylelint === true,
+      editorconfig: options.editorconfig === true,
+      cspell: options.cspell === true,
+      husky,
+      lintStaged,
       lockfile: pm ? getLockfileName(pm) : undefined,
    };
 
@@ -312,38 +305,46 @@ async function executeBuiltinPath(
    }
 
    const scripts = preset.scripts
-      ? filterScripts(
-           preset.scripts,
-           opts.noStylelint,
-           opts.noEditorconfig,
-           opts.noCspell,
-           opts.noLintStaged,
-        )
+      ? filterScripts(preset.scripts, {
+           stylelint: opts.stylelint,
+           editorconfig: opts.editorconfig,
+           cspell: opts.cspell,
+           lintStaged: opts.lintStaged,
+        })
       : undefined;
 
    if (scripts) {
       await injectScripts(scripts, opts, pm);
    }
 
-   if (!preset.dependencies?.dev) return;
+   if (!preset.deps) return;
 
-   const devDeps = opts.noStylelint
-      ? preset.dependencies.dev.filter(isNotStylelintDep)
-      : preset.dependencies.dev;
+   const depsToInstall = collectDepsFromRegistry(preset.deps, {
+      stylelint: opts.stylelint,
+      cspell: opts.cspell,
+      editorconfig: opts.editorconfig,
+      husky: opts.husky,
+      lintStaged: opts.lintStaged,
+   });
 
-   const noEditorconfigDeps = opts.noEditorconfig ? devDeps.filter(isNotEditorconfigDep) : devDeps;
+   const projectPkgPath = path.join(cwd, 'package.json');
+   const projectPkg = readJson<Record<string, unknown>>(projectPkgPath);
+   if (!projectPkg) return;
 
-   const noCspellDeps = opts.noCspell
-      ? noEditorconfigDeps.filter(isNotCspellDep)
-      : noEditorconfigDeps;
+   const existingDeps = (projectPkg.devDependencies ?? {}) as Record<string, string>;
+   const depNames = Object.keys(depsToInstall);
+   const missing = depNames.filter(dep => !existingDeps[dep]);
 
-   const noHuskyDeps = opts.noHusky ? noCspellDeps.filter(isNotHuskyDep) : noCspellDeps;
-
-   const finalDeps = opts.noLintStaged ? noHuskyDeps.filter(isNotLintStagedDep) : noHuskyDeps;
+   if (missing.length === 0) {
+      if (opts.husky) {
+         await initHusky(cwd, pm, opts);
+      }
+      return;
+   }
 
    if (opts.dryRun) {
-      logger.log(`[dry-run] Would add to package.json: ${finalDeps.join(', ')}`);
-      if (!opts.noHusky) {
+      logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
+      if (opts.husky) {
          await initHusky(cwd, pm, opts);
       }
       return;
@@ -351,7 +352,7 @@ async function executeBuiltinPath(
 
    if (options.install === false) {
       try {
-         const added = await addDepsToManifest(finalDeps, cwd);
+         const added = await addDepsToManifest(missing, cwd);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
          } else {
@@ -361,7 +362,7 @@ async function executeBuiltinPath(
          const message = error instanceof Error ? error.message : String(error);
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
-      if (!opts.noHusky) {
+      if (opts.husky) {
          await initHusky(cwd, pm, opts);
       }
       return;
@@ -369,7 +370,7 @@ async function executeBuiltinPath(
 
    try {
       logger.log(`Installing dependencies with ${pm}...`);
-      await installDevDeps(finalDeps, cwd, pm);
+      await installDevDeps(missing, cwd, pm);
       logger.success('Dependencies installed successfully');
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -377,27 +378,9 @@ async function executeBuiltinPath(
    }
 
    // Husky initialization
-   if (!opts.noHusky) {
+   if (opts.husky) {
       await initHusky(cwd, pm, opts);
    }
-}
-
-/** Filter deps by opt-in flags */
-function filterDeps(
-   deps: string[],
-   noStylelint: boolean,
-   noEditorconfig: boolean,
-   noCspell: boolean,
-   noHusky: boolean,
-   noLintStaged: boolean,
-): string[] {
-   let filtered = deps;
-   if (noStylelint) filtered = filtered.filter(isNotStylelintDep);
-   if (noEditorconfig) filtered = filtered.filter(isNotEditorconfigDep);
-   if (noCspell) filtered = filtered.filter(isNotCspellDep);
-   if (noHusky) filtered = filtered.filter(isNotHuskyDep);
-   if (noLintStaged) filtered = filtered.filter(isNotLintStagedDep);
-   return filtered;
 }
 
 /** Log file generation results, branching on dry-run vs real mode */
@@ -424,7 +407,7 @@ function logGenerationResult(
    }
    if (result.overwritten.length > 0) {
       logger.log(
-         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length} file${result.overwritten.length > 1 ? 's' : ''}`,
+         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length > 1 ? 's' : ''}`,
       );
    }
    if (result.skipped.length > 0) {
@@ -447,7 +430,7 @@ function logApplyResult(result: {
    }
    if (result.overwritten.length > 0) {
       logger.log(
-         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length} file${result.overwritten.length > 1 ? 's' : ''} from local preset`,
+         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length > 1 ? 's' : ''} from local preset`,
       );
    }
    if (result.skipped.length > 0) {
@@ -459,12 +442,12 @@ function logApplyResult(result: {
 
 /** Warn about skipped tasks when package.json is missing */
 function warnMissingPackageJson(
-   preset: { scripts?: Record<string, string>; dependencies?: { dev?: string[] } },
+   preset: { scripts?: Record<string, string>; deps?: unknown },
    installEnabled: boolean,
 ): void {
    const tasks: string[] = [];
    if (preset.scripts) tasks.push('script injection');
-   if (preset.dependencies?.dev && installEnabled) tasks.push('dependency installation');
+   if (preset.deps && installEnabled) tasks.push('dependency installation');
    if (tasks.length > 0) {
       logger.warn(`package.json not found, skipping ${tasks.join(' and ')}`);
    }
@@ -546,7 +529,7 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions)
    const prefix = getRunPrefix(pm);
    const isYarn = pm === 'yarn';
    const initScriptName = isYarn ? 'postinstall' : 'prepare';
-   const hookCommand = opts.noLintStaged ? `${prefix} lint` : `${prefix} lint-staged`;
+   const hookCommand = opts.lintStaged ? `${prefix} lint-staged` : `${prefix} lint`;
 
    // 1. Create .husky/pre-commit
    const huskyDir = path.join(cwd, '.husky');

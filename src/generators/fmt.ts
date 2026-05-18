@@ -3,15 +3,10 @@ import type { FmtPreset, GenerateOptions, GenerateResult } from '../presets/type
 import { resolveConflict } from '../core/conflict-resolver';
 import { writeFile, fileExists } from '../utils/fs';
 import { logger } from '../utils/logger';
-import { CONFIG_GETTERS } from '../core/shared';
+import { CONFIG_GETTERS, composeLintStaged } from '../core/shared';
 
 type FileAction = 'created' | 'overwritten' | 'skipped';
 
-/**
- * Generate a config file from a preset.
- * Handles conflict resolution, --force, --dry-run.
- * Replaces <lockfile> placeholder with the detected lockfile name.
- */
 function generateConfigFile(
    preset: FmtPreset,
    filename: string,
@@ -41,18 +36,13 @@ function generateConfigFile(
    return exists ? 'overwritten' : 'created';
 }
 
-/**
- * Generate all fmt config files for a preset.
- * Returns structured result for the caller to format output.
- */
 export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): GenerateResult {
    const result: GenerateResult = { created: [], overwritten: [], skipped: [] };
 
    for (const { filename, getContent } of CONFIG_GETTERS) {
-      if (opts.noStylelint && filename.includes('stylelint')) continue;
-      if (opts.noEditorconfig && filename === '.editorconfig') continue;
-      if (opts.noCspell && filename.includes('cspell')) continue;
-      if (opts.noLintStaged && filename === '.lintstagedrc.json') continue;
+      if (!opts.stylelint && filename.includes('stylelint')) continue;
+      if (!opts.editorconfig && filename === '.editorconfig') continue;
+      if (!opts.cspell && filename.includes('cspell')) continue;
 
       const content = getContent(preset);
       if (content === undefined) continue;
@@ -61,6 +51,18 @@ export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): Genera
       if (action === 'created') result.created.push(filename);
       else if (action === 'overwritten') result.overwritten.push(filename);
       else if (action === 'skipped') result.skipped.push(filename);
+   }
+
+   if (opts.lintStaged && preset.lintStagedFragments) {
+      const composed = composeLintStaged(preset.lintStagedFragments, {
+         stylelint: opts.stylelint,
+      });
+      const content = JSON.stringify(composed, null, 2) + '\n';
+
+      const action = generateConfigFile(preset, '.lintstagedrc.json', content, opts);
+      if (action === 'created') result.created.push('.lintstagedrc.json');
+      else if (action === 'overwritten') result.overwritten.push('.lintstagedrc.json');
+      else if (action === 'skipped') result.skipped.push('.lintstagedrc.json');
    }
 
    return result;

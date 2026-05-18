@@ -1,3 +1,11 @@
+/** Per-tool dependency registry */
+export interface DepsRegistry {
+   [tool: string]: {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+   };
+}
+
 /** Result of file generation */
 export interface GenerateResult {
    created: string[];
@@ -10,11 +18,11 @@ export interface GenerateOptions {
    cwd: string;
    force: boolean;
    dryRun: boolean;
-   noStylelint: boolean;
-   noEditorconfig: boolean;
-   noCspell: boolean;
-   noHusky: boolean;
-   noLintStaged: boolean;
+   stylelint: boolean;
+   editorconfig: boolean;
+   cspell: boolean;
+   husky: boolean;
+   lintStaged: boolean;
    lockfile?: string;
 }
 
@@ -29,9 +37,11 @@ export interface FmtPreset {
    stylelintIgnore?: () => string;
    cspell?: () => string;
    editorconfig?: () => string;
-   lintStaged?: () => string;
-   dependencies?: { dev?: string[] };
+   /** Per-tool dependency data (statically imported from deps.json) */
+   deps?: DepsRegistry;
    scripts?: Record<string, string>;
+   /** Per-tool lint-staged fragments for dynamic composition */
+   lintStagedFragments?: Record<string, Record<string, string[]>>;
    /** Files to always overwrite even without --force */
    forceOverwrite?: string[];
    /** Files to never overwrite even with --force */

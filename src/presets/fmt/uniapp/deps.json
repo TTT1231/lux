@@ -1,0 +1,41 @@
+{
+   "eslint": {
+      "devDependencies": {
+         "eslint": "<latest>",
+         "@vue/eslint-config-typescript": "<latest>",
+         "@vue/eslint-config-prettier": "<latest>",
+         "eslint-plugin-vue": "<latest>"
+      }
+   },
+   "prettier": {
+      "devDependencies": {
+         "prettier": "<latest>"
+      }
+   },
+   "stylelint": {
+      "devDependencies": {
+         "stylelint": "<latest>",
+         "stylelint-config-standard-scss": "<latest>",
+         "stylelint-order": "<latest>",
+         "stylelint-scss": "<latest>",
+         "@stylistic/stylelint-plugin": "<latest>",
+         "postcss-html": "<latest>",
+         "postcss-scss": "<latest>"
+      }
+   },
+   "cspell": {
+      "devDependencies": {
+         "cspell": "<latest>"
+      }
+   },
+   "husky": {
+      "devDependencies": {
+         "husky": "<latest>"
+      }
+   },
+   "lint-staged": {
+      "devDependencies": {
+         "lint-staged": "<latest>"
+      }
+   }
+}

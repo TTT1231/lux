@@ -21,7 +21,7 @@ export function generateVscodeSettings(
    }
 
    const rawSettings = preset.settings();
-   const presetSettings = opts.noStylelint ? filterStylelintSettings(rawSettings) : rawSettings;
+   const presetSettings = !opts.stylelint ? filterStylelintSettings(rawSettings) : rawSettings;
    const existingSettings = readJson<Record<string, unknown>>(settingsPath);
 
    if (existingSettings) {
@@ -68,7 +68,7 @@ export function generateVscodeExtensions(
 ): 'created' | null {
    if (opts.dryRun) return 'created';
 
-   const extensions = opts.noStylelint
+   const extensions = !opts.stylelint
       ? preset.extensions().filter(ext => ext !== STYLELINT_EXTENSION)
       : preset.extensions();
 

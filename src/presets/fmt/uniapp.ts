@@ -1,4 +1,7 @@
-import type { FmtPreset } from '../types';
+import type { DepsRegistry, FmtPreset } from '../types';
+import depsData from './uniapp/deps.json';
+
+const deps = depsData as DepsRegistry;
 
 export const uniappFmt: FmtPreset = {
    name: 'uniapp',
@@ -99,41 +102,31 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 `,
 
-   dependencies: {
-      dev: [
-         'eslint',
-         '@vue/eslint-config-typescript',
-         '@vue/eslint-config-prettier',
-         'eslint-plugin-vue',
-         'prettier',
-         'stylelint',
-         'stylelint-config-standard-scss',
-         'stylelint-order',
-         'stylelint-scss',
-         '@stylistic/stylelint-plugin',
-         'postcss-html',
-         'postcss-scss',
-         'cspell',
-         'husky',
-         'lint-staged',
-      ],
-   },
+   deps,
 
    scripts: {
-      lint: 'eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && vue-tsc --noEmit && stylelint "src/**/*.{css,scss,vue}" --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
-      'lint:fix':
-         'eslint . --cache --cache-location node_modules/.cache/eslint --fix && stylelint "src/**/*.{css,scss,vue}" --fix --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
+      eslint: 'eslint . --cache --cache-location node_modules/.cache/eslint',
+      'eslint:fix': 'eslint . --cache --cache-location node_modules/.cache/eslint --fix',
+      stylelint:
+         'stylelint "src/**/*.{css,scss,vue}" --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
+      'stylelint:fix':
+         'stylelint "src/**/*.{css,scss,vue}" --fix --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
+      cspell: 'cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
+      'type:check': 'vue-tsc --noEmit',
       format: 'prettier --write "src/**/*.{ts,js,json,vue,css,scss}"',
       'lint-staged': 'lint-staged',
    },
 
-   lintStaged: () =>
-      JSON.stringify(
-         {
-            '*.{ts,js,vue}': ['eslint --fix', 'prettier --write'],
-            '*.{css,scss,vue}': ['stylelint --fix', 'prettier --write'],
-         },
-         null,
-         2,
-      ) + '\n',
+   lintStagedFragments: {
+      eslint: {
+         '*.{ts,js,vue}': ['eslint --fix'],
+      },
+      prettier: {
+         '*.{ts,js,vue}': ['prettier --write'],
+         '*.{css,scss,vue}': ['prettier --write'],
+      },
+      stylelint: {
+         '*.{css,scss,vue}': ['stylelint --fix'],
+      },
+   },
 };

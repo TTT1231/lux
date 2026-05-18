@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import type { DepsRegistry } from '../presets/types';
 import type { FmtPreset } from '../presets/types';
 
 // --- VSCode stylelint constants ---
@@ -10,22 +13,6 @@ const STYLELINT_SETTINGS_PREFIXES = [
 ];
 
 export const STYLELINT_EXTENSION = 'stylelint.vscode-stylelint';
-
-// --- Dependency sets ---
-
-export const STYLELINT_DEPS = new Set([
-   'stylelint',
-   'stylelint-config-standard-scss',
-   'stylelint-order',
-   'stylelint-scss',
-   '@stylistic/stylelint-plugin',
-   'postcss-html',
-   'postcss-scss',
-]);
-
-export const HUSKY_DEPS = new Set(['husky']);
-
-export const LINTSTAGED_DEPS = new Set(['lint-staged']);
 
 // --- Config filename constants ---
 
@@ -50,7 +37,6 @@ export const CONFIG_GETTERS: ReadonlyArray<{
    { filename: '.stylelintignore', getContent: p => p.stylelintIgnore?.() },
    { filename: 'cspell.json', getContent: p => p.cspell?.() },
    { filename: '.editorconfig', getContent: p => p.editorconfig?.() },
-   { filename: '.lintstagedrc.json', getContent: p => p.lintStaged?.() },
 ];
 
 // --- Shared functions ---
@@ -76,24 +62,109 @@ export function filterStylelintSettings(
    return filtered;
 }
 
-export function isNotStylelintDep(dep: string): boolean {
-   if (dep.includes('stylelint')) return false;
-   if (dep === 'postcss-html' || dep === 'postcss-scss') return false;
-   return true;
+// --- deps.json utilities ---
+
+export function loadDepsJson(presetDir: string): DepsRegistry {
+   const depsPath = path.join(presetDir, 'deps.json');
+
+   if (!fs.existsSync(depsPath)) {
+      throw new Error(
+         `deps.json not found in "${presetDir}". Run with --reset to re-materialize the preset.`,
+      );
+   }
+
+   try {
+      const raw = fs.readFileSync(depsPath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return validateDepsRegistry(parsed);
+   } catch (error) {
+      if (error instanceof SyntaxError) {
+         throw new Error(
+            `deps.json in "${presetDir}" is not valid JSON. Fix it or run with --reset to re-materialize.`,
+            { cause: error },
+         );
+      }
+      throw error;
+   }
 }
 
-export function isNotEditorconfigDep(dep: string): boolean {
-   return !dep.includes('editorconfig');
+function validateDepsRegistry(data: unknown): DepsRegistry {
+   if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      throw new Error('deps.json must be an object keyed by tool name');
+   }
+
+   for (const [tool, entry] of Object.entries(data as Record<string, unknown>)) {
+      if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+         throw new Error(`deps.json entry "${tool}" must be an object`);
+      }
+   }
+
+   return data as DepsRegistry;
 }
 
-export function isNotCspellDep(dep: string): boolean {
-   return dep !== 'cspell';
+export interface DepsFilterFlags {
+   stylelint: boolean;
+   cspell: boolean;
+   editorconfig: boolean;
+   husky: boolean;
+   lintStaged: boolean;
 }
 
-export function isNotHuskyDep(dep: string): boolean {
-   return dep !== 'husky';
+export function collectDepsFromRegistry(
+   registry: DepsRegistry,
+   flags: DepsFilterFlags,
+): Record<string, string> {
+   const activeTools = new Set(['eslint', 'prettier']);
+
+   if (flags.stylelint) activeTools.add('stylelint');
+   if (flags.cspell) activeTools.add('cspell');
+   if (flags.editorconfig) activeTools.add('editorconfig');
+   if (flags.husky) activeTools.add('husky');
+   if (flags.lintStaged) activeTools.add('lint-staged');
+
+   const deps: Record<string, string> = {};
+
+   for (const tool of activeTools) {
+      const entry = registry[tool];
+      if (!entry) continue;
+
+      if (entry.devDependencies) {
+         Object.assign(deps, entry.devDependencies);
+      }
+      if (entry.dependencies) {
+         Object.assign(deps, entry.dependencies);
+      }
+   }
+
+   return deps;
 }
 
-export function isNotLintStagedDep(dep: string): boolean {
-   return dep !== 'lint-staged';
+export function composeLintStaged(
+   fragments: Record<string, Record<string, string[]>>,
+   flags: { stylelint: boolean },
+): Record<string, string[]> {
+   const activeTools = ['eslint', 'prettier'];
+   if (flags.stylelint) activeTools.push('stylelint');
+
+   const result: Record<string, string[]> = {};
+
+   for (const tool of activeTools) {
+      const fragment = fragments[tool];
+      if (!fragment) continue;
+
+      for (const [glob, commands] of Object.entries(fragment)) {
+         if (!result[glob]) {
+            result[glob] = [];
+         }
+         result[glob].push(...commands);
+      }
+   }
+
+   for (const [glob, commands] of Object.entries(result)) {
+      if (commands.length === 0) {
+         delete result[glob];
+      }
+   }
+
+   return result;
 }

@@ -1,4 +1,7 @@
-import type { FmtPreset } from '../types';
+import type { DepsRegistry, FmtPreset } from '../types';
+import depsData from './web-react/deps.json';
+
+const deps = depsData as DepsRegistry;
 
 export const webReactFmt: FmtPreset = {
    name: 'web-react',
@@ -104,43 +107,31 @@ trim_trailing_whitespace = true
 trim_trailing_whitespace = false
 `,
 
-   dependencies: {
-      dev: [
-         'eslint',
-         '@eslint/js',
-         'typescript-eslint',
-         'eslint-plugin-react-hooks',
-         'eslint-plugin-react-refresh',
-         'eslint-config-prettier',
-         'globals',
-         'prettier',
-         'stylelint',
-         'stylelint-config-standard-scss',
-         'stylelint-order',
-         'stylelint-scss',
-         '@stylistic/stylelint-plugin',
-         'postcss-scss',
-         'cspell',
-         'husky',
-         'lint-staged',
-      ],
-   },
+   deps,
 
    scripts: {
-      lint: 'eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*" && tsc --noEmit && stylelint "src/**/*.{css,scss}" --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
-      'lint:fix':
-         'eslint . --cache --cache-location node_modules/.cache/eslint --fix && stylelint "src/**/*.{css,scss}" --fix --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
+      eslint: 'eslint . --cache --cache-location node_modules/.cache/eslint',
+      'eslint:fix': 'eslint . --cache --cache-location node_modules/.cache/eslint --fix',
+      stylelint:
+         'stylelint "src/**/*.{css,scss}" --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
+      'stylelint:fix':
+         'stylelint "src/**/*.{css,scss}" --fix --cache --cache-strategy content --cache-location node_modules/.cache/stylelint/',
+      cspell: 'cspell --cache --cache-location node_modules/.cache/cspell --gitignore "src/**/*"',
+      'type:check': 'tsc --noEmit',
       format: 'prettier --write "src/**/*.{ts,js,json,jsx,tsx,css,scss}"',
       'lint-staged': 'lint-staged',
    },
 
-   lintStaged: () =>
-      JSON.stringify(
-         {
-            '*.{ts,tsx,js,jsx}': ['eslint --fix', 'prettier --write'],
-            '*.{css,scss}': ['stylelint --fix', 'prettier --write'],
-         },
-         null,
-         2,
-      ) + '\n',
+   lintStagedFragments: {
+      eslint: {
+         '*.{ts,tsx,js,jsx}': ['eslint --fix'],
+      },
+      prettier: {
+         '*.{ts,tsx,js,jsx}': ['prettier --write'],
+         '*.{css,scss}': ['prettier --write'],
+      },
+      stylelint: {
+         '*.{css,scss}': ['stylelint --fix'],
+      },
+   },
 };

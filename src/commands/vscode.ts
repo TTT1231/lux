@@ -75,11 +75,11 @@ function executeVscodeLocalPath(
       cwd,
       force: options.force ?? false,
       dryRun: options.dryRun ?? false,
-      noStylelint: options.stylelint !== true,
-      noEditorconfig: false,
-      noCspell: false,
-      noHusky: true,
-      noLintStaged: true,
+      stylelint: options.stylelint === true,
+      editorconfig: false,
+      cspell: false,
+      husky: false,
+      lintStaged: false,
    };
 
    const result = applyLocalVscodePreset(cwd, presetName, opts);
@@ -108,11 +108,11 @@ function executeVscodeBuiltinPath(
       cwd,
       force: options.force ?? false,
       dryRun: options.dryRun ?? false,
-      noStylelint: options.stylelint !== true,
-      noEditorconfig: false,
-      noCspell: false,
-      noHusky: true,
-      noLintStaged: true,
+      stylelint: options.stylelint === true,
+      editorconfig: false,
+      cspell: false,
+      husky: false,
+      lintStaged: false,
    };
 
    const result = generateAllVscode(preset, opts);
