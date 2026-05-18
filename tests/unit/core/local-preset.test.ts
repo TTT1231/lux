@@ -698,6 +698,90 @@ describe('applyLocalFmtPreset', () => {
       // deps are handled by executeLocalPath, not by applyLocalFmtPreset
       expect(pkg.devDependencies).toBeUndefined();
    });
+
+   it('copies .lintstagedrc.json when lintStaged flag is true', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         '.lintstagedrc.json': JSON.stringify({ '*.{ts}': ['eslint --fix'] }),
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         lintStaged: true,
+      });
+
+      expect(result.created).toContain('.lintstagedrc.json');
+      expect(fs.existsSync(path.join(tmpDir, '.lintstagedrc.json'))).toBe(true);
+      const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.lintstagedrc.json'), 'utf-8'));
+      expect(content['*.{ts}']).toEqual(['eslint --fix']);
+   });
+
+   it('skips .lintstagedrc.json when lintStaged flag is false', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         '.lintstagedrc.json': JSON.stringify({ '*.{ts}': ['eslint --fix'] }),
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         lintStaged: false,
+      });
+
+      expect(result.created).not.toContain('.lintstagedrc.json');
+      expect(fs.existsSync(path.join(tmpDir, '.lintstagedrc.json'))).toBe(false);
+   });
+
+   it('overwrites existing .lintstagedrc.json when lintStaged flag is true and force is true', () => {
+      tmpDir = createTempDir();
+      fs.writeFileSync(path.join(tmpDir, '.lintstagedrc.json'), JSON.stringify({ '*.{js}': ['eslint'] }));
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         '.lintstagedrc.json': JSON.stringify({ '*.{ts}': ['eslint --fix'] }),
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         lintStaged: true,
+         force: true,
+      });
+
+      expect(result.overwritten).toContain('.lintstagedrc.json');
+      const content = JSON.parse(fs.readFileSync(path.join(tmpDir, '.lintstagedrc.json'), 'utf-8'));
+      expect(content['*.{ts}']).toEqual(['eslint --fix']);
+   });
+
+   it('skips existing .lintstagedrc.json when lintStaged flag is true but force is false', () => {
+      tmpDir = createTempDir();
+      const existingContent = JSON.stringify({ '*.{js}': ['eslint'] });
+      fs.writeFileSync(path.join(tmpDir, '.lintstagedrc.json'), existingContent);
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         '.lintstagedrc.json': JSON.stringify({ '*.{ts}': ['eslint --fix'] }),
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         lintStaged: true,
+         force: false,
+      });
+
+      expect(result.skipped).toContain('.lintstagedrc.json');
+      expect(fs.readFileSync(path.join(tmpDir, '.lintstagedrc.json'), 'utf-8')).toBe(existingContent);
+   });
 });
 
 describe('applyLocalVscodePreset', () => {

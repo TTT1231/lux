@@ -201,6 +201,7 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
       if (!opts.stylelint && STYLELINT_FILES.has(filename)) continue;
       if (!opts.editorconfig && filename === EDITORCONFIG_FILE) continue;
       if (!opts.cspell && filename === CSPELL_FILE) continue;
+      if (!opts.lintStaged && filename === '.lintstagedrc.json') continue;
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);
