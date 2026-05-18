@@ -23,8 +23,9 @@
 ## 命令
 
 ```bash
-bun run lint                         # 检查代码lint
-bun run lint:fix                     # 修复代码lint
+bun run eslint                       # eslint
+bun run cspell                       # cspell
+bun run type:check                   # ts 类型检查
 bun run format                       # 格式化代码
 bun run test                         # 单元 + 验收
 bun run test --project unit          # 单元测试

@@ -17,9 +17,10 @@
    "scripts": {
       "build": "tsup && node scripts/copy-assets.mjs",
       "dev": "tsup --watch",
-      "lint": "eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore \"src/**/*\" && tsc --noEmit",
-      "lint:fix": "eslint . --cache --cache-location node_modules/.cache/eslint --fix",
+      "eslint": "eslint . --cache --cache-location node_modules/.cache/eslint && cspell --cache --cache-location node_modules/.cache/cspell --gitignore \"src/**/*\" && tsc --noEmit",
+      "cspell": "cspell --cache --cache-location node_modules/.cache/cspell --gitignore \"src/**/*\"",
       "format": "prettier --write \"src/**/*.{ts,js,json}\" \"tests/**/*.{ts,js,json}\"",
+      "type:check": "tsc --noEmit",
       "worktrees": "node scripts/sync-workspace.mjs",
       "test": "vitest run",
       "test:watch": "vitest",
@@ -47,7 +48,7 @@
       "commander": "^14.0.3"
    },
    "lint-staged": {
-      "src/**/*.{ts,js,json}": [
+      "{src,tests}/**/*.{ts,js,json}": [
          "eslint --fix",
          "prettier --write"
       ]
