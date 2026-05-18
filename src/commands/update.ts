@@ -3,6 +3,8 @@ import { execFileNoThrow } from '../utils/execFileNoThrow';
 import { logger } from '../utils/logger';
 import { PACKAGE_NAME, getCurrentVersion } from '../utils/version';
 
+const DEFAULT_REGISTRY = 'https://registry.npmjs.org';
+
 type GlobalPm = 'npm' | 'bun';
 
 const GLOBAL_UPDATE_CMDS: Record<GlobalPm, [string, string[]]> = {
@@ -18,19 +20,20 @@ export function detectGlobalPackageManager(): GlobalPm {
    return process.execPath.toLowerCase().includes('bun') ? 'bun' : 'npm';
 }
 
-/**
- * Fetch the latest published version from npm registry.
- * Takes the last non-empty line of stdout to handle npm warnings.
- */
 export async function fetchLatestVersion(): Promise<string> {
-   const { stdout, exitCode } = await execFileNoThrow('npm', ['view', PACKAGE_NAME, 'version']);
+   const res = await fetch(`${DEFAULT_REGISTRY}/${PACKAGE_NAME}/latest`, {
+      signal: AbortSignal.timeout(15_000),
+   });
 
-   if (exitCode !== 0 || !stdout) {
-      throw new Error(`Failed to fetch latest version from npm registry.`);
+   if (!res.ok) {
+      throw new Error(`Failed to fetch latest version from ${DEFAULT_REGISTRY}.`);
    }
 
-   const lines = stdout.split('\n').filter(line => line.trim().length > 0);
-   return lines[lines.length - 1]!.trim();
+   const data = (await res.json()) as { version?: string };
+   if (!data.version) {
+      throw new Error(`Unexpected response: missing version field`);
+   }
+   return data.version;
 }
 
 /**

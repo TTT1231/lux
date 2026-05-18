@@ -1,9 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { detectGlobalPackageManager, fetchLatestVersion } from '../../../src/commands/update';
-
-vi.mock('../../../src/utils/execFileNoThrow', () => ({
-   execFileNoThrow: vi.fn(),
-}));
 
 describe('update command internals', () => {
    describe('detectGlobalPackageManager', () => {
@@ -41,39 +37,36 @@ describe('update command internals', () => {
    });
 
    describe('fetchLatestVersion', () => {
-      it('returns version from npm view', async () => {
-         const { execFileNoThrow } = await import('../../../src/utils/execFileNoThrow');
-         (execFileNoThrow as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            stdout: '2.0.0',
-            stderr: '',
-            exitCode: 0,
-         });
+      afterEach(() => {
+         vi.restoreAllMocks();
+      });
+
+      it('returns version from registry', async () => {
+         vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+            ok: true,
+            json: async () => ({ version: '2.0.0' }),
+         } as unknown as Response);
 
          const version = await fetchLatestVersion();
          expect(version).toBe('2.0.0');
       });
 
-      it('takes last non-empty line from multi-line output', async () => {
-         const { execFileNoThrow } = await import('../../../src/utils/execFileNoThrow');
-         (execFileNoThrow as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            stdout: '\nnpm warning ...\n2.1.0\n',
-            stderr: '',
-            exitCode: 0,
-         });
-
-         const version = await fetchLatestVersion();
-         expect(version).toBe('2.1.0');
-      });
-
-      it('throws on non-zero exit code', async () => {
-         const { execFileNoThrow } = await import('../../../src/utils/execFileNoThrow');
-         (execFileNoThrow as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-            stdout: '',
-            stderr: 'E404',
-            exitCode: 1,
-         });
+      it('throws when response is not ok', async () => {
+         vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+            ok: false,
+            json: async () => ({}),
+         } as unknown as Response);
 
          await expect(fetchLatestVersion()).rejects.toThrow('Failed to fetch latest version');
+      });
+
+      it('throws when version field is missing', async () => {
+         vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+            ok: true,
+            json: async () => ({ name: '@luxkit/cli' }),
+         } as unknown as Response);
+
+         await expect(fetchLatestVersion()).rejects.toThrow('missing version field');
       });
    });
 });
