@@ -130,6 +130,8 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    const husky = options.husky === true || options.lintStaged === true;
    const lintStaged = options.lintStaged === true;
 
+   const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
+
    const opts: GenerateOptions = {
       cwd,
       force: options.force ?? false,
@@ -139,6 +141,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
       cspell: options.cspell === true,
       husky,
       lintStaged,
+      lockfile: pm ? getLockfileName(pm) : undefined,
    };
 
    let result: Awaited<ReturnType<typeof applyLocalFmtPreset>>;
@@ -162,8 +165,6 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
          `Added ${result.scriptsAdded} script${result.scriptsAdded > 1 ? 's' : ''} to package.json${result.scriptsSkipped > 0 ? ` (${result.scriptsSkipped} skipped)` : ''}`,
       );
    }
-
-   const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
 
    if (!pm) return;
 
