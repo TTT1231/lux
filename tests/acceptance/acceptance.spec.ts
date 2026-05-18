@@ -43,9 +43,9 @@ describe('Acceptance: lux CLI', () => {
 
          // Verify: scripts injected into package.json
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('eslint');
-         expect(pkg.scripts['lint']).not.toContain('cspell');
-         expect(pkg.scripts['lint:fix']).toContain('eslint');
+         expect(pkg.scripts['eslint']).toContain('eslint');
+         expect(pkg.scripts['cspell']).toBeUndefined();
+         expect(pkg.scripts['eslint:fix']).toContain('eslint');
          expect(pkg.scripts['format']).toContain('prettier --write');
          // Step 2: init vscode
          const vscodeResult = ctx.run(['vscode', 'web-vue']);
@@ -91,7 +91,7 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('.stylelintignore')).toBe(true);
 
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('stylelint');
+         expect(pkg.scripts['stylelint']).toContain('stylelint');
       });
    });
 
@@ -149,10 +149,10 @@ describe('Acceptance: lux CLI', () => {
 
          // Verify: scripts use tsc (not vue-tsc) and no cspell
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('tsc --noEmit');
-         expect(pkg.scripts['lint']).not.toContain('vue-tsc');
-         expect(pkg.scripts['lint']).not.toContain('cspell');
-         expect(pkg.scripts['lint:fix']).toContain('eslint');
+         expect(pkg.scripts['type:check']).toContain('tsc --noEmit');
+         expect(pkg.scripts['type:check']).not.toContain('vue-tsc');
+         expect(pkg.scripts['cspell']).toBeUndefined();
+         expect(pkg.scripts['eslint:fix']).toContain('eslint');
 
          // Step 2: init vscode
          const vscodeResult = ctx.run(['vscode', 'web-react']);
@@ -276,8 +276,8 @@ describe('Acceptance: lux CLI', () => {
 
          ctx.run(['fmt', 'web-vue', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('eslint');
-         expect(pkg.scripts['lint:fix']).toContain('eslint');
+         expect(pkg.scripts['eslint']).toContain('eslint');
+         expect(pkg.scripts['eslint:fix']).toContain('eslint');
       });
    });
 
@@ -292,8 +292,8 @@ describe('Acceptance: lux CLI', () => {
 
          ctx.run(['fmt', 'web-vue', '--no-install']);
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('eslint');
-         expect(pkg.scripts['lint:fix']).toContain('eslint');
+         expect(pkg.scripts['eslint']).toContain('eslint');
+         expect(pkg.scripts['eslint:fix']).toContain('eslint');
       });
    });
 
@@ -491,13 +491,17 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.luxFileExists('preset/fmt/web-vue/.prettierrc')).toBe(true);
          expect(ctx.luxFileExists('preset/fmt/web-vue/cspell.json')).toBe(true);
 
-         // Template package.json with <latest> and <pm> placeholders
+         // deps.json with <latest> placeholders
+         const depsJson = ctx.luxReadJsonFile<
+            Record<string, { devDependencies: Record<string, string> }>
+         >('preset/fmt/web-vue/deps.json')!;
+         expect(depsJson['eslint'].devDependencies['eslint']).toBe('<latest>');
+
+         // Template package.json with scripts only
          const templatePkg = ctx.luxReadJsonFile<{
-            devDependencies: Record<string, string>;
             scripts: Record<string, string>;
          }>('preset/fmt/web-vue/package.json')!;
-         expect(templatePkg.devDependencies['eslint']).toBe('<latest>');
-         expect(templatePkg.scripts['lint']).toContain('eslint');
+         expect(templatePkg.scripts['eslint']).toContain('eslint');
       });
    });
 
@@ -547,13 +551,12 @@ describe('Acceptance: lux CLI', () => {
 
          ctx.run(['fmt', 'web-vue', '--no-install']);
 
-         // Edit template package.json to pin eslint version
-         const templatePkg = ctx.luxReadJsonFile<Record<string, unknown>>(
-            'preset/fmt/web-vue/package.json',
-         )!;
-         const deps = templatePkg.devDependencies as Record<string, string>;
-         deps['eslint'] = '^9.0.0';
-         ctx.luxWriteJsonFile('preset/fmt/web-vue/package.json', templatePkg);
+         // Edit deps.json to pin eslint version
+         const depsJson = ctx.luxReadJsonFile<
+            Record<string, { devDependencies: Record<string, string> }>
+         >('preset/fmt/web-vue/deps.json')!;
+         depsJson['eslint'].devDependencies['eslint'] = '^9.0.0';
+         ctx.luxWriteJsonFile('preset/fmt/web-vue/deps.json', depsJson);
 
          // Remove eslint from project to force re-add
          const projectPkg = ctx.readJsonFile<Record<string, unknown>>('package.json')!;
@@ -727,12 +730,12 @@ describe('Acceptance: lux CLI', () => {
          // cspell.json NOT generated by default
          expect(ctx.fileExists('cspell.json')).toBe(false);
 
-         // lint script does NOT contain cspell segment
+         // cspell script NOT present
          const pkg = ctx.readJsonFile<{
             scripts: Record<string, string>;
             devDependencies: Record<string, string>;
          }>('package.json')!;
-         expect(pkg.scripts['lint']).not.toContain('cspell');
+         expect(pkg.scripts['cspell']).toBeUndefined();
 
          // cspell dep NOT in devDependencies
          expect(pkg.devDependencies?.['cspell']).toBeUndefined();
@@ -755,12 +758,12 @@ describe('Acceptance: lux CLI', () => {
          // cspell.json IS generated
          expect(ctx.fileExists('cspell.json')).toBe(true);
 
-         // lint script contains cspell segment
+         // cspell script IS present
          const pkg = ctx.readJsonFile<{
             scripts: Record<string, string>;
             devDependencies: Record<string, string>;
          }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('cspell');
+         expect(pkg.scripts['cspell']).toContain('cspell');
 
          // cspell dep in devDependencies
          expect(pkg.devDependencies['cspell']).toBeDefined();
@@ -789,8 +792,8 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.fileExists('.stylelintignore')).toBe(true);
 
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
-         expect(pkg.scripts['lint']).toContain('cspell');
-         expect(pkg.scripts['lint']).toContain('stylelint');
+         expect(pkg.scripts['cspell']).toContain('cspell');
+         expect(pkg.scripts['stylelint']).toContain('stylelint');
       });
 
       it('local preset path: filters cspell.json when --cspell not passed, includes when passed', async () => {
