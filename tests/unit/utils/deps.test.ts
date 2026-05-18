@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { detectPackageManager, getRunPrefix, addDepsToManifest } from '../../../src/utils/deps';
+import { detectPackageManager, getRunPrefix, getExecPrefix, addDepsToManifest } from '../../../src/utils/deps';
 
 vi.mock('../../../src/utils/config', () => ({
    getEnvConfig: vi.fn(),
@@ -35,6 +35,15 @@ describe('getRunPrefix', () => {
       expect(getRunPrefix('pnpm')).toBe('pnpm run');
       expect(getRunPrefix('yarn')).toBe('yarn run');
       expect(getRunPrefix('npm')).toBe('npm run');
+   });
+});
+
+describe('getExecPrefix', () => {
+   it('returns correct exec prefix for each package manager', () => {
+      expect(getExecPrefix('bun')).toBe('bunx');
+      expect(getExecPrefix('pnpm')).toBe('pnpx');
+      expect(getExecPrefix('yarn')).toBe('yarn dlx');
+      expect(getExecPrefix('npm')).toBe('npx');
    });
 });
 

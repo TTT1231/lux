@@ -70,6 +70,20 @@ export function getRunPrefix(pm: PackageManager): string {
    }
 }
 
+/** Get the exec command prefix for the detected package manager (npx/bunx/pnpx) */
+export function getExecPrefix(pm: PackageManager): string {
+   switch (pm) {
+      case 'bun':
+         return 'bunx';
+      case 'pnpm':
+         return 'pnpx';
+      case 'yarn':
+         return 'yarn dlx';
+      case 'npm':
+         return 'npx';
+   }
+}
+
 const DEFAULT_REGISTRY = 'https://registry.npmjs.org';
 
 function readRegistryFromNpmrc(dir: string): string | null {
