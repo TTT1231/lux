@@ -1,7 +1,21 @@
+import { composeLintStaged } from '../../core/shared';
 import type { DepsRegistry, FmtPreset } from '../types';
 import depsData from './web-react/deps.json';
 
 const deps = depsData as DepsRegistry;
+
+const lintStagedFragments = {
+   eslint: {
+      '*.{ts,tsx,js,jsx}': ['eslint --fix'],
+   },
+   prettier: {
+      '*.{ts,tsx,js,jsx}': ['prettier --write'],
+      '*.{css,scss}': ['prettier --write'],
+   },
+   stylelint: {
+      '*.{css,scss}': ['stylelint --fix'],
+   },
+};
 
 export const webReactFmt: FmtPreset = {
    name: 'web-react',
@@ -121,16 +135,17 @@ trim_trailing_whitespace = false
       'lint-staged': 'lint-staged',
    },
 
-   lintStagedFragments: {
-      eslint: {
-         '*.{ts,tsx,js,jsx}': ['eslint --fix'],
-      },
-      prettier: {
-         '*.{ts,tsx,js,jsx}': ['prettier --write'],
-         '*.{css,scss}': ['prettier --write'],
-      },
-      stylelint: {
-         '*.{css,scss}': ['stylelint --fix'],
-      },
+   lintStagedFragments,
+
+   husky: ({ lintStaged }) => {
+      if (lintStaged) {
+         return '<pmx> lint-staged\n';
+      }
+      return '<pm> lint\n';
+   },
+
+   lintStaged: ({ stylelint }) => {
+      const composed = composeLintStaged(lintStagedFragments, { stylelint });
+      return JSON.stringify(composed, null, 2) + '\n';
    },
 };

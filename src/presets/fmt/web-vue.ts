@@ -1,7 +1,21 @@
+import { composeLintStaged } from '../../core/shared';
 import type { DepsRegistry, FmtPreset } from '../types';
 import depsData from './web-vue/deps.json';
 
 const deps = depsData as DepsRegistry;
+
+const lintStagedFragments = {
+   eslint: {
+      '*.{ts,js,vue}': ['eslint --fix'],
+   },
+   prettier: {
+      '*.{ts,js,vue}': ['prettier --write'],
+      '*.{css,scss,vue}': ['prettier --write'],
+   },
+   stylelint: {
+      '*.{css,scss,vue}': ['stylelint --fix'],
+   },
+};
 
 export const webVueFmt: FmtPreset = {
    name: 'web-vue',
@@ -117,16 +131,17 @@ trim_trailing_whitespace = false
       'lint-staged': 'lint-staged',
    },
 
-   lintStagedFragments: {
-      eslint: {
-         '*.{ts,js,vue}': ['eslint --fix'],
-      },
-      prettier: {
-         '*.{ts,js,vue}': ['prettier --write'],
-         '*.{css,scss,vue}': ['prettier --write'],
-      },
-      stylelint: {
-         '*.{css,scss,vue}': ['stylelint --fix'],
-      },
+   lintStagedFragments,
+
+   husky: ({ lintStaged }) => {
+      if (lintStaged) {
+         return '<pmx> lint-staged\n';
+      }
+      return '<pm> lint\n';
+   },
+
+   lintStaged: ({ stylelint }) => {
+      const composed = composeLintStaged(lintStagedFragments, { stylelint });
+      return JSON.stringify(composed, null, 2) + '\n';
    },
 };
