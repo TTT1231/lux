@@ -4,19 +4,28 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { detectPackageManager, getRunPrefix, addDepsToManifest } from '../../../src/utils/deps';
 
-vi.mock('../../../src/utils/execFileNoThrow', () => ({
-   execFileNoThrow: vi.fn(),
-}));
-
 vi.mock('../../../src/utils/config', () => ({
    getEnvConfig: vi.fn(),
 }));
 
-import { execFileNoThrow } from '../../../src/utils/execFileNoThrow';
 import { getEnvConfig } from '../../../src/utils/config';
 
-const mockExecFileNoThrow = vi.mocked(execFileNoThrow);
 const mockGetEnvConfig = vi.mocked(getEnvConfig);
+
+function mockFetchVersion(versionMap: Record<string, string>) {
+   return vi.fn(async (input: string | URL | Request) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const pkgName = new URL(url).pathname.split('/')[1];
+      const version = versionMap[pkgName];
+      if (!version) {
+         return { ok: false, json: async () => ({}) } as Response;
+      }
+      return {
+         ok: true,
+         json: async () => ({ version }),
+      } as unknown as Response;
+   });
+}
 
 describe('getRunPrefix', () => {
    it('returns correct prefix for each package manager', () => {
@@ -132,7 +141,7 @@ describe('addDepsToManifest', () => {
    let tmpDir = '';
 
    afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
    });
 
@@ -150,9 +159,9 @@ describe('addDepsToManifest', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir);
 
-      mockExecFileNoThrow
-         .mockResolvedValueOnce({ stdout: '9.25.0', stderr: '', exitCode: 0 })
-         .mockResolvedValueOnce({ stdout: '3.3.0', stderr: '', exitCode: 0 });
+      vi.spyOn(globalThis, 'fetch').mockImplementation(
+         mockFetchVersion({ eslint: '9.25.0', prettier: '3.3.0' }),
+      );
 
       const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
 
@@ -166,11 +175,9 @@ describe('addDepsToManifest', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir, { eslint: '^9.0.0' });
 
-      mockExecFileNoThrow.mockResolvedValueOnce({
-         stdout: '3.3.0',
-         stderr: '',
-         exitCode: 0,
-      });
+      vi.spyOn(globalThis, 'fetch').mockImplementation(
+         mockFetchVersion({ prettier: '3.3.0' }),
+      );
 
       const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
 
@@ -184,10 +191,12 @@ describe('addDepsToManifest', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir, { eslint: '^9.0.0', prettier: '^3.0.0' });
 
+      const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
       const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
 
       expect(added).toEqual([]);
-      expect(mockExecFileNoThrow).not.toHaveBeenCalled();
+      expect(fetchSpy).not.toHaveBeenCalled();
    });
 
    it('throws when package.json not found', async () => {
@@ -196,15 +205,13 @@ describe('addDepsToManifest', () => {
       await expect(addDepsToManifest(['eslint'], tmpDir)).rejects.toThrow('package.json not found');
    });
 
-   it('throws when npm view fails', async () => {
+   it('throws when fetch fails', async () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir);
 
-      mockExecFileNoThrow.mockResolvedValueOnce({
-         stdout: '',
-         stderr: 'not found',
-         exitCode: 1,
-      });
+      vi.spyOn(globalThis, 'fetch').mockImplementation(
+         mockFetchVersion({}),
+      );
 
       await expect(addDepsToManifest(['nonexistent-pkg'], tmpDir)).rejects.toThrow(
          'Failed to fetch version for "nonexistent-pkg"',

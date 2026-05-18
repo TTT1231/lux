@@ -1,7 +1,7 @@
+import { homedir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { fileExists, readJson, writeJson } from './fs';
-import { execFileNoThrow } from './execFileNoThrow';
+import { fileExists, readJson, writeJson, readFile } from './fs';
 import { getEnvConfig } from './config';
 import { logger } from './logger';
 
@@ -70,19 +70,34 @@ export function getRunPrefix(pm: PackageManager): string {
    }
 }
 
-/**
- * Fetch the latest version of a package from npm registry.
- * Takes the last non-empty line of stdout to handle npm warnings.
- */
-async function fetchPackageVersion(pkg: string): Promise<string> {
-   const { stdout, exitCode } = await execFileNoThrow('npm', ['view', pkg, 'version']);
+const DEFAULT_REGISTRY = 'https://registry.npmjs.org';
 
-   if (exitCode !== 0 || !stdout) {
+function readRegistryFromNpmrc(dir: string): string | null {
+   const content = readFile(path.join(dir, '.npmrc'));
+   if (!content) return null;
+
+   for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith(';')) continue;
+      const match = /^registry\s*=\s*(.+)$/.exec(trimmed);
+      if (match) return match[1]!.trim().replace(/\/+$/, '');
+   }
+   return null;
+}
+
+function resolveRegistry(cwd: string): string {
+   return readRegistryFromNpmrc(cwd) ?? readRegistryFromNpmrc(homedir()) ?? DEFAULT_REGISTRY;
+}
+
+async function fetchPackageVersion(pkg: string, registry: string): Promise<string> {
+   const res = await fetch(`${registry}/${pkg}/latest`);
+
+   if (!res.ok) {
       throw new Error(`Failed to fetch version for "${pkg}" from npm registry.`);
    }
 
-   const lines = stdout.split('\n').filter(line => line.trim().length > 0);
-   return lines[lines.length - 1]!.trim();
+   const data = (await res.json()) as { version: string };
+   return data.version;
 }
 
 /**
@@ -102,9 +117,10 @@ export async function addDepsToManifest(packages: string[], cwd: string): Promis
 
    if (missing.length === 0) return [];
 
+   const registry = resolveRegistry(cwd);
    const results = await Promise.all(
       missing.map(async pkgName => {
-         const version = await fetchPackageVersion(pkgName);
+         const version = await fetchPackageVersion(pkgName, registry);
          return { pkgName, version };
       }),
    );
