@@ -453,7 +453,7 @@ describe('applyLocalFmtPreset', () => {
       expect(result.created).not.toContain('.stylelintignore');
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['stylelint']).toBeUndefined();
+      // deps are handled by executeLocalPath, not by applyLocalFmtPreset
       expect(pkg.scripts['stylelint']).toBeUndefined();
    });
 
@@ -501,7 +501,7 @@ describe('applyLocalFmtPreset', () => {
       expect(result.created).not.toContain('cspell.json');
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['cspell']).toBeUndefined();
+      // deps are handled by executeLocalPath, not by applyLocalFmtPreset
       expect(pkg.scripts['cspell']).toBeUndefined();
    });
 
@@ -577,11 +577,11 @@ describe('applyLocalFmtPreset', () => {
       });
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['lint-staged']).toBeUndefined();
+      // deps are handled by executeLocalPath, not by applyLocalFmtPreset
       expect(pkg.scripts['lint-staged']).toBeUndefined();
    });
 
-   it('includes lint-staged dep and script when lintStaged flag is true', () => {
+   it('includes lint-staged script when lintStaged flag is true', () => {
       tmpDir = createTempDir();
       setupLocalPreset({
          'eslint.config.mjs': 'export default []',
@@ -602,7 +602,7 @@ describe('applyLocalFmtPreset', () => {
       });
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['lint-staged']).toBe('^15.0.0');
+      // deps are handled by executeLocalPath, not by applyLocalFmtPreset
       expect(pkg.scripts['lint-staged']).toBe('lint-staged');
    });
 
@@ -625,7 +625,8 @@ describe('applyLocalFmtPreset', () => {
       });
 
       const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
-      expect(pkg.devDependencies['husky']).toBeUndefined();
+      // deps are handled by executeLocalPath, not by applyLocalFmtPreset
+      expect(pkg.devDependencies).toBeUndefined();
    });
 });
 

@@ -15,7 +15,6 @@ import {
    STYLELINT_EXTENSION,
    filterStylelintSettings,
    loadDepsJson,
-   collectDepsFromRegistry,
 } from './shared';
 
 type PresetType = 'fmt' | 'vscode';
@@ -339,7 +338,7 @@ interface FilterScriptsFlags {
 
 function mergeTemplateIntoProject(
    templatePkg: { scripts?: Record<string, string> },
-   presetDir: string,
+   _presetDir: string,
    projectPkg: Record<string, unknown>,
    pm: PackageManager | undefined,
    opts: GenerateOptions,
@@ -348,33 +347,10 @@ function mergeTemplateIntoProject(
    const merged = { ...projectPkg };
    const prefix = pm ? getRunPrefix(pm) : '';
 
-   // Dependency merging from deps.json
-   let registry;
-   try {
-      registry = loadDepsJson(presetDir);
-   } catch {
-      // If deps.json is missing, skip dep merging (old preset format)
-   }
-
-   if (registry) {
-      const depsToInstall = collectDepsFromRegistry(registry, {
-         stylelint: opts.stylelint,
-         cspell: opts.cspell,
-         editorconfig: opts.editorconfig,
-         husky: opts.husky,
-         lintStaged: opts.lintStaged,
-      });
-
-      const existingDeps = (merged.devDependencies ?? {}) as Record<string, string>;
-      const newDeps: Record<string, string> = { ...existingDeps };
-
-      for (const [dep, version] of Object.entries(depsToInstall)) {
-         if (existingDeps[dep] === undefined) {
-            newDeps[dep] = version;
-         }
-      }
-      merged.devDependencies = newDeps;
-   }
+   // Dep merging is handled by executeLocalPath via addDepsToManifest,
+   // which resolves <latest> to real versions. Do not add raw <latest>
+   // placeholders here or the caller will see them as "already present"
+   // and skip resolution.
 
    if (templatePkg.scripts) {
       const existingScripts = (merged.scripts ?? {}) as Record<string, string>;
