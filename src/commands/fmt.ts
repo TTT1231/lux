@@ -23,7 +23,6 @@ import {
    resetLocalPreset,
    materializeFmtPreset,
    applyLocalFmtPreset,
-   resolveLocalDeps,
    InvalidPackageJsonError,
    filterScripts,
    isValidCustomPreset,

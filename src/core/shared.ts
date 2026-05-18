@@ -22,8 +22,6 @@ export const EDITORCONFIG_FILE = '.editorconfig';
 
 export const CSPELL_FILE = 'cspell.json';
 
-export const LINTSTAGED_FILE = '.lintstagedrc.json';
-
 // --- Config file getters ---
 
 export const CONFIG_GETTERS: ReadonlyArray<{

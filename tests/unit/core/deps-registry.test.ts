@@ -2,11 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import {
-   loadDepsJson,
-   collectDepsFromRegistry,
-   composeLintStaged,
-} from '../../../src/core/shared';
+import { loadDepsJson, collectDepsFromRegistry, composeLintStaged } from '../../../src/core/shared';
 import type { DepsRegistry } from '../../../src/presets/types';
 
 function createTempDir(): string {
