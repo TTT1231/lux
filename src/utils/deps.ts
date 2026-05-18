@@ -90,13 +90,18 @@ function resolveRegistry(cwd: string): string {
 }
 
 async function fetchPackageVersion(pkg: string, registry: string): Promise<string> {
-   const res = await fetch(`${registry}/${pkg}/latest`);
+   const res = await fetch(`${registry}/${pkg}/latest`, {
+      signal: AbortSignal.timeout(15_000),
+   });
 
    if (!res.ok) {
-      throw new Error(`Failed to fetch version for "${pkg}" from npm registry.`);
+      throw new Error(`Failed to fetch version for "${pkg}" from ${registry}.`);
    }
 
-   const data = (await res.json()) as { version: string };
+   const data = (await res.json()) as { version?: string };
+   if (!data.version) {
+      throw new Error(`Unexpected response for "${pkg}": missing version field`);
+   }
    return data.version;
 }
 

@@ -15,7 +15,9 @@ const mockGetEnvConfig = vi.mocked(getEnvConfig);
 function mockFetchVersion(versionMap: Record<string, string>) {
    return vi.fn(async (input: string | URL | Request) => {
       const url = typeof input === 'string' ? input : input.toString();
-      const pkgName = new URL(url).pathname.split('/')[1];
+      // pathname: /@scope/pkg/latest or /pkg/latest → extract everything before /latest
+      const pathname = new URL(url).pathname;
+      const pkgName = pathname.slice(1, -'/latest'.length);
       const version = versionMap[pkgName];
       if (!version) {
          return { ok: false, json: async () => ({}) } as Response;
@@ -159,9 +161,7 @@ describe('addDepsToManifest', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir);
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(
-         mockFetchVersion({ eslint: '9.25.0', prettier: '3.3.0' }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockImplementation(mockFetchVersion({ eslint: '9.25.0', prettier: '3.3.0' }));
 
       const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
 
@@ -175,9 +175,7 @@ describe('addDepsToManifest', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir, { eslint: '^9.0.0' });
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(
-         mockFetchVersion({ prettier: '3.3.0' }),
-      );
+      vi.spyOn(globalThis, 'fetch').mockImplementation(mockFetchVersion({ prettier: '3.3.0' }));
 
       const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir);
 
@@ -209,9 +207,7 @@ describe('addDepsToManifest', () => {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
       createPkgJson(tmpDir);
 
-      vi.spyOn(globalThis, 'fetch').mockImplementation(
-         mockFetchVersion({}),
-      );
+      vi.spyOn(globalThis, 'fetch').mockImplementation(mockFetchVersion({}));
 
       await expect(addDepsToManifest(['nonexistent-pkg'], tmpDir)).rejects.toThrow(
          'Failed to fetch version for "nonexistent-pkg"',
