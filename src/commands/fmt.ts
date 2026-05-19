@@ -158,7 +158,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
       hookContent = readFile(hookTemplatePath) ?? undefined;
       // Strip lint-staged from hook content if --lint-staged is not passed
       if (hookContent && !opts.lintStaged) {
-         hookContent = hookContent.replace(/<pmx>\s*lint-staged/g, '<pm> lint');
+         hookContent = hookContent.replace(/<pmx>\s*lint-staged/g, '<pm> type:check');
       }
    }
 
@@ -331,9 +331,11 @@ async function executeBuiltinPath(
    const depNames = Object.keys(depsToInstall);
    const missing = depNames.filter(dep => !existingDeps[dep]);
 
+   const hookContent = preset.husky?.({ lintStaged: opts.lintStaged });
+
    if (missing.length === 0) {
       if (opts.husky) {
-         await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
+         await initHusky(cwd, pm, opts, hookContent);
       }
       return;
    }
@@ -341,7 +343,7 @@ async function executeBuiltinPath(
    if (opts.dryRun) {
       logger.log(`[dry-run] Would add to package.json: ${missing.join(', ')}`);
       if (opts.husky) {
-         await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
+         await initHusky(cwd, pm, opts, hookContent);
       }
       return;
    }
@@ -359,7 +361,7 @@ async function executeBuiltinPath(
          logger.warn(`Failed to fetch versions: ${message}. You can add dependencies manually.`);
       }
       if (opts.husky) {
-         await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
+         await initHusky(cwd, pm, opts, hookContent);
       }
       return;
    }
@@ -375,7 +377,7 @@ async function executeBuiltinPath(
 
    // Husky initialization
    if (opts.husky) {
-      await initHusky(cwd, pm, opts, preset.husky?.({ lintStaged: opts.lintStaged }));
+      await initHusky(cwd, pm, opts, hookContent);
    }
 }
 
@@ -525,7 +527,7 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
    const prefix = getRunPrefix(pm);
 
    // Resolve hook template with tag replacement
-   const template = hookContent ?? (opts.lintStaged ? '<pmx> lint-staged\n' : '<pm> lint\n');
+   const template = hookContent ?? (opts.lintStaged ? '<pmx> lint-staged\n' : '<pm> type:check\n');
    const resolvedHook = template.replace(/<pmx>/g, getExecPrefix(pm)).replace(/<pm>/g, prefix);
 
    const huskyDir = path.join(cwd, '.husky');
@@ -540,6 +542,7 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
 
    // 1. Inject init script into package.json
    const scripts = (pkg.scripts ?? {}) as Record<string, string>;
+   let scriptInjected = false;
    if (scripts[initScriptName] !== undefined && !opts.force) {
       logger.log(`Skipped script "${initScriptName}" (already exists)`);
    } else {
@@ -547,10 +550,13 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       pkg.scripts = scripts;
       writeJson(pkgPath, pkg);
       logger.log(`Injected "${initScriptName}" script for husky`);
+      scriptInjected = true;
    }
 
-   // 2. Execute init script (husky creates .husky/ dir with default pre-commit)
-   logger.log(`Running ${prefix} ${initScriptName} to initialize git hooks...`);
+   // 2. Execute init script only when we injected it (husky creates .husky/ dir with default pre-commit)
+   if (scriptInjected) {
+      logger.log(`Running ${prefix} ${initScriptName} to initialize git hooks...`);
+   }
    try {
       const args = isYarn ? ['postinstall'] : ['run', initScriptName];
       const { exitCode } = await execFileNoThrow(pm, args, { cwd });
@@ -565,11 +571,8 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
    }
 
    // 3. Overwrite .husky/pre-commit with correct content (replaces husky's default)
-   if (fileExists(preCommitPath) && !opts.force) {
-      logger.log('Skipped .husky/pre-commit (already exists)');
-   } else {
-      ensureDir(huskyDir);
-      writeFile(preCommitPath, resolvedHook);
-      fs.chmodSync(preCommitPath, 0o755);
-   }
+   //    Always write — husky init creates default content that must be replaced.
+   ensureDir(huskyDir);
+   writeFile(preCommitPath, resolvedHook);
+   fs.chmodSync(preCommitPath, 0o755);
 }

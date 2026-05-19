@@ -11,11 +11,12 @@ describe('built-in preset husky()', () => {
             expect(content).toContain('lint-staged');
          });
 
-         it('returns <pm> lint when lintStaged flag is false', () => {
+         it('returns <pm> command when lintStaged flag is false', () => {
             if (!preset.husky) return;
             const content = preset.husky({ lintStaged: false });
             expect(content).toContain('<pm>');
-            expect(content).toContain('lint');
+            expect(content).not.toContain('<pmx>');
+            expect(content).not.toContain('lint-staged');
          });
       });
    }
