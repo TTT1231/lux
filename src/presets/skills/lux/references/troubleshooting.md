@@ -32,7 +32,7 @@ If developing locally, run `bun run build` first.
 
 **Symptom:** `lux fmt <name>` returns `Preset "<name>" not found` with exit code 1.
 
-**Fix:** Check available presets with `lux fmt list`. If the name is slightly wrong, lux will fuzzy-match and suggest alternatives. For custom presets, ensure the directory exists at `~/.lux/preset/fmt/<name>/`.
+**Fix:** Check available presets with `lux fmt list`. If the name is slightly wrong, lux will fuzzy-match and suggest alternatives using Levenshtein distance. For custom presets, ensure the directory exists at `~/.lux/preset/fmt/<name>/`.
 
 ### Custom preset not appearing in `lux fmt list`
 
@@ -53,27 +53,63 @@ If developing locally, run `bun run build` first.
 }
 ```
 
-### "--stylelint / --cspell / --editorconfig has no effect" warning
+### "deps.json not found" error
 
-**Symptom:** `lux fmt <name> --stylelint` warns that the flag has no effect.
+**Symptom:** `lux fmt <custom-name>` fails with `deps.json not found in "<path>". Run with --reset to re-materialize the preset.`
 
-**Cause:** The preset doesn't contain the corresponding config file or dependency.
+**Cause:** The preset directory is missing a `deps.json` file, which is **required** for dependency collection and flag-based filtering.
 
-**Fix:** Add the required files to the preset directory:
+**Fix:** Create a `deps.json` in the preset directory. At minimum:
 
-| Flag             | Required files                             | Required deps (at least one)      |
-| :--------------- | :----------------------------------------- | :-------------------------------- |
-| `--stylelint`    | `stylelint.config.mjs`, `.stylelintignore` | `stylelint`, `postcss-html`, etc. |
-| `--cspell`       | `cspell.json`                              | `cspell`                          |
-| `--editorconfig` | `.editorconfig`                            | `editorconfig-checker`            |
-| `--husky`        | (auto-generated)                           | `husky`                           |
-| `--lint-staged`  | `.lintstagedrc.json`                       | `lint-staged`                     |
+```json
+{
+   "devDependencies": {},
+   "dependencies": {},
+   "eslint": {
+      "devDependencies": {
+         "eslint": "<latest>"
+      }
+   },
+   "prettier": {
+      "devDependencies": {
+         "prettier": "<latest>"
+      }
+   }
+}
+```
+
+For built-in presets: run `lux init --preset` to re-materialize, or `lux fmt <name> --reset`.
+
+### "deps.json is not valid JSON" error
+
+**Symptom:** `lux fmt <name>` fails with `deps.json in "<path>" is not valid JSON.`
+
+**Cause:** The `deps.json` file has a syntax error (e.g., trailing comma, missing bracket).
+
+**Fix:** Validate the JSON syntax. For built-in presets: run `lux fmt <name> --reset` to re-materialize from built-in.
+
+### "--xxx has no effect" warning
+
+**Symptom:** `lux fmt <name> --stylelint` (or `--cspell`, `--editorconfig`, `--lint-staged`) warns that the flag has no effect.
+
+**Cause:** The preset doesn't contain the corresponding config files **and** dependency entries in `deps.json`. lux checks both — if neither exists, the flag is considered ineffective.
+
+**Fix:** Add the required files and deps.json entries to the preset directory:
+
+| Flag             | Required files                             | Required deps.json key    |
+| :--------------- | :----------------------------------------- | :------------------------ |
+| `--stylelint`    | `stylelint.config.mjs`, `.stylelintignore` | `"stylelint"`             |
+| `--cspell`       | `cspell.json`                              | `"cspell"`                |
+| `--editorconfig` | `.editorconfig`                            | `"editorconfig"`          |
+| `--lint-staged`  | `.lintstagedrc.json`                       | `"lint-staged"`           |
+
+> **Note:** `--husky` does not have a separate "no effect" warning — it is implicitly enabled by `--lint-staged`. When used alone, it only requires the `"husky"` key in `deps.json`.
 
 ### "--reset warns and aborts for custom presets"
 
-**Symptom:** `lux fmt <custom-name> --reset` shows a warning and does nothing.
+**Symptom:** `lux fmt <custom-name> --reset` shows `"<name>" is a custom preset, --reset has no builtin to restore` and does nothing.
 
-**Cause:** By design — custom presets have no built-in source to restore from.
+**Cause:** By design — custom presets have no built-in source to restore from. `--reset` only works for built-in presets.
 
 **Fix:** Manually edit files in `~/.lux/preset/fmt/<custom-name>/`, or delete the directory and recreate it.
 
@@ -91,6 +127,35 @@ If developing locally, run `bun run build` first.
 | `cspell`       | `cspell:check`       | `Cspell:check`       |
 | `editorconfig` | `editorconfig:check` | `Editorconfig:check` |
 | `lint-staged`  | `lint-staged`        | `Lint-staged`        |
+
+> **Note:** `husky` scripts are NOT controlled by keyword matching. The husky init script (`prepare` or `postinstall`) is injected directly by lux with a fixed key name.
+
+### Git repository not found (--husky / --lint-staged)
+
+**Symptom:** `lux fmt <name> --husky` shows `Git repository not found. Husky and lint-staged require a git repo — skipping.`
+
+**Cause:** The project directory does not have a `.git` directory — husky and lint-staged require git to function.
+
+**Fix:** Initialize a git repository first:
+
+```bash
+git init
+```
+
+Then re-run `lux fmt <name> --husky`. Note that other config files (ESLint, Prettier, etc.) are still generated — only husky/lint-staged setup is skipped.
+
+### Husky init script fails
+
+**Symptom:** `lux fmt` shows `Husky init failed: <message>. You can run "<pm> prepare" manually.`
+
+**Cause:** The `prepare` (or `postinstall` for yarn) script execution failed. This can happen if husky is not yet installed in `node_modules`.
+
+**Fix:** Install dependencies first, then run the init script manually:
+
+```bash
+bun install
+bun run prepare    # or: npm run prepare / pnpm run prepare / yarn postinstall
+```
 
 ### "package.json not found, skipping script injection"
 
@@ -114,7 +179,7 @@ bun install   # or npm install / pnpm install / yarn
 
 **Symptom:** `lux fmt` warns `Failed to fetch versions: <message>. You can add dependencies manually.`
 
-**Cause:** Network issue or npm registry unreachable — lux cannot resolve `<latest>` version placeholders in preset's `package.json`.
+**Cause:** Network issue or npm registry unreachable — lux cannot resolve `<latest>` version placeholders in `deps.json`.
 
 **Fix:** Dependencies with `<latest>` placeholders are written to `package.json` as-is. Manually replace `<latest>` with specific versions and run install:
 
@@ -137,7 +202,10 @@ Or check network/proxy settings and retry `lux fmt`.
 lux fmt <name> --force
 ```
 
-Note: `--force` overwrites config files and scripts, but **never** overwrites dependencies — deps are always additive (missing only). Some files are protected by preset rules (e.g., nest preset never overwrites `eslint.config.mjs`).
+Note: `--force` overwrites config files and scripts, but **never** overwrites dependencies — deps are always additive (missing only). Some files are protected by preset rules:
+- **`neverOverwrite`**: Files that are never overwritten even with `--force` (e.g., nest preset never overwrites `eslint.config.mjs`)
+- **`forceOverwrite`**: Files that are always overwritten even without `--force` (e.g., nest preset always overwrites `.prettierrc`)
+- **`.husky/pre-commit`**: Always overwritten by `initHusky()` regardless of `--force` — husky's default hook must be replaced with the correct content
 
 ### "--reset doesn't work" / "Local preset not found"
 
@@ -201,3 +269,11 @@ lux set lux_package_manager=auto
 **Symptom:** File write errors or `EPERM` errors during `lux fmt`.
 
 **Fix:** Ensure no other process (VSCode, terminal) has the target files open. Close editors and retry.
+
+### "package.json exists but is not valid JSON" error
+
+**Symptom:** `lux fmt` (or `lux init --preset`) fails with JSON parse error.
+
+**Cause:** The target project's `package.json` exists but contains invalid JSON.
+
+**Fix:** Fix the JSON syntax in `package.json` first, then re-run the lux command.

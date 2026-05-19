@@ -126,7 +126,7 @@ flowchart LR
 
 ## Health Stack
 
-- lint: bun run lint
+- lint: bun run eslint && bun run type:check
 - test: vitest run
 - format: prettier --check "src/\*_/_.{ts,js,json}"
 - gbrain: gbrain doctor --json

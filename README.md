@@ -85,13 +85,23 @@ lux vscode list
 > Prerequisite: `lux init && lux init --preset` completed (see Quick Start)
 
 ```bash
-# Use an AI agent to create a custom preset (recommended)
-# In Claude or other AI agents, just run:
-/lux configure my formatting template <your-custom-fmt-preset-name> to fit my development project style
+# 1. Create your custom preset directory
+mkdir -p ~/.lux/preset/fmt/my-team-lint
 
-# Verify the preset is registered
+# 2. Add minimum required files:
+#    - package.json  (with scripts — needed for preset detection)
+#    - deps.json     (dependency registry — REQUIRED, lux errors without it)
+
+# 3. Use an AI agent to scaffold the preset (recommended)
+# In Claude or other AI agents, just run:
+/lux configure my formatting template my-team-lint to fit my development project style
+
+# 4. Verify the preset is registered
 lux fmt list
+# Output: my-team-lint     (custom)
 ```
+
+> **Minimum preset requirements:** `package.json` (for detection) + `deps.json` (for dependency collection). Without `deps.json`, lux throws a fatal error. See `references/custom-preset-setting.md` for full details.
 
 ### 📖CLI Commands
 
@@ -153,27 +163,36 @@ lux fmt <preset> [options]
        ├── Built-in preset ──► --reset? ──► Reset local copy
        │              │
        │              ├── Local copy exists (~/.lux/preset/)? ──► Apply from local
-       │              └── Not found ──► Generate from built-in ──► Save to ~/.lux/preset/ ──► Apply
+       │              └── Not found ──► Generate → materialize to ~/.lux/preset/ ──► Apply
        │
        ├── Custom preset (~/.lux/preset/fmt/<name>/) ──► Apply from local directory
        │
-       └── Not found ──► Fuzzy match against all presets (built-in + custom), show error
+       └── Not found ──► Fuzzy match, suggest + exit code 1
        │
        ▼
-  --stylelint / --editorconfig / --cspell / --husky / --lint-staged filtering (warns if custom preset lacks matching config)
+  Apply config files (flag-aware — skips stylelint/cspell/editorconfig/lint-staged when flag off)
        │
-       ▼
-  For each config file:
-       │
-       ├── File not found? ──► Create
+       ├── File not found? ──► Create (with <lockfile> resolution)
        ├── Exists + --force? ──► Overwrite
-       └── Exists? ──► Skip
+       ├── neverOverwrite rule? ──► Skip (even with --force)
+       └── Otherwise ──► Skip
        │
        ▼
-  Inject scripts into package.json (auto-detect bun / pnpm / npm / yarn)
+  Inject scripts into package.json (flag-filtered by key.includes(keyword), <pm> resolved)
        │
        ▼
-  Install devDependencies (detects lockfile for package manager)
+  Load deps.json → collect deps by flags (collectDepsFromRegistry) → resolve <latest> → install missing
+       │                                                                         │
+       │                                                    ┌────────────────────┘
+       │                                                    ▼
+       │                                          Install deps (or --no-install: write to package.json only)
+       │
+       ▼
+  Init husky (if --husky / --lint-staged)
+       │
+       ├── .git missing? ──► Warn + skip
+       ├── Inject prepare/postinstall script → run init → write .husky/pre-commit
+       └── Hook content resolved: <pmx> → npx/pnpx/bunx/yarn dlx, <pm> → pm run
 ```
 
 <br />
@@ -215,7 +234,8 @@ npm uninstall -g @luxkit/cli
 | Issue                          | Solution                                                                                                                                            |
 | :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `package.json` errors          | Ensure a valid `package.json` exists in the project root                                                                                            |
-| Preset not found               | Run `lux fmt list` to see all available presets — lux auto-suggests via fuzzy matching                                                              |
+| Preset not found               | Run `lux fmt list` to see all available presets — lux auto-suggests via fuzzy matching. Custom presets need `package.json` to be detectable         |
+| `deps.json` not found          | Custom presets require a `deps.json` dependency registry. Create one in the preset dir, or for built-in presets run `lux init --preset`              |
 | Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`), or set globally: `lux set lux_package_manager=pnpm`               |
 | Skip dependency install        | Use `--no-install` to only write to `package.json`, install manually                                                                                |
 | Preview before applying        | Use `--dry-run` to see all operations without writing                                                                                               |
@@ -330,13 +350,23 @@ lux vscode list
 > 前置条件：已完成 `lux init && lux init --preset`（见快速开始）
 
 ```bash
-# 使用 AI Agent 创建自定义预设（推荐）
-# 在 Claude 等 AI Agent 中直接执行：
-/lux 配置我的格式化模板 <your-custom-fmt-preset-name>，符合我的开发项目风格
+# 1. 创建你的自定义预设目录
+mkdir -p ~/.lux/preset/fmt/my-team-lint
 
-# 验证预设是否注册成功
+# 2. 添加最小必需文件：
+#    - package.json  （含 scripts —— 预设检测需要）
+#    - deps.json     （依赖注册表 —— 必需，缺少会导致 lux 报错中断）
+
+# 3. 使用 AI Agent 生成预设（推荐）
+# 在 Claude 等 AI Agent 中直接执行：
+/lux 配置我的格式化模板 my-team-lint，符合我的开发项目风格
+
+# 4. 验证预设是否注册成功
 lux fmt list
+# 输出：my-team-lint     (custom)
 ```
+
+> **最小预设要求：** `package.json`（用于检测）+ `deps.json`（用于依赖收集）。缺少 `deps.json` 会导致 lux 抛出致命错误。完整文档见 `references/custom-preset-setting.zh-CN.md`。
 
 ## 📖命令参考
 
@@ -398,27 +428,36 @@ lux fmt <preset> [options]
        ├── 内置预设 ──► --reset？ ──► 重置本地副本
        │              │
        │              ├── 本地副本存在 (~/.lux/preset/)？ ──► 从本地副本应用
-       │              └── 不存在 ──► 从内置生成 ──► 保存到 ~/.lux/preset/ ──► 应用
+       │              └── 不存在 ──► 从内置生成 → 物化到 ~/.lux/preset/ ──► 应用
        │
        ├── 自定义预设 (~/.lux/preset/fmt/<name>/) ──► 直接从本地目录应用
        │
-       └── 未找到 ──► 模糊匹配所有可用预设（内置 + 自定义）并报错
+       └── 未找到 ──► 模糊匹配，建议 + 退出码 1
        │
        ▼
-  --stylelint / --editorconfig / --cspell / --husky / --lint-staged 过滤（自定义预设无对应配置时 warning）
+  应用配置文件（感知 flag — 未传标志时跳过 stylelint/cspell/editorconfig/lint-staged 文件）
        │
-       ▼
-  遍历每个配置文件：
-       │
-       ├── 文件不存在？ ──► 创建
+       ├── 文件不存在？ ──► 创建（含 <lockfile> 解析）
        ├── 已存在 + --force？ ──► 覆盖
-       └── 已存在？ ──► 跳过
+       ├── neverOverwrite 规则？ ──► 跳过（即使 --force）
+       └── 其他情况 ──► 跳过
        │
        ▼
-  注入脚本到 package.json（自动检测 bun / pnpm / npm / yarn）
+  注入 scripts 到 package.json（flag 过滤：key.includes(keyword)，<pm> 解析）
        │
        ▼
-  安装 devDependencies（检测 lockfile 判断包管理器）
+  加载 deps.json → 按 flag 收集依赖 (collectDepsFromRegistry) → 解析 <latest> → 安装缺失项
+       │                                                                         │
+       │                                                    ┌────────────────────┘
+       │                                                    ▼
+       │                                          安装依赖（或 --no-install：仅写入 package.json）
+       │
+       ▼
+  初始化 husky（若 --husky / --lint-staged）
+       │
+       ├── 缺少 .git？ ──► 警告 + 跳过
+       ├── 注入 prepare/postinstall 脚本 → 运行初始化 → 写入 .husky/pre-commit
+       └── 钩子内容解析：<pmx> → npx/pnpx/bunx/yarn dlx，<pm> → pm run
 ```
 
 <br />
@@ -460,7 +499,8 @@ npm uninstall -g @luxkit/cli
 | 问题                    | 解决方案                                                                                                                  |
 | :---------------------- | :------------------------------------------------------------------------------------------------------------------------ |
 | `package.json` 相关错误 | 确保项目根目录存在合法的 `package.json`                                                                                   |
-| 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议                                                              |
+| 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议。自定义预设需包含 `package.json` 才能被检测到                |
+| `deps.json` 未找到      | 自定义预设需要 `deps.json` 依赖注册表。在预设目录中创建此文件；内置预设则运行 `lux init --preset`                          |
 | 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`），或全局指定：`lux set lux_package_manager=pnpm` |
 | 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                                                       |
 | 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                                                     |
