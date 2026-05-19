@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.50
+
+- Husky and lint-staged are now preset-driven — defined per preset, materialized to local preset directory, and applied from preset definitions; `--husky` and `--lint-staged` flags enable them
+- Lint scripts restructured: the consolidated `lint` script is replaced with separate `eslint`, `cspell`, and `type:check` scripts; legacy combined scripts (`code:check`, `code:check:all`, `code:fix`, `code:fix:all`, `format:check`) are removed
+- Custom presets support `__LOCKFILE__` placeholder in config files — automatically replaced with the project's lockfile name at generation time
+- `lux init --preset` no longer overwrites existing custom presets
+- `lux vpn` clipboard operations now work on macOS and Linux
+- ESLint flat config ignores patterns now correctly handle lockfile paths
+- Husky setup is skipped when not in a git repository
+- Pre-commit hook now includes shebang for Windows compatibility
+- TypeScript dependencies are now included in all format presets
+- Self-update version resolution is faster (uses HTTP fetch instead of npm view)
+
 ## 1.1.46
 
 - Fixed `lux init` listing all files in target directory instead of only copied skills
