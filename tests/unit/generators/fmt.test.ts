@@ -29,6 +29,15 @@ const presetWithLintStaged: FmtPreset = {
          '*.{ts,js}': ['eslint --fix', 'prettier --write'],
       },
    },
+   lintStaged: ({ stylelint }) => {
+      const config: Record<string, string[]> = {
+         '*.{ts,js}': ['eslint --fix', 'prettier --write'],
+      };
+      if (stylelint) {
+         config['*.{css,scss}'] = ['stylelint --fix'];
+      }
+      return JSON.stringify(config, null, 2) + '\n';
+   },
 };
 
 describe('generateAllFmt', () => {
@@ -39,6 +48,23 @@ describe('generateAllFmt', () => {
    });
 
    it('generates .lintstagedrc.json when preset has lintStagedFragments and lintStaged flag is true', () => {
+      tmpDir = createTempDir();
+
+      const result = generateAllFmt(presetWithLintStaged, {
+         ...baseOpts,
+         cwd: tmpDir,
+         lintStaged: true,
+      });
+
+      const filePath = path.join(tmpDir, '.lintstagedrc.json');
+      expect(fs.existsSync(filePath)).toBe(true);
+      expect(result.created).toContain('.lintstagedrc.json');
+
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      expect(content['*.{ts,js}']).toEqual(['eslint --fix', 'prettier --write']);
+   });
+
+   it('generates .lintstagedrc.json using lintStaged function when available', () => {
       tmpDir = createTempDir();
 
       const result = generateAllFmt(presetWithLintStaged, {

@@ -1,7 +1,17 @@
+import { composeLintStaged } from '../../core/shared';
 import type { DepsRegistry, FmtPreset } from '../types';
 import depsData from './node/deps.json';
 
 const deps = depsData as DepsRegistry;
+
+const lintStagedFragments = {
+   eslint: {
+      '*.{ts,js}': ['eslint --fix'],
+   },
+   prettier: {
+      '*.{ts,js}': ['prettier --write'],
+   },
+};
 
 export const nodeFmt: FmtPreset = {
    name: 'node',
@@ -116,12 +126,17 @@ trim_trailing_whitespace = false
       'lint-staged': 'lint-staged',
    },
 
-   lintStagedFragments: {
-      eslint: {
-         '*.{ts,js}': ['eslint --fix'],
-      },
-      prettier: {
-         '*.{ts,js}': ['prettier --write'],
-      },
+   lintStagedFragments,
+
+   husky: ({ lintStaged }) => {
+      if (lintStaged) {
+         return '<pmx> lint-staged\n';
+      }
+      return '<pm> type:check\n';
+   },
+
+   lintStaged: ({ stylelint }) => {
+      const composed = composeLintStaged(lintStagedFragments, { stylelint });
+      return JSON.stringify(composed, null, 2) + '\n';
    },
 };

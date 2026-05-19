@@ -92,7 +92,10 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
 
       const resolved = opts.lockfile
          ? content.replace(/<lockfile>/g, opts.lockfile)
-         : content.replace(/<lockfile>\n?/g, '');
+         : content
+              .replace(/,?\s*'<lockfile>'/g, '')
+              .replace(/'<lockfile>',?\s*/g, '')
+              .replace(/<lockfile>\n?/g, '');
 
       writeFile(path.join(presetDir, filename), resolved);
    }
@@ -104,6 +107,20 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
 
    const templatePkg = buildTemplatePackageJson(preset);
    writeJson(path.join(presetDir, 'package.json'), templatePkg);
+
+   // Materialize lint-staged config (full version with all fragments)
+   if (preset.lintStaged) {
+      const lintStagedContent = preset.lintStaged({ stylelint: true });
+      writeFile(path.join(presetDir, '.lintstagedrc.json'), lintStagedContent);
+   }
+
+   // Materialize husky hook (full version with lint-staged)
+   if (preset.husky) {
+      const hookContent = preset.husky({ lintStaged: true });
+      const huskyDir = path.join(presetDir, '.husky');
+      ensureDir(huskyDir);
+      writeFile(path.join(huskyDir, 'pre-commit'), hookContent);
+   }
 
    logger.log(`Local preset created at ${presetDir}`);
 }
@@ -187,6 +204,7 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
       if (!opts.stylelint && STYLELINT_FILES.has(filename)) continue;
       if (!opts.editorconfig && filename === EDITORCONFIG_FILE) continue;
       if (!opts.cspell && filename === CSPELL_FILE) continue;
+      if (!opts.lintStaged && filename === '.lintstagedrc.json') continue;
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);
@@ -209,7 +227,10 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
       if (content !== null) {
          const resolved = opts.lockfile
             ? content.replace(/<lockfile>/g, opts.lockfile)
-            : content.replace(/<lockfile>\n?/g, '');
+            : content
+                 .replace(/,?\s*'<lockfile>'/g, '')
+                 .replace(/'<lockfile>',?\s*/g, '')
+                 .replace(/<lockfile>\n?/g, '');
          writeFile(destPath, resolved);
          (exists ? result.overwritten : result.created).push(filename);
       }

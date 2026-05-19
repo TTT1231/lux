@@ -23,7 +23,10 @@ function generateConfigFile(
 
    const resolved = opts.lockfile
       ? content.replace(/<lockfile>/g, opts.lockfile)
-      : content.replace(/<lockfile>\n?/g, '');
+      : content
+           .replace(/,?\s*'<lockfile>'/g, '')
+           .replace(/'<lockfile>',?\s*/g, '')
+           .replace(/<lockfile>\n?/g, '');
 
    try {
       writeFile(filepath, resolved);
@@ -53,16 +56,20 @@ export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): Genera
       else if (action === 'skipped') result.skipped.push(filename);
    }
 
-   if (opts.lintStaged && preset.lintStagedFragments) {
-      const composed = composeLintStaged(preset.lintStagedFragments, {
-         stylelint: opts.stylelint,
-      });
-      const content = JSON.stringify(composed, null, 2) + '\n';
+   if (opts.lintStaged) {
+      const content = preset.lintStaged
+         ? preset.lintStaged({ stylelint: opts.stylelint })
+         : preset.lintStagedFragments
+           ? JSON.stringify(composeLintStaged(preset.lintStagedFragments, { stylelint: opts.stylelint }), null, 2) +
+             '\n'
+           : undefined;
 
-      const action = generateConfigFile(preset, '.lintstagedrc.json', content, opts);
-      if (action === 'created') result.created.push('.lintstagedrc.json');
-      else if (action === 'overwritten') result.overwritten.push('.lintstagedrc.json');
-      else if (action === 'skipped') result.skipped.push('.lintstagedrc.json');
+      if (content) {
+         const action = generateConfigFile(preset, '.lintstagedrc.json', content, opts);
+         if (action === 'created') result.created.push('.lintstagedrc.json');
+         else if (action === 'overwritten') result.overwritten.push('.lintstagedrc.json');
+         else if (action === 'skipped') result.skipped.push('.lintstagedrc.json');
+      }
    }
 
    return result;
