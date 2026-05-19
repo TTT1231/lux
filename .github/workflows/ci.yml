@@ -35,7 +35,9 @@ jobs:
 
          - run: bun run build
 
-         - run: bun run lint
+         - run: bun run eslint
+
+         - run: bun run type:check
 
          - run: bun run test --coverage
 
