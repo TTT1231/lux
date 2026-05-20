@@ -112,4 +112,54 @@ describe('generateAllFmt', () => {
       expect(fs.existsSync(path.join(tmpDir, '.lintstagedrc.json'))).toBe(false);
       expect(result.created).not.toContain('.lintstagedrc.json');
    });
+
+   it('generates fallback tsconfig files when project has none', () => {
+      tmpDir = createTempDir();
+
+      const presetWithTsconfig: FmtPreset = {
+         name: 'tsconfig-preset',
+         description: 'TS config',
+         tsconfig: () => ({
+            'tsconfig.json': '{"compilerOptions":{}}\n',
+            'tsconfig.app.json': '{"extends":"./tsconfig.json"}\n',
+         }),
+      };
+
+      const result = generateAllFmt(presetWithTsconfig, {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      expect(result.created).toContain('tsconfig.json');
+      expect(result.created).toContain('tsconfig.app.json');
+      expect(fs.existsSync(path.join(tmpDir, 'tsconfig.json'))).toBe(true);
+      expect(fs.existsSync(path.join(tmpDir, 'tsconfig.app.json'))).toBe(true);
+   });
+
+   it('skips all fallback tsconfig files when project already has any tsconfig', () => {
+      tmpDir = createTempDir();
+      fs.writeFileSync(path.join(tmpDir, 'tsconfig.json'), '{"compilerOptions":{"strict":false}}\n');
+
+      const presetWithTsconfig: FmtPreset = {
+         name: 'tsconfig-preset',
+         description: 'TS config',
+         tsconfig: () => ({
+            'tsconfig.json': '{"compilerOptions":{"strict":true}}\n',
+            'tsconfig.app.json': '{"extends":"./tsconfig.json"}\n',
+         }),
+      };
+
+      const result = generateAllFmt(presetWithTsconfig, {
+         ...baseOpts,
+         cwd: tmpDir,
+         force: true,
+      });
+
+      expect(result.skipped).toContain('tsconfig.json');
+      expect(result.skipped).toContain('tsconfig.app.json');
+      expect(fs.existsSync(path.join(tmpDir, 'tsconfig.app.json'))).toBe(false);
+      expect(fs.readFileSync(path.join(tmpDir, 'tsconfig.json'), 'utf-8')).toBe(
+         '{"compilerOptions":{"strict":false}}\n',
+      );
+   });
 });

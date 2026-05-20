@@ -1,6 +1,7 @@
 import { composeLintStaged } from '../../core/shared';
 import type { DepsRegistry, FmtPreset } from '../types';
 import depsData from './uniapp/deps.json';
+import { uniappTsconfigFiles } from './tsconfig';
 
 const deps = depsData as DepsRegistry;
 
@@ -117,6 +118,8 @@ trim_trailing_whitespace = true
 [*.md]
 trim_trailing_whitespace = false
 `,
+
+   tsconfig: uniappTsconfigFiles,
 
    deps,
 

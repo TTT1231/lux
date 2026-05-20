@@ -3,7 +3,7 @@ import type { FmtPreset, GenerateOptions, GenerateResult } from '../presets/type
 import { resolveConflict } from '../core/conflict-resolver';
 import { writeFile, fileExists } from '../utils/fs';
 import { logger } from '../utils/logger';
-import { CONFIG_GETTERS, composeLintStaged } from '../core/shared';
+import { CONFIG_GETTERS, composeLintStaged, getPresetTsconfigEntries, hasTsconfigFile } from '../core/shared';
 
 type FileAction = 'created' | 'overwritten' | 'skipped';
 
@@ -54,6 +54,20 @@ export function generateAllFmt(preset: FmtPreset, opts: GenerateOptions): Genera
       if (action === 'created') result.created.push(filename);
       else if (action === 'overwritten') result.overwritten.push(filename);
       else if (action === 'skipped') result.skipped.push(filename);
+   }
+
+   const tsconfigEntries = getPresetTsconfigEntries(preset);
+   if (tsconfigEntries.length > 0) {
+      if (hasTsconfigFile(opts.cwd)) {
+         result.skipped.push(...tsconfigEntries.map(([filename]) => filename));
+      } else {
+         for (const [filename, content] of tsconfigEntries) {
+            const action = generateConfigFile(preset, filename, content, opts);
+            if (action === 'created') result.created.push(filename);
+            else if (action === 'overwritten') result.overwritten.push(filename);
+            else if (action === 'skipped') result.skipped.push(filename);
+         }
+      }
    }
 
    if (opts.lintStaged) {

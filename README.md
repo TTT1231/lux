@@ -191,7 +191,7 @@ lux fmt <preset> [options]
   Init husky (if --husky / --lint-staged)
        │
        ├── .git missing? ──► Warn + skip
-       ├── Inject prepare/postinstall script → run init → write .husky/pre-commit
+       ├── Inject prepare/postinstall script → create .husky/_ support files → write .husky/pre-commit
        └── Hook content resolved: <pmx> → npx/pnpx/bunx/yarn dlx, <pm> → pm run
 ```
 
@@ -456,7 +456,7 @@ lux fmt <preset> [options]
   初始化 husky（若 --husky / --lint-staged）
        │
        ├── 缺少 .git？ ──► 警告 + 跳过
-       ├── 注入 prepare/postinstall 脚本 → 运行初始化 → 写入 .husky/pre-commit
+       ├── 注入 prepare/postinstall 脚本 → 创建 .husky/_ 支持文件 → 写入 .husky/pre-commit
        └── 钩子内容解析：<pmx> → npx/pnpx/bunx/yarn dlx，<pm> → pm run
 ```
 

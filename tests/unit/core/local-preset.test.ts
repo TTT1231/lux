@@ -266,6 +266,29 @@ describe('materializeFmtPreset', () => {
       expect(fs.existsSync(path.join(presetDir, '.husky', 'pre-commit'))).toBe(true);
       expect(fs.readFileSync(path.join(presetDir, '.husky', 'pre-commit'), 'utf-8')).toBe('<pmx> lint-staged\n');
    });
+
+   it('materializes fallback tsconfig files from preset', () => {
+      const presetWithTsconfig: FmtPreset = {
+         name: 'test-tsconfig',
+         description: 'Test',
+         eslint: () => 'export default []\n',
+         tsconfig: () => ({
+            'tsconfig.json': '{"compilerOptions":{"strict":true}}\n',
+            'tsconfig.app.json': '{"extends":"./tsconfig.json"}\n',
+         }),
+      };
+      tmpDir = createTempDir();
+
+      materializeFmtPreset('test-tsconfig', presetWithTsconfig, {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      const presetDir = getLocalPresetDir('fmt', 'test-tsconfig');
+      expect(fs.existsSync(path.join(presetDir, 'tsconfig.json'))).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, 'tsconfig.app.json'))).toBe(true);
+      expect(fs.readFileSync(path.join(presetDir, 'tsconfig.json'), 'utf-8')).toContain('"strict":true');
+   });
 });
 
 describe('materializeVscodePreset', () => {
@@ -331,6 +354,50 @@ describe('applyLocalFmtPreset', () => {
       expect(result.created).toContain('eslint.config.mjs');
       expect(result.created).toContain('.prettierrc');
       expect(fs.readFileSync(path.join(tmpDir, 'eslint.config.mjs'), 'utf-8')).toBe('export default []');
+   });
+
+   it('copies fallback tsconfig files from local preset when project has none', () => {
+      tmpDir = createTempDir();
+      setupLocalPreset({
+         'tsconfig.json': '{"compilerOptions":{"strict":true}}\n',
+         'tsconfig.app.json': '{"extends":"./tsconfig.json"}\n',
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+      });
+
+      expect(result.created).toContain('tsconfig.json');
+      expect(result.created).toContain('tsconfig.app.json');
+      expect(fs.existsSync(path.join(tmpDir, 'tsconfig.json'))).toBe(true);
+      expect(fs.existsSync(path.join(tmpDir, 'tsconfig.app.json'))).toBe(true);
+   });
+
+   it('skips local fallback tsconfig files when project already has any tsconfig', () => {
+      tmpDir = createTempDir();
+      fs.writeFileSync(path.join(tmpDir, 'tsconfig.json'), '{"compilerOptions":{"strict":false}}\n');
+      setupLocalPreset({
+         'tsconfig.json': '{"compilerOptions":{"strict":true}}\n',
+         'tsconfig.app.json': '{"extends":"./tsconfig.json"}\n',
+         'package.json': JSON.stringify({ scripts: {} }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', {
+         ...baseOpts,
+         cwd: tmpDir,
+         force: true,
+      });
+
+      expect(result.skipped).toContain('tsconfig.json');
+      expect(result.skipped).toContain('tsconfig.app.json');
+      expect(fs.existsSync(path.join(tmpDir, 'tsconfig.app.json'))).toBe(false);
+      expect(fs.readFileSync(path.join(tmpDir, 'tsconfig.json'), 'utf-8')).toBe(
+         '{"compilerOptions":{"strict":false}}\n',
+      );
    });
 
    it('skips existing files without --force', () => {

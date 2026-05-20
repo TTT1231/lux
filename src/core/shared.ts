@@ -17,6 +17,8 @@ export const EDITORCONFIG_FILE = '.editorconfig';
 
 export const CSPELL_FILE = 'cspell.json';
 
+const TSCONFIG_FILE_RE = /^tsconfig(?:\..+)?\.json$/i;
+
 // --- Config file getters ---
 
 export const CONFIG_GETTERS: ReadonlyArray<{
@@ -127,6 +129,21 @@ export function collectDepsFromRegistry(registry: DepsRegistry, flags: DepsFilte
    }
 
    return deps;
+}
+
+export function isTsconfigFile(filename: string): boolean {
+   return TSCONFIG_FILE_RE.test(filename);
+}
+
+export function hasTsconfigFile(dir: string): boolean {
+   if (!fs.existsSync(dir)) return false;
+
+   return fs.readdirSync(dir, { withFileTypes: true }).some(entry => entry.isFile() && isTsconfigFile(entry.name));
+}
+
+export function getPresetTsconfigEntries(preset: FmtPreset): Array<[string, string]> {
+   const files = preset.tsconfig?.() ?? {};
+   return Object.entries(files).filter(([filename]) => isTsconfigFile(filename));
 }
 
 export function composeLintStaged(

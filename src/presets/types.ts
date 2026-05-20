@@ -44,6 +44,8 @@ export interface FmtPreset {
    stylelintIgnore?: () => string;
    cspell?: () => string;
    editorconfig?: () => string;
+   /** Fallback TypeScript config files, copied only when the target project has no tsconfig*.json */
+   tsconfig?: () => Record<string, string>;
    /** Per-tool dependency data (statically imported from deps.json) */
    deps?: DepsRegistry;
    scripts?: Record<string, string>;

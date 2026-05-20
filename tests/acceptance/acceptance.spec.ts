@@ -520,6 +520,9 @@ describe('Acceptance: lux CLI', () => {
          expect(ctx.luxFileExists('preset/fmt/web-vue/eslint.config.mjs')).toBe(true);
          expect(ctx.luxFileExists('preset/fmt/web-vue/.prettierrc')).toBe(true);
          expect(ctx.luxFileExists('preset/fmt/web-vue/cspell.json')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/tsconfig.json')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/tsconfig.app.json')).toBe(true);
+         expect(ctx.luxFileExists('preset/fmt/web-vue/tsconfig.node.json')).toBe(true);
 
          // deps.json with <latest> placeholders
          const depsJson =
@@ -533,6 +536,84 @@ describe('Acceptance: lux CLI', () => {
             scripts: Record<string, string>;
          }>('preset/fmt/web-vue/package.json')!;
          expect(templatePkg.scripts['eslint']).toContain('eslint');
+      });
+   });
+
+   // ─── Scenario 12b: Missing tsconfig gets fallback config ──────────
+   describe('Scenario: fmt provides fallback tsconfig only when missing', () => {
+      it('builtin path creates web tsconfig files when project has none', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-tsconfig-missing',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
+         expect(result.exitCode).toBe(0);
+
+         expect(ctx.fileExists('tsconfig.json')).toBe(true);
+         expect(ctx.fileExists('tsconfig.app.json')).toBe(true);
+         expect(ctx.fileExists('tsconfig.node.json')).toBe(true);
+
+         const tsconfig = ctx.readJsonFile<{ include: string[] }>('tsconfig.json')!;
+         expect(tsconfig.include).toContain('src/**/*.vue');
+      });
+
+      it('builtin path preserves an existing project tsconfig and does not add fallback siblings', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-tsconfig-existing',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+               'tsconfig.json': JSON.stringify({
+                  compilerOptions: {
+                     strict: false,
+                  },
+               }),
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--force']);
+         expect(result.exitCode).toBe(0);
+
+         const tsconfig = ctx.readJsonFile<{ compilerOptions: { strict: boolean } }>('tsconfig.json')!;
+         expect(tsconfig.compilerOptions.strict).toBe(false);
+         expect(ctx.fileExists('tsconfig.app.json')).toBe(false);
+         expect(ctx.fileExists('tsconfig.node.json')).toBe(false);
+      });
+
+      it('local preset path copies materialized tsconfig files when project has none', async () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'test-tsconfig-local',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         ctx.run(['fmt', 'web-vue', '--no-install']);
+
+         const fs = await import('node:fs');
+         const path = await import('node:path');
+         for (const file of ['tsconfig.json', 'tsconfig.app.json', 'tsconfig.node.json']) {
+            fs.unlinkSync(path.join(ctx.tmpDir, file));
+         }
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--force']);
+         expect(result.exitCode).toBe(0);
+         expect(result.stdout).toContain('Using local custom preset');
+
+         expect(ctx.fileExists('tsconfig.json')).toBe(true);
+         expect(ctx.fileExists('tsconfig.app.json')).toBe(true);
+         expect(ctx.fileExists('tsconfig.node.json')).toBe(true);
       });
    });
 
@@ -943,6 +1024,36 @@ describe('Acceptance: lux CLI', () => {
          // No lint-staged script
          const pkg = ctx.readJsonFile<{ scripts: Record<string, string> }>('package.json')!;
          expect(pkg.scripts['lint-staged']).toBeUndefined();
+      });
+
+      it('does not require the husky binary when --no-install is used', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'husky-no-binary-test',
+                  version: '1.0.0',
+                  scripts: {
+                     prepare: 'husky',
+                  },
+               }),
+               'bun.lock': '',
+            },
+         });
+         initGit(ctx.tmpDir);
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--husky']);
+         expect(result.exitCode).toBe(0);
+
+         const output = result.stdout + result.stderr;
+         expect(output).not.toContain('Husky init failed');
+         expect(output).not.toContain('Husky init script');
+         expect(output).not.toContain('You can run');
+
+         expect(ctx.fileExists('.husky/pre-commit')).toBe(true);
+         expect(ctx.fileExists('.husky/_/h')).toBe(true);
+         const preCommit = ctx.readFile('.husky/pre-commit')!;
+         expect(preCommit).toContain('bun run type:check');
+         expect(preCommit).not.toContain('bun test');
       });
    });
 

@@ -1,6 +1,7 @@
 import { composeLintStaged } from '../../core/shared';
 import type { DepsRegistry, FmtPreset } from '../types';
 import depsData from './web-react/deps.json';
+import { reactWebTsconfigFiles } from './tsconfig';
 
 const deps = depsData as DepsRegistry;
 
@@ -119,6 +120,8 @@ trim_trailing_whitespace = true
 [*.md]
 trim_trailing_whitespace = false
 `,
+
+   tsconfig: reactWebTsconfigFiles,
 
    deps,
 

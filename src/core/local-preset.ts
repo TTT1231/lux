@@ -14,6 +14,9 @@ import {
    CSPELL_FILE,
    STYLELINT_EXTENSION,
    filterStylelintSettings,
+   getPresetTsconfigEntries,
+   hasTsconfigFile,
+   isTsconfigFile,
    loadDepsJson,
 } from './shared';
 
@@ -98,6 +101,10 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
               .replace(/<lockfile>\n?/g, '');
 
       writeFile(path.join(presetDir, filename), resolved);
+   }
+
+   for (const [filename, content] of getPresetTsconfigEntries(preset)) {
+      writeFile(path.join(presetDir, filename), content);
    }
 
    // Write deps.json from preset's statically imported data
@@ -194,6 +201,7 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
       }
    }
 
+   const projectHasTsconfig = hasTsconfigFile(cwd);
    const entries = fs
       .readdirSync(presetDir)
       .filter(
@@ -205,6 +213,13 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
       if (!opts.editorconfig && filename === EDITORCONFIG_FILE) continue;
       if (!opts.cspell && filename === CSPELL_FILE) continue;
       if (!opts.lintStaged && filename === '.lintstagedrc.json') continue;
+      if (projectHasTsconfig && isTsconfigFile(filename)) {
+         result.skipped.push(filename);
+         if (opts.dryRun) {
+            logger.log(`[dry-run] Skipped ${filename} (project already has tsconfig)`);
+         }
+         continue;
+      }
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);

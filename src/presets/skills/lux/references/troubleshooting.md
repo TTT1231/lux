@@ -144,18 +144,13 @@ git init
 
 Then re-run `lux fmt <name> --husky`. Note that other config files (ESLint, Prettier, etc.) are still generated — only husky/lint-staged setup is skipped.
 
-### Husky init script fails
+### Husky setup with --no-install
 
-**Symptom:** `lux fmt` shows `Husky init failed: <message>. You can run "<pm> prepare" manually.`
+**Symptom:** You used `lux fmt <name> --no-install --husky` and `husky` is not installed in `node_modules` yet.
 
-**Cause:** The `prepare` (or `postinstall` for yarn) script execution failed. This can happen if husky is not yet installed in `node_modules`.
+**Cause:** `--no-install` writes dependencies to `package.json` but does not install local binaries.
 
-**Fix:** Install dependencies first, then run the init script manually:
-
-```bash
-bun install
-bun run prepare    # or: npm run prepare / pnpm run prepare / yarn postinstall
-```
+**Fix:** Run your package manager install when ready. `lux` already creates `.husky/_` support files and writes `.husky/pre-commit` directly, so do not run `husky init` manually; that command can recreate the default hook content.
 
 ### "package.json not found, skipping script injection"
 

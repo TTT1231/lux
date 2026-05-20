@@ -532,6 +532,7 @@ function summarizeFiles(filenames: string[]): string {
       else if (name.includes('stylelint')) categories.add('stylelint');
       else if (name.includes('cspell')) categories.add('cspell');
       else if (name.includes('editorconfig')) categories.add('editorconfig');
+      else if (name.includes('tsconfig')) categories.add('tsconfig');
       else if (name.includes('husky')) categories.add('husky');
       else if (name.includes('lintstagedrc')) categories.add('lint-staged');
    }
@@ -587,7 +588,7 @@ async function injectScripts(
    }
 }
 
-/** Initialize husky: inject init script, execute once, then write pre-commit hook */
+/** Initialize husky: inject init script, create support files directly, then write pre-commit hook */
 async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions, hookContent?: string): Promise<void> {
    const gitDir = path.join(cwd, '.git');
    if (!fileExists(gitDir)) {
@@ -617,13 +618,11 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       logger.log(`[dry-run] Would create .husky/pre-commit with: ${resolvedHook.trim()}`);
       logger.log('[dry-run] Would initialize husky support files under .husky/_');
       logger.log(`[dry-run] Would inject "${initScriptName}": "husky" script`);
-      logger.log(`[dry-run] Would run ${prefix} ${initScriptName}`);
       return;
    }
 
    // 1. Inject init script into package.json
    const scripts = (pkg.scripts ?? {}) as Record<string, string>;
-   let scriptInjected = false;
    if (scripts[initScriptName] !== undefined && !opts.force) {
       logger.log(`Skipped script "${initScriptName}" (already exists)`);
    } else {
@@ -631,35 +630,12 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       pkg.scripts = scripts;
       writeJson(pkgPath, pkg);
       logger.log(`Injected "${initScriptName}" script for husky`);
-      scriptInjected = true;
    }
 
-   // 2. Execute init script only when we injected it (husky creates .husky/ dir with default pre-commit)
-   if (scriptInjected) {
-      logger.log(`Running ${prefix} ${initScriptName} to initialize git hooks...`);
-   }
-   let initFailureMessage: string | undefined;
-   try {
-      const args = isYarn ? ['postinstall'] : ['run', initScriptName];
-      const { exitCode } = await execFileNoThrow(pm, args, { cwd });
-      if (exitCode === 0) {
-         logger.success('Husky initialized successfully');
-      } else {
-         initFailureMessage = `Husky init script exited with code ${exitCode}`;
-      }
-   } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      initFailureMessage = `Husky init failed: ${message}`;
-   }
-
+   // 2. Create Husky support files directly so --no-install does not depend on node_modules/.bin/husky.
    const bootstrapped = await ensureHuskyBootstrap(cwd, huskyDir);
    if (bootstrapped) {
-      if (initFailureMessage) {
-         logger.log(`${initFailureMessage}; created husky support files directly.`);
-      }
       logger.success('Husky support files initialized successfully');
-   } else if (initFailureMessage && !hasHuskyBootstrap(huskyDir)) {
-      logger.warn(`${initFailureMessage}. You can run "${prefix} ${initScriptName}" manually.`);
    }
 
    // 3. Overwrite .husky/pre-commit with correct content (replaces husky's default)
@@ -700,9 +676,4 @@ async function ensureHuskyBootstrap(cwd: string, huskyDir: string): Promise<bool
    writeFile(path.join(hooksDir, 'husky.sh'), HUSKY_DEPRECATED_SH);
 
    return true;
-}
-
-function hasHuskyBootstrap(huskyDir: string): boolean {
-   const hooksDir = path.join(huskyDir, '_');
-   return fileExists(path.join(hooksDir, 'h')) && fileExists(path.join(hooksDir, 'pre-commit'));
 }
