@@ -44,6 +44,57 @@ interface FmtCommandOptions {
    reset?: boolean;
 }
 
+interface MissingPackageJsonCapabilities {
+   scripts?: Record<string, string>;
+   deps?: unknown;
+   husky?: boolean;
+}
+
+const HUSKY_HOOKS = [
+   'pre-commit',
+   'pre-merge-commit',
+   'prepare-commit-msg',
+   'commit-msg',
+   'post-commit',
+   'applypatch-msg',
+   'pre-applypatch',
+   'post-applypatch',
+   'pre-rebase',
+   'post-rewrite',
+   'post-checkout',
+   'post-merge',
+   'pre-push',
+   'pre-auto-gc',
+] as const;
+
+const HUSKY_RUNNER = `#!/usr/bin/env sh
+[ "$HUSKY" = "2" ] && set -x
+hook_name=$(basename "$0")
+hook_script="$(dirname "$(dirname "$0")")/$hook_name"
+
+[ ! -f "$hook_script" ] && exit 0
+[ "\${HUSKY-}" = "0" ] && exit 0
+
+export PATH="node_modules/.bin:$PATH"
+sh -e "$hook_script" "$@"
+exit_code=$?
+
+[ $exit_code != 0 ] && echo "husky - $hook_name script failed (code $exit_code)"
+[ $exit_code = 127 ] && echo "husky - command not found in PATH=$PATH"
+exit $exit_code
+`;
+
+const HUSKY_DEPRECATED_SH = `echo "husky - DEPRECATED
+
+Please remove the following two lines from $0:
+
+#!/usr/bin/env sh
+. \\"\\$(dirname -- \\"\\$0\\")/_/husky.sh\\"
+
+They WILL FAIL in v10.0.0
+"
+`;
+
 export function registerFmtCommand(program: Command) {
    const fmt = program.command('fmt').description('Initialize formatting config with preset');
 
@@ -184,7 +235,10 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
       );
    }
 
-   if (!pm) return;
+   if (!pm) {
+      warnMissingPackageJson(getLocalMissingPackageJsonCapabilities(presetName, opts), options.install !== false);
+      return;
+   }
 
    const presetDir = getLocalPresetDir('fmt', presetName);
    let registry;
@@ -295,11 +349,6 @@ async function executeBuiltinPath(
       materializeFmtPreset(presetName, preset, opts);
    }
 
-   if (!pm) {
-      warnMissingPackageJson(preset, options.install !== false);
-      return;
-   }
-
    const scripts = preset.scripts
       ? filterScripts(preset.scripts, {
            stylelint: opts.stylelint,
@@ -308,6 +357,11 @@ async function executeBuiltinPath(
            lintStaged: opts.lintStaged,
         })
       : undefined;
+
+   if (!pm) {
+      warnMissingPackageJson({ scripts, deps: preset.deps, husky: opts.husky }, options.install !== false);
+      return;
+   }
 
    if (scripts) {
       await injectScripts(scripts, opts, pm);
@@ -431,16 +485,42 @@ function logApplyResult(result: { created: string[]; overwritten: string[]; skip
 }
 
 /** Warn about skipped tasks when package.json is missing */
-function warnMissingPackageJson(
-   preset: { scripts?: Record<string, string>; deps?: unknown },
-   installEnabled: boolean,
-): void {
+function warnMissingPackageJson(capabilities: MissingPackageJsonCapabilities, installEnabled: boolean): void {
    const tasks: string[] = [];
-   if (preset.scripts) tasks.push('script injection');
-   if (preset.deps && installEnabled) tasks.push('dependency installation');
+   if (capabilities.scripts && Object.keys(capabilities.scripts).length > 0) tasks.push('script injection');
+   if (capabilities.deps) tasks.push(installEnabled ? 'dependency installation' : 'dependency manifest update');
+   if (capabilities.husky) tasks.push('husky setup');
    if (tasks.length > 0) {
-      logger.warn(`package.json not found, skipping ${tasks.join(' and ')}`);
+      logger.warn(`package.json not found, skipping ${formatTaskList(tasks)}`);
    }
+}
+
+function getLocalMissingPackageJsonCapabilities(
+   presetName: string,
+   opts: GenerateOptions,
+): MissingPackageJsonCapabilities {
+   const presetDir = getLocalPresetDir('fmt', presetName);
+   const templatePkg = readJson<{ scripts?: Record<string, string> }>(path.join(presetDir, 'package.json'));
+   const scripts = templatePkg?.scripts
+      ? filterScripts(templatePkg.scripts, {
+           stylelint: opts.stylelint,
+           editorconfig: opts.editorconfig,
+           cspell: opts.cspell,
+           lintStaged: opts.lintStaged,
+        })
+      : undefined;
+
+   return {
+      scripts,
+      deps: fileExists(path.join(presetDir, 'deps.json')),
+      husky: opts.husky,
+   };
+}
+
+function formatTaskList(tasks: string[]): string {
+   if (tasks.length <= 1) return tasks[0] ?? '';
+   if (tasks.length === 2) return `${tasks[0]} and ${tasks[1]}`;
+   return `${tasks.slice(0, -1).join(', ')}, and ${tasks[tasks.length - 1]}`;
 }
 
 /** Map filenames to tool categories: eslint, prettier, stylelint, cspell, editorconfig, husky, lint-staged */
@@ -535,6 +615,7 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
 
    if (opts.dryRun) {
       logger.log(`[dry-run] Would create .husky/pre-commit with: ${resolvedHook.trim()}`);
+      logger.log('[dry-run] Would initialize husky support files under .husky/_');
       logger.log(`[dry-run] Would inject "${initScriptName}": "husky" script`);
       logger.log(`[dry-run] Would run ${prefix} ${initScriptName}`);
       return;
@@ -557,17 +638,28 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
    if (scriptInjected) {
       logger.log(`Running ${prefix} ${initScriptName} to initialize git hooks...`);
    }
+   let initFailureMessage: string | undefined;
    try {
       const args = isYarn ? ['postinstall'] : ['run', initScriptName];
       const { exitCode } = await execFileNoThrow(pm, args, { cwd });
       if (exitCode === 0) {
          logger.success('Husky initialized successfully');
       } else {
-         logger.warn(`Husky init script exited with code ${exitCode}`);
+         initFailureMessage = `Husky init script exited with code ${exitCode}`;
       }
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.warn(`Husky init failed: ${message}. You can run "${prefix} ${initScriptName}" manually.`);
+      initFailureMessage = `Husky init failed: ${message}`;
+   }
+
+   const bootstrapped = await ensureHuskyBootstrap(cwd, huskyDir);
+   if (bootstrapped) {
+      if (initFailureMessage) {
+         logger.log(`${initFailureMessage}; created husky support files directly.`);
+      }
+      logger.success('Husky support files initialized successfully');
+   } else if (initFailureMessage && !hasHuskyBootstrap(huskyDir)) {
+      logger.warn(`${initFailureMessage}. You can run "${prefix} ${initScriptName}" manually.`);
    }
 
    // 3. Overwrite .husky/pre-commit with correct content (replaces husky's default)
@@ -575,4 +667,42 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
    ensureDir(huskyDir);
    writeFile(preCommitPath, resolvedHook);
    fs.chmodSync(preCommitPath, 0o755);
+}
+
+async function ensureHuskyBootstrap(cwd: string, huskyDir: string): Promise<boolean> {
+   const hooksDir = path.join(huskyDir, '_');
+   const runnerPath = path.join(hooksDir, 'h');
+   const preCommitShimPath = path.join(hooksDir, 'pre-commit');
+
+   const { exitCode, stderr } = await execFileNoThrow('git', ['config', 'core.hooksPath', '.husky/_'], { cwd });
+   if (exitCode !== 0) {
+      const detail = stderr ? `: ${stderr}` : '';
+      logger.warn(`Failed to configure git hooks path${detail}`);
+      return false;
+   }
+
+   if (fileExists(runnerPath) && fileExists(preCommitShimPath)) {
+      return false;
+   }
+
+   ensureDir(hooksDir);
+   writeFile(path.join(hooksDir, '.gitignore'), '*\n');
+   writeFile(runnerPath, HUSKY_RUNNER);
+   fs.chmodSync(runnerPath, 0o755);
+
+   const shim = '#!/usr/bin/env sh\n. "$(dirname "$0")/h"\n';
+   for (const hook of HUSKY_HOOKS) {
+      const hookPath = path.join(hooksDir, hook);
+      writeFile(hookPath, shim);
+      fs.chmodSync(hookPath, 0o755);
+   }
+
+   writeFile(path.join(hooksDir, 'husky.sh'), HUSKY_DEPRECATED_SH);
+
+   return true;
+}
+
+function hasHuskyBootstrap(huskyDir: string): boolean {
+   const hooksDir = path.join(huskyDir, '_');
+   return fileExists(path.join(hooksDir, 'h')) && fileExists(path.join(hooksDir, 'pre-commit'));
 }

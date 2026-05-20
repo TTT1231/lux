@@ -1,5 +1,11 @@
+import { spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createTestContext } from '../helpers/cli-runner';
+
+function initGit(cwd: string): void {
+   const result = spawnSync('git', ['init'], { cwd, encoding: 'utf-8' });
+   expect(result.status).toBe(0);
+}
 
 /**
  * Acceptance Tests — lux CLI
@@ -369,6 +375,50 @@ describe('Acceptance: lux CLI', () => {
 
          // Warning about missing package.json (logger.warn outputs to stderr)
          expect(result.stderr).toContain('package.json not found');
+      });
+
+      it('local preset path warns about every package.json-dependent task', () => {
+         ctx = createTestContext();
+         ctx.luxWriteJsonFile('preset/fmt/web-vue/package.json', {
+            scripts: {
+               eslint: 'eslint .',
+            },
+         });
+         ctx.luxWriteJsonFile('preset/fmt/web-vue/deps.json', {
+            devDependencies: {
+               eslint: '<latest>',
+            },
+            husky: {
+               devDependencies: {
+                  husky: '<latest>',
+               },
+            },
+         });
+         ctx.luxWriteFile('preset/fmt/web-vue/eslint.config.mjs', 'export default []\n');
+         ctx.luxWriteFile('preset/fmt/web-vue/.prettierrc', '{}\n');
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--husky']);
+         expect(result.exitCode).toBe(0);
+
+         expect(result.stdout).toContain('Using local custom preset');
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(true);
+         expect(ctx.fileExists('.prettierrc')).toBe(true);
+         expect(result.stderr).toContain('package.json not found');
+         expect(result.stderr).toContain('script injection');
+         expect(result.stderr).toContain('dependency manifest update');
+         expect(result.stderr).toContain('husky setup');
+      });
+
+      it('builtin reset path includes husky setup in the missing package.json warning', () => {
+         ctx = createTestContext();
+         ctx.luxWriteJsonFile('preset/fmt/web-vue/package.json', {});
+
+         const result = ctx.run(['fmt', 'web-vue', '--reset', '--no-install', '--husky']);
+         expect(result.exitCode).toBe(0);
+
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(true);
+         expect(result.stderr).toContain('package.json not found');
+         expect(result.stderr).toContain('husky setup');
       });
    });
 
@@ -844,12 +894,15 @@ describe('Acceptance: lux CLI', () => {
                }),
             },
          });
+         initGit(ctx.tmpDir);
 
          const result = ctx.run(['fmt', 'web-vue', '--no-install', '--lint-staged']);
          expect(result.exitCode).toBe(0);
 
          // .husky/pre-commit created with lint-staged command
          expect(ctx.fileExists('.husky/pre-commit')).toBe(true);
+         expect(ctx.fileExists('.husky/_/h')).toBe(true);
+         expect(ctx.fileExists('.husky/_/pre-commit')).toBe(true);
          const preCommit = ctx.readFile('.husky/pre-commit')!;
          expect(preCommit).toContain('lint-staged');
 
@@ -871,14 +924,17 @@ describe('Acceptance: lux CLI', () => {
                }),
             },
          });
+         initGit(ctx.tmpDir);
 
          const result = ctx.run(['fmt', 'web-vue', '--no-install', '--husky']);
          expect(result.exitCode).toBe(0);
 
          // .husky/pre-commit with lint command (not lint-staged)
          expect(ctx.fileExists('.husky/pre-commit')).toBe(true);
+         expect(ctx.fileExists('.husky/_/h')).toBe(true);
+         expect(ctx.fileExists('.husky/_/pre-commit')).toBe(true);
          const preCommit = ctx.readFile('.husky/pre-commit')!;
-         expect(preCommit).toContain('lint');
+         expect(preCommit).toContain('type:check');
          expect(preCommit).not.toContain('lint-staged');
 
          // No .lintstagedrc.json
