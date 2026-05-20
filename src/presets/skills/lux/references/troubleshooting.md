@@ -96,12 +96,12 @@ For built-in presets: run `lux init --preset` to re-materialize, or `lux fmt <na
 
 **Fix:** Add the required files and deps.json entries to the preset directory:
 
-| Flag             | Required files                             | Required deps.json key    |
-| :--------------- | :----------------------------------------- | :------------------------ |
-| `--stylelint`    | `stylelint.config.mjs`, `.stylelintignore` | `"stylelint"`             |
-| `--cspell`       | `cspell.json`                              | `"cspell"`                |
-| `--editorconfig` | `.editorconfig`                            | `"editorconfig"`          |
-| `--lint-staged`  | `.lintstagedrc.json`                       | `"lint-staged"`           |
+| Flag             | Required files                             | Required deps.json key |
+| :--------------- | :----------------------------------------- | :--------------------- |
+| `--stylelint`    | `stylelint.config.mjs`, `.stylelintignore` | `"stylelint"`          |
+| `--cspell`       | `cspell.json`                              | `"cspell"`             |
+| `--editorconfig` | `.editorconfig`                            | `"editorconfig"`       |
+| `--lint-staged`  | `.lintstagedrc.json`                       | `"lint-staged"`        |
 
 > **Note:** `--husky` does not have a separate "no effect" warning — it is implicitly enabled by `--lint-staged`. When used alone, it only requires the `"husky"` key in `deps.json`.
 
@@ -198,6 +198,7 @@ lux fmt <name> --force
 ```
 
 Note: `--force` overwrites config files and scripts, but **never** overwrites dependencies — deps are always additive (missing only). Some files are protected by preset rules:
+
 - **`neverOverwrite`**: Files that are never overwritten even with `--force` (e.g., nest preset never overwrites `eslint.config.mjs`)
 - **`forceOverwrite`**: Files that are always overwritten even without `--force` (e.g., nest preset always overwrites `.prettierrc`)
 - **`.husky/pre-commit`**: Always overwritten by `initHusky()` regardless of `--force` — husky's default hook must be replaced with the correct content

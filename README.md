@@ -235,7 +235,7 @@ npm uninstall -g @luxkit/cli
 | :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `package.json` errors          | Ensure a valid `package.json` exists in the project root                                                                                            |
 | Preset not found               | Run `lux fmt list` to see all available presets — lux auto-suggests via fuzzy matching. Custom presets need `package.json` to be detectable         |
-| `deps.json` not found          | Custom presets require a `deps.json` dependency registry. Create one in the preset dir, or for built-in presets run `lux init --preset`              |
+| `deps.json` not found          | Custom presets require a `deps.json` dependency registry. Create one in the preset dir, or for built-in presets run `lux init --preset`             |
 | Wrong package manager detected | Ensure the lockfile exists (`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`), or set globally: `lux set lux_package_manager=pnpm`               |
 | Skip dependency install        | Use `--no-install` to only write to `package.json`, install manually                                                                                |
 | Preview before applying        | Use `--dry-run` to see all operations without writing                                                                                               |
@@ -500,7 +500,7 @@ npm uninstall -g @luxkit/cli
 | :---------------------- | :------------------------------------------------------------------------------------------------------------------------ |
 | `package.json` 相关错误 | 确保项目根目录存在合法的 `package.json`                                                                                   |
 | 预设未找到              | 运行 `lux fmt list` 查看所有可用预设，lux 会自动模糊匹配建议。自定义预设需包含 `package.json` 才能被检测到                |
-| `deps.json` 未找到      | 自定义预设需要 `deps.json` 依赖注册表。在预设目录中创建此文件；内置预设则运行 `lux init --preset`                          |
+| `deps.json` 未找到      | 自定义预设需要 `deps.json` 依赖注册表。在预设目录中创建此文件；内置预设则运行 `lux init --preset`                         |
 | 包管理器检测不正确      | 确保 lockfile 存在（`bun.lock` / `package-lock.json` / `pnpm-lock.yaml`），或全局指定：`lux set lux_package_manager=pnpm` |
 | 跳过依赖安装            | 使用 `--no-install` 仅写入 `package.json`，手动安装                                                                       |
 | 预览操作结果            | 使用 `--dry-run` 查看将执行的所有操作                                                                                     |

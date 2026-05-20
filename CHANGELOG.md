@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.51
+
+- Added fallback TypeScript configs for `lux fmt`: web presets create `tsconfig.json`, `tsconfig.app.json`, and `tsconfig.node.json` only when the target project has no `tsconfig*.json`; existing user tsconfig files are preserved even with `--force`
+- Husky setup no longer executes `prepare`/`postinstall` or depends on `node_modules/.bin/husky`; lux now creates `.husky/_` support files directly and writes the final `.husky/pre-commit` hook
+- Improved missing `package.json` warnings for local and built-in fmt paths so skipped script injection, dependency manifest updates, and husky setup are visible
+- Updated lux skill and README guidance to describe the direct husky bootstrap flow and avoid running `husky init` manually
+
 ## 1.1.50
 
 - Husky and lint-staged are now preset-driven — defined per preset, materialized to local preset directory, and applied from preset definitions; `--husky` and `--lint-staged` flags enable them
