@@ -1082,4 +1082,104 @@ describe('Acceptance: lux CLI', () => {
          expect(pkg.scripts['postinstall']).toBeUndefined();
       });
    });
+
+   // ─── Scenario 23: Sibling config blocks generation ─────────────────
+   describe('Scenario: sibling flat config file blocks generation', () => {
+      it('skips eslint.config.mjs when eslint.config.js already exists (built-in path)', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'sibling-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+               'eslint.config.js': '// existing flat config',
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
+         expect(result.exitCode).toBe(0);
+
+         // eslint.config.mjs NOT generated — sibling exists
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(false);
+         // The existing file is untouched
+         expect(ctx.readFile('eslint.config.js')).toBe('// existing flat config');
+
+         // Warning message printed
+         expect(result.stderr).toContain('eslint.config.mjs not generated');
+         expect(result.stderr).toContain('eslint.config.js already exists');
+
+         // Other files still generated normally
+         expect(ctx.fileExists('.prettierrc')).toBe(true);
+         expect(ctx.fileExists('.prettierignore')).toBe(true);
+      });
+
+      it('skips stylelint.config.mjs when stylelint.config.ts already exists', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'sibling-stylelint-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+               'stylelint.config.ts': '// existing stylelint',
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--stylelint']);
+         expect(result.exitCode).toBe(0);
+
+         expect(ctx.fileExists('stylelint.config.mjs')).toBe(false);
+         expect(ctx.fileExists('.stylelintignore')).toBe(true);
+      });
+
+      it('--force overrides sibling detection and generates the file', () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'sibling-force-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+               'eslint.config.js': '// existing flat config',
+            },
+         });
+
+         const result = ctx.run(['fmt', 'web-vue', '--no-install', '--force']);
+         expect(result.exitCode).toBe(0);
+
+         // --force overrides sibling: file IS generated
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(true);
+      });
+
+      it('skips eslint.config.mjs when sibling exists (local preset path)', async () => {
+         ctx = createTestContext({
+            files: {
+               'package.json': JSON.stringify({
+                  name: 'sibling-local-test',
+                  version: '1.0.0',
+                  scripts: {},
+               }),
+            },
+         });
+
+         // First run — materializes local preset
+         ctx.run(['fmt', 'web-vue', '--no-install']);
+
+         // Delete generated eslint config and add a sibling
+         const fs = await import('node:fs');
+         const nodePath = await import('node:path');
+         fs.unlinkSync(nodePath.join(ctx.tmpDir, 'eslint.config.mjs'));
+         fs.writeFileSync(nodePath.join(ctx.tmpDir, 'eslint.config.js'), '// sibling from user');
+
+         // Second run — uses local preset path (no --force so sibling detection applies)
+         const result = ctx.run(['fmt', 'web-vue', '--no-install']);
+         expect(result.exitCode).toBe(0);
+         expect(result.stdout.toLowerCase()).toContain('using local custom preset');
+
+         // eslint.config.mjs NOT generated
+         expect(ctx.fileExists('eslint.config.mjs')).toBe(false);
+         expect(result.stderr).toContain('eslint.config.mjs not generated');
+      });
+   });
 });
