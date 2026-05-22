@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import type { FmtPreset, GenerateOptions, VscodePreset } from '../presets/types';
+import { findConflictSibling } from './conflict-resolver';
 import { mergeVscodeSettings } from './merge-settings';
 import { fileExists, ensureDir, writeFile, readFile, readJson, writeJson } from '../utils/fs';
 import { logger } from '../utils/logger';
@@ -223,6 +224,16 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
 
       const destPath = path.join(cwd, filename);
       const exists = fileExists(destPath);
+
+      // Sibling config detection
+      if (!exists && !opts.force) {
+         const sibling = findConflictSibling(filename, cwd);
+         if (sibling) {
+            result.skipped.push(filename);
+            logger.warn(`${filename} not generated: ${sibling} already exists`);
+            continue;
+         }
+      }
 
       if (exists && !opts.force) {
          result.skipped.push(filename);

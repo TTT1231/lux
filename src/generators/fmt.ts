@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { FmtPreset, GenerateOptions, GenerateResult } from '../presets/types';
-import { resolveConflict } from '../core/conflict-resolver';
+import { findConflictSibling, resolveConflict } from '../core/conflict-resolver';
 import { writeFile, fileExists } from '../utils/fs';
 import { logger } from '../utils/logger';
 import { CONFIG_GETTERS, composeLintStaged, getPresetTsconfigEntries, hasTsconfigFile } from '../core/shared';
@@ -15,9 +15,17 @@ function generateConfigFile(
 ): FileAction | null {
    const filepath = path.join(opts.cwd, filename);
    const exists = fileExists(filepath);
-   const action = resolveConflict(filename, exists, preset, opts.force);
+   const action = resolveConflict(filename, exists, preset, opts.force, opts.cwd);
 
-   if (action === 'skip') return 'skipped';
+   if (action === 'skip') {
+      if (!exists) {
+         const sibling = findConflictSibling(filename, opts.cwd);
+         if (sibling) {
+            logger.warn(`${filename} not generated: ${sibling} already exists`);
+         }
+      }
+      return 'skipped';
+   }
 
    if (opts.dryRun) return exists ? 'overwritten' : 'created';
 
