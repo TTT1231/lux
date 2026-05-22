@@ -56,10 +56,12 @@ export function findConflictSibling(filename: string, cwd: string): string | und
 
 1. `neverOverwrite` → always skip
 2. `forceOverwrite` → always overwrite
-3. **Sibling exists + file doesn't exist → warn + skip** (new)
+3. **Sibling exists + file doesn't exist + no `--force` → warn + skip** (new)
 4. File doesn't exist → create
 5. File exists + `--force` → overwrite
 6. File exists (no force) → skip
+
+`--force` overrides sibling detection: if the user explicitly forces, the file is generated even when a sibling exists.
 
 ### Logging
 
@@ -84,4 +86,3 @@ Same log format in `applyLocalFmtPreset()`.
 
 - Prettier sibling detection (`.prettierrc` has no extension variants)
 - Legacy `.eslintrc*` detection
-- `--force` overriding sibling detection (siblings always prevent generation)
