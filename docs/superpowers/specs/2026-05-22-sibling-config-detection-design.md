@@ -80,7 +80,8 @@ Same log format in `applyLocalFmtPreset()`.
 | `src/core/conflict-resolver.ts` | Add `CONFIG_FAMILY`, `findConflictSibling()`, extend `resolveConflict()` with `cwd` |
 | `src/generators/fmt.ts` | `generateConfigFile()` passes `opts.cwd` to `resolveConflict()`, logs sibling warnings |
 | `src/core/local-preset.ts` | `applyLocalFmtPreset()` calls `findConflictSibling()` for sibling-aware skip |
-| `tests/unit/core/conflict-resolver.test.ts` | New tests for sibling detection + updated priority order |
+| `tests/unit/core/conflict-resolver.test.ts` | New tests for `findConflictSibling()` + sibling-aware `resolveConflict()` priority |
+| `tests/acceptance/acceptance.spec.ts` | New scenario: sibling config blocks generation, `--force` overrides it |
 
 ## Out of scope
 
