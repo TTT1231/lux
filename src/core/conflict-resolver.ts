@@ -1,4 +1,25 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import type { FmtPreset } from '../presets/types';
+
+const CONFIG_FAMILY: Record<string, string[]> = {
+   'eslint.config.mjs': ['eslint.config.js', 'eslint.config.cjs', 'eslint.config.ts'],
+   'stylelint.config.mjs': ['stylelint.config.js', 'stylelint.config.cjs', 'stylelint.config.ts'],
+};
+
+/** Find a conflicting sibling file in the same config family */
+export function findConflictSibling(filename: string, cwd: string): string | undefined {
+   const siblings = CONFIG_FAMILY[filename];
+   if (!siblings) return undefined;
+
+   for (const sibling of siblings) {
+      if (fs.existsSync(path.join(cwd, sibling))) {
+         return sibling;
+      }
+   }
+
+   return undefined;
+}
 
 /** Resolve what action to take when a file conflict occurs */
 export function resolveConflict(

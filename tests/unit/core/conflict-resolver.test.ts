@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
-import { resolveConflict } from '../../../src/core/conflict-resolver';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { findConflictSibling, resolveConflict } from '../../../src/core/conflict-resolver';
 import type { FmtPreset } from '../../../src/presets/types';
 
 const basePreset: FmtPreset = {
@@ -43,5 +46,54 @@ describe('resolveConflict', () => {
          forceOverwrite: ['eslint.config.mjs'],
       };
       expect(resolveConflict('eslint.config.mjs', true, preset, true)).toBe('skip');
+   });
+});
+
+describe('findConflictSibling', () => {
+   const tmpDir = path.join(os.tmpdir(), 'sibling-test-' + process.pid);
+
+   beforeAll(() => {
+      fs.mkdirSync(tmpDir, { recursive: true });
+   });
+
+   afterAll(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   afterEach(() => {
+      for (const f of fs.readdirSync(tmpDir)) {
+         fs.unlinkSync(path.join(tmpDir, f));
+      }
+   });
+
+   it('returns undefined when no siblings exist', () => {
+      expect(findConflictSibling('eslint.config.mjs', tmpDir)).toBeUndefined();
+   });
+
+   it('returns undefined for files without a family mapping', () => {
+      expect(findConflictSibling('.prettierrc', tmpDir)).toBeUndefined();
+   });
+
+   it('returns sibling filename when eslint.config.js exists', () => {
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.js'), '');
+      expect(findConflictSibling('eslint.config.mjs', tmpDir)).toBe('eslint.config.js');
+   });
+
+   it('returns first found sibling when multiple siblings exist', () => {
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.cjs'), '');
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.ts'), '');
+      const result = findConflictSibling('eslint.config.mjs', tmpDir);
+      expect(result).toBeDefined();
+      expect(['eslint.config.cjs', 'eslint.config.ts']).toContain(result);
+   });
+
+   it('detects stylelint config siblings', () => {
+      fs.writeFileSync(path.join(tmpDir, 'stylelint.config.js'), '');
+      expect(findConflictSibling('stylelint.config.mjs', tmpDir)).toBe('stylelint.config.js');
+   });
+
+   it('returns undefined when only the target file itself exists', () => {
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.mjs'), '');
+      expect(findConflictSibling('eslint.config.mjs', tmpDir)).toBeUndefined();
    });
 });
