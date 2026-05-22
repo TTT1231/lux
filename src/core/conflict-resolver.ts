@@ -27,6 +27,7 @@ export function resolveConflict(
    exists: boolean,
    preset: FmtPreset,
    forceFlag: boolean,
+   cwd?: string,
 ): 'create' | 'overwrite' | 'skip' {
    // Never overwrite list → always skip
    if (exists && preset.neverOverwrite?.includes(filename)) {
@@ -36,6 +37,11 @@ export function resolveConflict(
    // Force overwrite list → always overwrite
    if (exists && preset.forceOverwrite?.includes(filename)) {
       return 'overwrite';
+   }
+
+   // Sibling exists + file doesn't exist + no force → skip
+   if (!exists && !forceFlag && cwd && findConflictSibling(filename, cwd)) {
+      return 'skip';
    }
 
    // File doesn't exist → create

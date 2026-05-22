@@ -97,3 +97,61 @@ describe('findConflictSibling', () => {
       expect(findConflictSibling('eslint.config.mjs', tmpDir)).toBeUndefined();
    });
 });
+
+describe('resolveConflict with sibling detection', () => {
+   const tmpDir = path.join(os.tmpdir(), 'resolve-sibling-' + process.pid);
+
+   beforeAll(() => {
+      fs.mkdirSync(tmpDir, { recursive: true });
+   });
+
+   afterAll(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   afterEach(() => {
+      for (const f of fs.readdirSync(tmpDir)) {
+         fs.unlinkSync(path.join(tmpDir, f));
+      }
+   });
+
+   it('returns "skip" when sibling exists and file does not', () => {
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.js'), '');
+      expect(resolveConflict('eslint.config.mjs', false, basePreset, false, tmpDir)).toBe('skip');
+   });
+
+   it('returns "create" when no sibling exists and file does not', () => {
+      expect(resolveConflict('eslint.config.mjs', false, basePreset, false, tmpDir)).toBe('create');
+   });
+
+   it('returns "create" when sibling exists but --force is set', () => {
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.js'), '');
+      expect(resolveConflict('eslint.config.mjs', false, basePreset, true, tmpDir)).toBe('create');
+   });
+
+   it('returns "skip" for neverOverwrite even when sibling does not exist', () => {
+      const preset: FmtPreset = {
+         ...basePreset,
+         neverOverwrite: ['eslint.config.mjs'],
+      };
+      expect(resolveConflict('eslint.config.mjs', true, preset, true, tmpDir)).toBe('skip');
+   });
+
+   it('returns "overwrite" for forceOverwrite even when sibling exists', () => {
+      fs.writeFileSync(path.join(tmpDir, 'eslint.config.js'), '');
+      const preset: FmtPreset = {
+         ...basePreset,
+         forceOverwrite: ['eslint.config.mjs'],
+      };
+      expect(resolveConflict('eslint.config.mjs', true, preset, false, tmpDir)).toBe('overwrite');
+   });
+
+   it('returns "skip" for stylelint sibling', () => {
+      fs.writeFileSync(path.join(tmpDir, 'stylelint.config.ts'), '');
+      expect(resolveConflict('stylelint.config.mjs', false, basePreset, false, tmpDir)).toBe('skip');
+   });
+
+   it('ignores siblings for files not in CONFIG_FAMILY', () => {
+      expect(resolveConflict('.prettierrc', false, basePreset, false, tmpDir)).toBe('create');
+   });
+});
