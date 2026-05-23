@@ -11,10 +11,10 @@
 
 ## 3. Dep Version Pinning (P1)
 
-- [ ] 3.1 Modify `addDepsToManifest` in `deps.ts` to accept an optional version map `Record<string, string>` as second parameter. When provided, use pinned versions for matching packages instead of fetching latest. For packages with `<latest>` version, still fetch from registry.
-- [ ] 3.2 Update `executeLocalPath` in `fmt.ts` to pass full `depsToInstall` map (not just keys) to `addDepsToManifest` and `installDevDeps`. Update the `missing` array construction to preserve version info.
-- [ ] 3.3 Update `executeBuiltinPath` in `fmt.ts` similarly — pass full version map instead of just `Object.keys(depsToInstall)`.
-- [ ] 3.4 Add unit tests verifying pinned versions are preserved and `<latest>` is still resolved.
+- [x] 3.1 Modify `addDepsToManifest` in `deps.ts` to accept an optional version map `Record<string, string>` as second parameter. When provided, use pinned versions for matching packages instead of fetching latest. For packages with `<latest>` version, still fetch from registry.
+- [x] 3.2 Update `executeLocalPath` in `fmt.ts` to pass full `depsToInstall` map (not just keys) to `addDepsToManifest` and `installDevDeps`. Update the `missing` array construction to preserve version info.
+- [x] 3.3 Update `executeBuiltinPath` in `fmt.ts` similarly — pass full version map instead of just `Object.keys(depsToInstall)`.
+- [x] 3.4 Add unit tests verifying pinned versions are preserved and `<latest>` is still resolved.
 
 ## 4. Flag Consistency (P2 — UX and logging)
 

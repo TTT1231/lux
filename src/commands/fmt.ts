@@ -292,7 +292,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
 
    if (options.install === false) {
       try {
-         const added = await addDepsToManifest(missing, cwd);
+         const added = await addDepsToManifest(missing, cwd, depsToInstall);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
          } else {
@@ -413,7 +413,7 @@ async function executeBuiltinPath(
 
    if (options.install === false) {
       try {
-         const added = await addDepsToManifest(missing, cwd);
+         const added = await addDepsToManifest(missing, cwd, depsToInstall);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
          } else {

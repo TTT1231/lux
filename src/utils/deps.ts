@@ -124,7 +124,11 @@ async function fetchPackageVersion(pkg: string, registry: string): Promise<strin
  * without actually installing them to node_modules.
  * Returns the list of packages that were actually added.
  */
-export async function addDepsToManifest(packages: string[], cwd: string): Promise<string[]> {
+export async function addDepsToManifest(
+   packages: string[],
+   cwd: string,
+   pinnedVersions?: Record<string, string>,
+): Promise<string[]> {
    const pkgPath = path.join(cwd, 'package.json');
    const pkg = readJson<Record<string, unknown>>(pkgPath);
    if (!pkg) {
@@ -139,6 +143,10 @@ export async function addDepsToManifest(packages: string[], cwd: string): Promis
    const registry = resolveRegistry(cwd);
    const results = await Promise.all(
       missing.map(async pkgName => {
+         const pinned = pinnedVersions?.[pkgName];
+         if (pinned && pinned !== '<latest>') {
+            return { pkgName, version: pinned.replace(/^[\^~]/, '') };
+         }
          const version = await fetchPackageVersion(pkgName, registry);
          return { pkgName, version };
       }),
