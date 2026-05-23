@@ -43,14 +43,14 @@
 
 ## 7. E2E Acceptance Tests
 
-- [ ] 7.1 Create acceptance test helper for temp project setup (package.json, .git init, optional local preset)
-- [ ] 7.2 E2E: `--dry-run --reset` does not delete local preset directory
-- [ ] 7.3 E2E: Invalid package.json returns exitCode 1
-- [ ] 7.4 E2E: Scripts merge with non-object scripts field succeeds safely
-- [ ] 7.5 E2E: `--force` controls husky pre-commit overwrite
-- [ ] 7.6 E2E: Dep versions from deps.json are preserved in package.json
-- [ ] 7.7 E2E: `--force` suggestion shown when all files skipped
-- [ ] 7.8 E2E: Builtin dry-run distinguishes create vs overwrite
+- [x] 7.1 Create acceptance test helper for temp project setup (package.json, .git init, optional local preset)
+- [x] 7.2 E2E: `--dry-run --reset` does not delete local preset directory
+- [x] 7.3 E2E: Invalid package.json returns exitCode 1
+- [x] 7.4 E2E: Scripts merge with non-object scripts field succeeds safely
+- [x] 7.5 E2E: `--force` controls husky pre-commit overwrite
+- [x] 7.6 E2E: Dep versions from deps.json are preserved in package.json
+- [x] 7.7 E2E: `--force` suggestion shown when all files skipped
+- [x] 7.8 E2E: Builtin dry-run distinguishes create vs overwrite
 
 ## GSTACK REVIEW REPORT
 
