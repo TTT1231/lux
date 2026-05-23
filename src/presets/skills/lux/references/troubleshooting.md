@@ -103,7 +103,7 @@ For built-in presets: run `lux init --preset` to re-materialize, or `lux fmt <na
 | `--editorconfig` | `.editorconfig`                            | `"editorconfig"`       |
 | `--lint-staged`  | `.lintstagedrc.json`                       | `"lint-staged"`        |
 
-> **Note:** `--husky` does not have a separate "no effect" warning — it is implicitly enabled by `--lint-staged`. When used alone, it only requires the `"husky"` key in `deps.json`.
+> **Note:** `--husky` also warns when the preset has no `"husky"` dependency entry in `deps.json`.
 
 ### "--reset warns and aborts for custom presets"
 
@@ -117,16 +117,16 @@ For built-in presets: run `lux init --preset` to re-materialize, or `lux fmt <na
 
 **Symptom:** A custom preset script is always copied even when the corresponding flag is not passed.
 
-**Cause:** Script key doesn't contain the required keyword. Matching is **case-sensitive** and uses `key.includes(keyword)`.
+**Cause:** Script key doesn't contain the required keyword as an exact `:`-separated segment. Matching is **case-sensitive** and uses exact segment matching, not substring matching.
 
-**Fix:** Rename the script key to include the keyword:
+**Fix:** Rename the script key so one `:`-separated segment exactly matches the keyword:
 
-| Keyword        | Correct key          | Wrong key            |
-| :------------- | :------------------- | :------------------- |
-| `stylelint`    | `stylelint:check`    | `Stylelint:check`    |
-| `cspell`       | `cspell:check`       | `Cspell:check`       |
-| `editorconfig` | `editorconfig:check` | `Editorconfig:check` |
-| `lint-staged`  | `lint-staged`        | `Lint-staged`        |
+| Keyword        | Correct key          | Wrong key                            |
+| :------------- | :------------------- | :----------------------------------- |
+| `stylelint`    | `stylelint:check`    | `Stylelint:check`, `stylelint-extra` |
+| `cspell`       | `cspell:check`       | `Cspell:check`, `spellcheck`         |
+| `editorconfig` | `editorconfig:check` | `Editorconfig:check`, `editor`       |
+| `lint-staged`  | `lint-staged`        | `Lint-staged`, `pre:lint-staged2`    |
 
 > **Note:** `husky` scripts are NOT controlled by keyword matching. The husky init script (`prepare` or `postinstall`) is injected directly by lux with a fixed key name.
 
@@ -197,29 +197,37 @@ Or check network/proxy settings and retry `lux fmt`.
 lux fmt <name> --force
 ```
 
-Note: `--force` overwrites config files and scripts, but **never** overwrites dependencies — deps are always additive (missing only). Some files are protected by preset rules:
+Note: `--force` overwrites config files, scripts, and `.husky/pre-commit`, but **never** overwrites dependencies — deps are always additive (missing only). Some files are protected by preset rules:
 
 - **`neverOverwrite`**: Files that are never overwritten even with `--force` (e.g., nest preset never overwrites `eslint.config.mjs`)
 - **`forceOverwrite`**: Files that are always overwritten even without `--force` (e.g., nest preset always overwrites `.prettierrc`)
-- **`.husky/pre-commit`**: Always overwritten by `initHusky()` regardless of `--force` — husky's default hook must be replaced with the correct content
+- **`.husky/pre-commit`**: Skipped when it already exists unless `--force` is passed
+
+### Sibling config file skipped
+
+**Symptom:** `lux fmt <name>` does not generate `eslint.config.mjs` or `stylelint.config.mjs`, and warns that a sibling config already exists.
+
+**Cause:** lux avoids creating duplicate flat config files in the same config family. For `eslint.config.mjs`, siblings are `eslint.config.js`, `eslint.config.cjs`, and `eslint.config.ts`. For `stylelint.config.mjs`, siblings are `stylelint.config.js`, `stylelint.config.cjs`, and `stylelint.config.ts`.
+
+**Fix:** Keep the existing sibling config, rename/remove it manually, or pass `--force` if you intentionally want lux to generate the `.mjs` file anyway.
 
 ### "--reset doesn't work" / "Local preset not found"
 
 **Symptom:** `lux fmt <name> --reset` warns `Local preset not found at ~/.lux/preset/fmt/<name>/`.
 
-**Cause:** The local preset was never materialized. `--reset` only deletes local copies; it cannot create them.
+**Cause:** The local preset was never materialized. `--reset` only deletes existing local copies before the command continues through the built-in path; if the command is warning only about the missing local directory, there was nothing to delete.
 
-**Fix:** Run `lux init --preset` first to materialize all built-in presets, then use `--reset`.
+**Fix:** Run `lux fmt <built-in-name>` normally to materialize that preset, or run `lux init --preset` to materialize all built-in presets.
 
 ## lux vscode
 
-### "No files generated" warning
+### Existing VSCode files are merged, not skipped
 
-**Symptom:** `lux vscode <name>` completes but generates nothing.
+**Symptom:** Existing `.vscode/settings.json` or `.vscode/extensions.json` changed even without `--force`.
 
-**Cause:** All target files already exist and `--force` was not passed.
+**Cause:** VSCode presets use merge/write behavior. Built-in settings are merged into existing settings and backed up once to `settings.json.bak`; local settings are merged too. Extensions are written by the built-in path and merged/deduped by the local path.
 
-**Fix:** Use `lux vscode <name> --force` to overwrite existing `.vscode/settings.json` and `.vscode/extensions.json`.
+**Fix:** Review `.vscode/settings.json.bak` if present, or edit the materialized local preset under `~/.lux/preset/vscode/<name>/` before applying it again. `--force` is accepted but is not the main control for VSCode merge behavior.
 
 ## lux vpn / set / unset
 

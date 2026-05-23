@@ -14,19 +14,19 @@ Presets are stored at `~/.lux/preset/` (i.e. `os.homedir()/.lux/preset/`). Overr
 
 ### fmt preset
 
-| File                   | Description                                                | web-vue | web-react | electron-vue | uniapp | node | nest |
-| :--------------------- | :--------------------------------------------------------- | :-----: | :-------: | :----------: | :----: | :--: | :--: |
-| `eslint.config.mjs`    | ESLint flat config                                         |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  —   |
-| `.prettierrc`          | Prettier JSON config                                       |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
-| `.prettierignore`      | Prettier ignore rules                                      |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
-| `stylelint.config.mjs` | Stylelint config                                           |   ✅    |    ✅     |      ✅      |   ✅   |  —   |  —   |
-| `.stylelintignore`     | Stylelint ignore rules                                     |   ✅    |    ✅     |      ✅      |   ✅   |  —   |  —   |
-| `cspell.json`          | CSpell dictionary config                                   |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
-| `.editorconfig`        | EditorConfig config                                        |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
-| `.lintstagedrc.json`   | lint-staged config (enables `--lint-staged`)               |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
-| `.husky/pre-commit`    | Husky Git hook (enables `--husky` or `--lint-staged`)      |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| File                   | Description                                                        | web-vue | web-react | electron-vue | uniapp | node | nest |
+| :--------------------- | :----------------------------------------------------------------- | :-----: | :-------: | :----------: | :----: | :--: | :--: |
+| `eslint.config.mjs`    | ESLint flat config                                                 |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  —   |
+| `.prettierrc`          | Prettier JSON config                                               |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| `.prettierignore`      | Prettier ignore rules                                              |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| `stylelint.config.mjs` | Stylelint config                                                   |   ✅    |    ✅     |      ✅      |   ✅   |  —   |  —   |
+| `.stylelintignore`     | Stylelint ignore rules                                             |   ✅    |    ✅     |      ✅      |   ✅   |  —   |  —   |
+| `cspell.json`          | CSpell dictionary config                                           |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| `.editorconfig`        | EditorConfig config                                                |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| `.lintstagedrc.json`   | lint-staged config (enables `--lint-staged`)                       |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| `.husky/pre-commit`    | Husky Git hook (enables `--husky` or `--lint-staged`)              |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
 | `deps.json`            | Dependency registry (tool-grouped, supports flag-aware collection) |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
-| `package.json`         | Template with `scripts`                                    |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
+| `package.json`         | Template with `scripts`                                            |   ✅    |    ✅     |      ✅      |   ✅   |  ✅  |  ✅  |
 
 > **Note:** `node` and `nest` presets exclude stylelint (backend projects don't need CSS lint). `nest` preset excludes eslint (Nest CLI manages its own; preset sets `neverOverwrite: ['eslint.config.mjs']`), but force-overwrites `.prettierrc` (`forceOverwrite: ['.prettierrc']`).
 
@@ -152,56 +152,38 @@ The `--stylelint`/`--cspell`/`--editorconfig`/`--husky`/`--lint-staged` flags co
 
 When a flag is **not** passed (default), lux skips the corresponding files, deps, and scripts. When a flag **is** passed, those items are preserved.
 
-| Layer         | Matching rule                                                                                                                      | Examples                                                                                       |
-| :------------ | :--------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
-| **Files**     | Exact filename match                                                                                                               | `stylelint.config.mjs`, `.stylelintignore`, `cspell.json`, `.editorconfig`, `.lintstagedrc.json` |
-| **Deps**      | Tool-key lookup in deps.json: if `stylelint`/`cspell`/`editorconfig`/`husky`/`lint-staged` key exists and flag is on, collects all sub-deps | e.g. if `deps.json` has `"stylelint": {...}`, all sub-deps are collected when `--stylelint` is on |
-| **Script keys** | **Case-sensitive** `key.includes(keyword)` match + inline command segment stripping                                                | See detailed rules below                                                                       |
+| Layer           | Matching rule                                                                                                                               | Examples                                                                                          |
+| :-------------- | :------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------ |
+| **Files**       | Exact filename match                                                                                                                        | `stylelint.config.mjs`, `.stylelintignore`, `cspell.json`, `.editorconfig`, `.lintstagedrc.json`  |
+| **Deps**        | Tool-key lookup in deps.json: if `stylelint`/`cspell`/`editorconfig`/`husky`/`lint-staged` key exists and flag is on, collects all sub-deps | e.g. if `deps.json` has `"stylelint": {...}`, all sub-deps are collected when `--stylelint` is on |
+| **Script keys** | **Case-sensitive exact segment match** after splitting the key by `:`                                                                       | See detailed rules below                                                                          |
 
 > **`eslint` and `prettier` are always enabled** — their files, deps, and scripts are never controlled by any flag; they are always included.
 
 ### Script Naming Convention (Important)
 
-lux checks whether a script **key** contains a specific keyword to decide whether to filter it:
+lux splits a script **key** by `:` and checks whether any segment exactly equals the controlled keyword:
 
-| Script key example              | Filtered by `--stylelint`? | Reason                                        |
-| :------------------------------ | :------------------------- | :-------------------------------------------- |
-| `stylelint:check`               | ✅ Yes                      | key contains `stylelint` (all lowercase)      |
-| `stylelint`                     | ✅ Yes                      | key contains `stylelint`                       |
-| `Stylelint:check`               | ❌ No                       | uppercase `S`, case-sensitive mismatch         |
-| `style:check`                   | ❌ No                       | key does not contain the full word `stylelint` |
-| `lintX:check`                   | ❌ No                       | key does not contain any known keyword         |
+| Script key example      | Filtered by `--stylelint`? | Reason                                    |
+| :---------------------- | :------------------------- | :---------------------------------------- |
+| `stylelint:check`       | ✅ Yes                     | one segment is exactly `stylelint`        |
+| `stylelint`             | ✅ Yes                     | the whole key is exactly `stylelint`      |
+| `Stylelint:check`       | ❌ No                      | uppercase `S`, case-sensitive mismatch    |
+| `stylelint-check`       | ❌ No                      | no `:` segment exactly equals `stylelint` |
+| `stylelint-extra:check` | ❌ No                      | substring matches do not count            |
 
 The same rules apply to `cspell`, `editorconfig`, and `lint-staged`:
 
-| Keyword        | Matching key examples              | Non-matching key examples      |
-| :------------- | :--------------------------------- | :----------------------------- |
-| `stylelint`    | `stylelint:check`, `stylelint`     | `Stylelint:*`, `style:*`       |
-| `cspell`       | `cspell`, `cspell:check`           | `Cspell:*`, `spell:*`          |
-| `editorconfig` | `editorconfig:check`               | `Editorconfig:*`, `editor:*`   |
-| `lint-staged`  | `lint-staged`, `lint-staged:check` | `Lint-staged:*` (case-sensitive) |
+| Keyword        | Matching key examples              | Non-matching key examples                     |
+| :------------- | :--------------------------------- | :-------------------------------------------- |
+| `stylelint`    | `stylelint:check`, `stylelint`     | `Stylelint:*`, `style:*`, `stylelint-extra:*` |
+| `cspell`       | `cspell`, `cspell:check`           | `Cspell:*`, `spell:*`, `spellcheck`           |
+| `editorconfig` | `editorconfig:check`               | `Editorconfig:*`, `editor:*`                  |
+| `lint-staged`  | `lint-staged`, `lint-staged:check` | `Lint-staged:*`, `pre:lint-staged2`           |
 
 > **Note:** `husky` has no script key filtering — the husky init script (`prepare`/`postinstall`) has a fixed name, injected directly by lux, not matched by keyword.
 
-**Non-matching script keys are copied as-is** to the target project — lux does not process them.
-
-### Inline Command Segment Stripping
-
-lux also strips inline tool invocation segments from **composite scripts**:
-
-```jsonc
-{
-   "scripts": {
-      // Original: composite script with stylelint and cspell
-      "lint": "<pm> eslint . && stylelint \"src/**/*.{css,scss,vue}\" && cspell --gitignore \"src/**/*\"",
-
-      // When --stylelint and --cspell are both NOT passed, both segments are stripped
-      // Result: "lint": "<pm> eslint ."
-   },
-}
-```
-
-Inline stripping matches `&& stylelint "..."` and `&& cspell ...` command text patterns.
+**Non-matching script keys are copied as-is** to the target project — lux does not inspect or strip command text inside script values. Put optional tools in separate scripts with exact segment keys such as `stylelint:check` or `cspell:check` instead of hiding them inside a composite `lint` command.
 
 ### Husky Hook Content Stripping
 
@@ -236,18 +218,18 @@ To make `--stylelint`, `--cspell`, `--editorconfig`, `--husky`, and `--lint-stag
 ```jsonc
 {
    "devDependencies": {
-      "typescript": "<latest>"
+      "typescript": "<latest>",
    },
    "dependencies": {},
    "eslint": {
       "devDependencies": {
-         "eslint": "<latest>"
-      }
+         "eslint": "<latest>",
+      },
    },
    "prettier": {
       "devDependencies": {
-         "prettier": "<latest>"
-      }
+         "prettier": "<latest>",
+      },
    },
    // ← enables --stylelint
    "stylelint": {
@@ -255,27 +237,27 @@ To make `--stylelint`, `--cspell`, `--editorconfig`, `--husky`, and `--lint-stag
          "stylelint": "<latest>",
          "stylelint-config-standard-scss": "<latest>",
          "stylelint-order": "<latest>",
-         "postcss-html": "<latest>"
-      }
+         "postcss-html": "<latest>",
+      },
    },
    // ← enables --cspell
    "cspell": {
       "devDependencies": {
-         "cspell": "<latest>"
-      }
+         "cspell": "<latest>",
+      },
    },
    // ← enables --husky
    "husky": {
       "devDependencies": {
-         "husky": "<latest>"
-      }
+         "husky": "<latest>",
+      },
    },
    // ← enables --lint-staged
    "lint-staged": {
       "devDependencies": {
-         "lint-staged": "<latest>"
-      }
-   }
+         "lint-staged": "<latest>",
+      },
+   },
 }
 ```
 
@@ -286,11 +268,11 @@ To make `--stylelint`, `--cspell`, `--editorconfig`, `--husky`, and `--lint-stag
    "scripts": {
       "lint": "<pm> eslint .",
       "lint:fix": "<pm> eslint . --fix --cache --cache-location node_modules/.cache/.eslintcache",
-      // ← key contains "stylelint", controllable by --stylelint
+      // ← key has an exact "stylelint" segment, controllable by --stylelint
       "stylelint:check": "<pm> stylelint \"src/**/*.{css,scss,vue}\"",
-      // ← key contains "cspell", controllable by --cspell
+      // ← key is exactly "cspell", controllable by --cspell
       "cspell": "<pm> cspell \"**\"",
-      // ← key contains "lint-staged", controllable by --lint-staged
+      // ← key is exactly "lint-staged", controllable by --lint-staged
       "lint-staged": "lint-staged",
    },
 }
@@ -344,48 +326,48 @@ Other files: lux copies them to the target project with `<lockfile>` tag resolut
 
 ```jsonc
 {
-  // Top-level: always collected (not gated by flags)
-  "devDependencies": {
-    "typescript": "<latest>",
-    "vue-tsc": "<latest>"
-  },
-  "dependencies": {},
+   // Top-level: always collected (not gated by flags)
+   "devDependencies": {
+      "typescript": "<latest>",
+      "vue-tsc": "<latest>",
+   },
+   "dependencies": {},
 
-  // Tool groups: collected only when the corresponding flag is on
-  "eslint": {
-    "devDependencies": {
-      "eslint": "<latest>",
-      "@vue/eslint-config-typescript": "<latest>",
-      "@vue/eslint-config-prettier": "<latest>"
-    }
-  },
-  "prettier": {
-    "devDependencies": {
-      "prettier": "<latest>"
-    }
-  },
-  "stylelint": {
-    "devDependencies": {
-      "stylelint": "<latest>",
-      "stylelint-config-standard-scss": "<latest>",
-      "postcss-html": "<latest>"
-    }
-  },
-  "cspell": {
-    "devDependencies": {
-      "cspell": "<latest>"
-    }
-  },
-  "husky": {
-    "devDependencies": {
-      "husky": "<latest>"
-    }
-  },
-  "lint-staged": {
-    "devDependencies": {
-      "lint-staged": "<latest>"
-    }
-  }
+   // Tool groups: collected only when the corresponding flag is on
+   "eslint": {
+      "devDependencies": {
+         "eslint": "<latest>",
+         "@vue/eslint-config-typescript": "<latest>",
+         "@vue/eslint-config-prettier": "<latest>",
+      },
+   },
+   "prettier": {
+      "devDependencies": {
+         "prettier": "<latest>",
+      },
+   },
+   "stylelint": {
+      "devDependencies": {
+         "stylelint": "<latest>",
+         "stylelint-config-standard-scss": "<latest>",
+         "postcss-html": "<latest>",
+      },
+   },
+   "cspell": {
+      "devDependencies": {
+         "cspell": "<latest>",
+      },
+   },
+   "husky": {
+      "devDependencies": {
+         "husky": "<latest>",
+      },
+   },
+   "lint-staged": {
+      "devDependencies": {
+         "lint-staged": "<latest>",
+      },
+   },
 }
 ```
 
@@ -421,12 +403,12 @@ When no package manager is detected (no lockfile), `<lockfile>` lines are remove
 
 The `<pm>` tag is replaced with the package manager's **run prefix**:
 
-| Package Manager | `<pm>` Replacement         |
-| :-------------- | :------------------------- |
-| npm             | `npm run`                  |
-| yarn            | `yarn run`                 |
-| pnpm            | `pnpm run`                 |
-| bun             | `bun run`                  |
+| Package Manager | `<pm>` Replacement |
+| :-------------- | :----------------- |
+| npm             | `npm run`          |
+| yarn            | `yarn run`         |
+| pnpm            | `pnpm run`         |
+| bun             | `bun run`          |
 
 `<pm>` tag resolution scope:
 
@@ -437,12 +419,12 @@ The `<pm>` tag is replaced with the package manager's **run prefix**:
 
 The `<pmx>` tag is replaced with the package manager's **exec prefix** (for running one-off commands):
 
-| Package Manager | `<pmx>` Replacement         |
-| :-------------- | :-------------------------- |
-| npm             | `npx`                       |
-| yarn            | `yarn dlx`                  |
-| pnpm            | `pnpx`                      |
-| bun             | `bunx`                      |
+| Package Manager | `<pmx>` Replacement |
+| :-------------- | :------------------ |
+| npm             | `npx`               |
+| yarn            | `yarn dlx`          |
+| pnpm            | `pnpx`              |
+| bun             | `bunx`              |
 
 `<pmx>` tag resolution scope:
 
@@ -451,6 +433,12 @@ The `<pmx>` tag is replaced with the package manager's **exec prefix** (for runn
 ### No Git Warning
 
 `husky` and `lint-staged` require a `git` repository to function. `initHusky()` checks for a `.git` directory in the project root before proceeding — if the project has not been initialized as a git repository, it outputs the warning `Git repository not found. Husky and lint-staged require a git repo — skipping.` and skips husky initialization, but other configs (eslint, prettier, etc.) still execute normally.
+
+### Conflict Sibling Detection
+
+lux avoids creating duplicate flat config files in the same config family. When generating `eslint.config.mjs`, it checks for existing `eslint.config.js`, `eslint.config.cjs`, and `eslint.config.ts`. When generating `stylelint.config.mjs`, it checks for existing `stylelint.config.js`, `stylelint.config.cjs`, and `stylelint.config.ts`.
+
+If a sibling exists and `--force` is not passed, lux skips the generated `.mjs` file and warns which sibling caused the conflict. Passing `--force` overrides sibling detection.
 
 ### Package Manager Conflict Warning
 

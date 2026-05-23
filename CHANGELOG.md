@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.53
+
+- Updated the bundled lux skill docs to match v1.1.52 behavior for `--force`, `.husky/pre-commit`, sibling config detection, and VSCode merge/write behavior
+- Corrected custom preset script filtering guidance: optional script keys now use exact `:` segment matching, and lux does not strip inline command segments from script values
+- Added troubleshooting guidance for sibling `eslint.config.*` / `stylelint.config.*` conflicts and custom preset `--husky` warnings
+
 ## 1.1.52
 
 - `lux fmt` now detects existing flat config siblings (e.g. `eslint.config.js` when generating `eslint.config.mjs`) and skips generation with a warning instead of creating duplicate config files
