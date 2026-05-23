@@ -18,11 +18,11 @@
 
 ## 4. Flag Consistency (P2 — UX and logging)
 
-- [ ] 4.1 Add flag capability warnings to builtin path in `executeBuiltinPath` — check if preset provides the corresponding config/deps for each active flag, warn if not (matching the pattern already in `executeLocalPath`).
-- [ ] 4.2 Fix dry-run labels in `logGenerationResult` — distinguish "Would create" vs "Would overwrite" using the `result.created` and `result.overwritten` arrays separately.
-- [ ] 4.3 Show dry-run script info in `injectScripts` — when `opts.dryRun`, log `[dry-run] Would add script "<key>"` for each new script, and add a summary line.
-- [ ] 4.4 Add `--force` suggestion when all files are skipped — in both `executeBuiltinPath` and `executeLocalPath`, when `allFiles.length === 0 && result.skipped.length > 0`, log "Use --force to overwrite existing files".
-- [ ] 4.5 Add `--husky` warning when deps unavailable — in `initHusky`, after dependency installation step, warn if husky is not in project devDependencies. In `executeLocalPath`, warn if preset has no husky deps in `deps.json` but `--husky` is active.
+- [x] 4.1 Add flag capability warnings to builtin path in `executeBuiltinPath` — check if preset provides the corresponding config/deps for each active flag, warn if not (matching the pattern already in `executeLocalPath`).
+- [x] 4.2 Fix dry-run labels in `logGenerationResult` — distinguish "Would create" vs "Would overwrite" using the `result.created` and `result.overwritten` arrays separately.
+- [x] 4.3 Show dry-run script info in `injectScripts` — when `opts.dryRun`, log `[dry-run] Would add script "<key>"` for each new script, and add a summary line.
+- [x] 4.4 Add `--force` suggestion when all files are skipped — in both `executeBuiltinPath` and `executeLocalPath`, when `allFiles.length === 0 && result.skipped.length > 0`, log "Use --force to overwrite existing files".
+- [x] 4.5 Add `--husky` warning when deps unavailable — in `initHusky`, after dependency installation step, warn if husky is not in project devDependencies. In `executeLocalPath`, warn if preset has no husky deps in `deps.json` but `--husky` is active.
 
 ## 5. Preset Correctness (P2 — materialization and filtering)
 

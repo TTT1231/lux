@@ -444,6 +444,7 @@ export function detectPresetCapabilities(presetName: string): {
    hasEditorconfig: boolean;
    hasCspell: boolean;
    hasLintStaged: boolean;
+   hasHusky: boolean;
 } {
    const presetDir = path.join(getLuxDir(), 'preset', 'fmt', presetName);
    const entries = fs.readdirSync(presetDir);
@@ -456,6 +457,7 @@ export function detectPresetCapabilities(presetName: string): {
    let hasEditorconfigDep = false;
    let hasCspellDep = false;
    let hasLintStagedDep = false;
+   let hasHuskyDep = false;
 
    try {
       const registry = loadDepsJson(presetDir);
@@ -463,6 +465,7 @@ export function detectPresetCapabilities(presetName: string): {
       hasEditorconfigDep = 'editorconfig' in registry;
       hasCspellDep = 'cspell' in registry;
       hasLintStagedDep = 'lint-staged' in registry;
+      hasHuskyDep = 'husky' in registry;
    } catch {
       // Fallback: check package.json for old format
       const pkg = readJson<{ devDependencies?: Record<string, string> }>(path.join(presetDir, 'package.json'));
@@ -472,6 +475,7 @@ export function detectPresetCapabilities(presetName: string): {
          hasEditorconfigDep = depNames.some(d => d.includes('editorconfig'));
          hasCspellDep = depNames.includes('cspell');
          hasLintStagedDep = depNames.includes('lint-staged');
+         hasHuskyDep = depNames.includes('husky');
       }
    }
 
@@ -480,5 +484,6 @@ export function detectPresetCapabilities(presetName: string): {
       hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
       hasCspell: hasCspellFile || hasCspellDep,
       hasLintStaged: hasLintStagedDep,
+      hasHusky: hasHuskyDep,
    };
 }

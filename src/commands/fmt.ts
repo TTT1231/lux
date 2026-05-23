@@ -193,6 +193,9 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    }
 
    const husky = options.husky === true || options.lintStaged === true;
+   if (husky && !caps.hasHusky) {
+      logger.warn('--husky has no effect: this preset has no husky dependencies');
+   }
    const lintStaged = options.lintStaged === true;
 
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
@@ -235,6 +238,10 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
 
    if (allFiles.length > 0 || result.skipped.length > 0) {
       logApplyResult(result, opts.dryRun);
+   }
+
+   if (allFiles.length === 0 && result.skipped.length > 0) {
+      logger.log('Use --force to overwrite existing files');
    }
 
    if (result.scriptsAdded > 0 || result.scriptsSkipped > 0) {
@@ -347,12 +354,30 @@ async function executeBuiltinPath(
    const result = generateAllFmt(preset, opts);
    const allFiles = [...result.created, ...result.overwritten];
 
+   // Warn when flags have no effect on builtin preset
+   if (opts.stylelint && !preset.stylelint) {
+      logger.warn('--stylelint has no effect: this preset has no stylelint config');
+   }
+   if (opts.editorconfig && !preset.editorconfig) {
+      logger.warn('--editorconfig has no effect: this preset has no editorconfig config');
+   }
+   if (opts.cspell && !preset.cspell) {
+      logger.warn('--cspell has no effect: this preset has no cspell config');
+   }
+   if (opts.lintStaged && !preset.lintStaged && !preset.lintStagedFragments) {
+      logger.warn('--lint-staged has no effect: this preset has no lint-staged config');
+   }
+
    if (allFiles.length === 0 && result.skipped.length === 0) {
       logger.warn('No files to generate for this preset');
       return;
    }
 
    logGenerationResult(result, opts.dryRun);
+
+   if (allFiles.length === 0 && result.skipped.length > 0) {
+      logger.log('Use --force to overwrite existing files');
+   }
 
    if (!opts.dryRun) {
       materializeFmtPreset(presetName, preset, opts);
@@ -452,8 +477,11 @@ function logGenerationResult(
    const files = [...result.created, ...result.overwritten];
 
    if (dryRun) {
-      if (files.length > 0) {
-         logger.log(`[dry-run] Would create ${files.join(', ')}`);
+      if (result.created.length > 0) {
+         logger.log(`[dry-run] Would create ${result.created.join(', ')}`);
+      }
+      if (result.overwritten.length > 0) {
+         logger.log(`[dry-run] Would overwrite ${result.overwritten.join(', ')}`);
       }
       if (result.skipped.length > 0) {
          logger.log(`[dry-run] Skipped ${result.skipped.join(', ')} (already exists)`);
@@ -589,12 +617,17 @@ async function injectScripts(
       }
 
       if (opts.dryRun) {
+         logger.log(`[dry-run] Would add script "${key}"`);
          added++;
          continue;
       }
 
       existingScripts[key] = value;
       added++;
+   }
+
+   if (opts.dryRun && added > 0) {
+      logger.log(`[dry-run] Would add ${added} script${added > 1 ? 's' : ''} to package.json`);
    }
 
    if (added > 0 && !opts.dryRun) {
@@ -637,6 +670,12 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       logger.log('[dry-run] Would initialize husky support files under .husky/_');
       logger.log(`[dry-run] Would inject "${initScriptName}": "husky" script`);
       return;
+   }
+
+   // Warn if husky dep is missing from project
+   const devDeps = (pkg.devDependencies ?? {}) as Record<string, string>;
+   if (!devDeps['husky']) {
+      logger.warn('Husky hook is configured but "husky" is not in devDependencies. Run install or add it manually.');
    }
 
    // 1. Inject init script into package.json
