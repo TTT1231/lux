@@ -26,11 +26,11 @@
 
 ## 5. Preset Correctness (P2 — materialization and filtering)
 
-- [ ] 5.1 Fix `materializeFmtPreset` to NOT resolve `<lockfile>` placeholder — store config content as-is without lockfile substitution during materialization. Remove the lockfile resolution block in the materialization function.
-- [ ] 5.2 Add `lintStagedFragments` handling to `materializeFmtPreset` — when preset has `lintStagedFragments` but not `lintStaged`, compose using `composeLintStaged(fragments, { stylelint: true })` and write `.lintstagedrc.json`.
-- [ ] 5.3 Fix `filterScripts` to use segment matching — split key on `:` and check if any segment exactly equals the tool name (`stylelint`, `cspell`, `lint-staged`, `editorconfig`). Update unit tests for `filterScripts` with false-positive cases (`lint:css`, `lint:staged`, `spellcheck`).
-- [ ] 5.4 Fix `detectPresetCapabilities` to check `.lintstagedrc.json` file — add file presence check for lint-staged alongside the existing deps.json check.
-- [ ] 5.5 Add per-file error handling in `applyLocalFmtPreset` — wrap the `writeFile` call in try/catch, log errors, and continue with remaining files on failure.
+- [x] 5.1 Fix `materializeFmtPreset` to NOT resolve `<lockfile>` placeholder — store config content as-is without lockfile substitution during materialization. Remove the lockfile resolution block in the materialization function.
+- [x] 5.2 Add `lintStagedFragments` handling to `materializeFmtPreset` — when preset has `lintStagedFragments` but not `lintStaged`, compose using `composeLintStaged(fragments, { stylelint: true })` and write `.lintstagedrc.json`.
+- [x] 5.3 Fix `filterScripts` to use segment matching — split key on `:` and check if any segment exactly equals the tool name (`stylelint`, `cspell`, `lint-staged`, `editorconfig`). Update unit tests for `filterScripts` with false-positive cases (`lint:css`, `lint:staged`, `spellcheck`).
+- [x] 5.4 Fix `detectPresetCapabilities` to check `.lintstagedrc.json` file — add file presence check for lint-staged alongside the existing deps.json check.
+- [x] 5.5 Add per-file error handling in `applyLocalFmtPreset` — wrap the `writeFile` call in try/catch, log errors, and continue with remaining files on failure.
 
 ## 6. Unit Tests
 

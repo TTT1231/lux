@@ -194,7 +194,7 @@ describe('materializeFmtPreset', () => {
       expect(deps.eslint.devDependencies.eslint).toBe('<latest>');
    });
 
-   it('resolves <lockfile> placeholders in generated files', () => {
+   it('preserves <lockfile> placeholder in materialized files', () => {
       const presetWithLockfile: FmtPreset = {
          name: 'test-preset',
          description: 'Test',
@@ -209,8 +209,9 @@ describe('materializeFmtPreset', () => {
       });
 
       const presetDir = getLocalPresetDir('fmt', 'test-preset');
+      // Materialization preserves placeholders — resolve at apply time
       expect(fs.readFileSync(path.join(presetDir, '.prettierignore'), 'utf-8')).toBe(
-         'node_modules/\nbun.lock\ndist/\n',
+         'node_modules/\n<lockfile>\ndist/\n',
       );
    });
 

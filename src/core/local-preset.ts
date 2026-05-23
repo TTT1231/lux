@@ -18,6 +18,7 @@ import {
    hasTsconfigFile,
    isTsconfigFile,
    loadDepsJson,
+   composeLintStaged,
 } from './shared';
 
 type PresetType = 'fmt' | 'vscode';
@@ -99,14 +100,8 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
       const content = getContent(preset);
       if (content === undefined) continue;
 
-      const resolved = opts.lockfile
-         ? content.replace(/<lockfile>/g, opts.lockfile)
-         : content
-              .replace(/,?\s*'<lockfile>'/g, '')
-              .replace(/'<lockfile>',?\s*/g, '')
-              .replace(/<lockfile>\n?/g, '');
-
-      writeFile(path.join(presetDir, filename), resolved);
+      // Materialize with placeholder as-is — resolve at apply time
+      writeFile(path.join(presetDir, filename), content);
    }
 
    for (const [filename, content] of getPresetTsconfigEntries(preset)) {
@@ -125,6 +120,9 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
    if (preset.lintStaged) {
       const lintStagedContent = preset.lintStaged({ stylelint: true });
       writeFile(path.join(presetDir, '.lintstagedrc.json'), lintStagedContent);
+   } else if (preset.lintStagedFragments) {
+      const composed = composeLintStaged(preset.lintStagedFragments, { stylelint: true });
+      writeFile(path.join(presetDir, '.lintstagedrc.json'), JSON.stringify(composed, null, 2) + '\n');
    }
 
    // Materialize husky hook (full version with lint-staged)
@@ -246,14 +244,19 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
 
       const content = readFile(path.join(presetDir, filename));
       if (content !== null) {
-         const resolved = opts.lockfile
-            ? content.replace(/<lockfile>/g, opts.lockfile)
-            : content
-                 .replace(/,?\s*'<lockfile>'/g, '')
-                 .replace(/'<lockfile>',?\s*/g, '')
-                 .replace(/<lockfile>\n?/g, '');
-         writeFile(destPath, resolved);
-         (exists ? result.overwritten : result.created).push(filename);
+         try {
+            const resolved = opts.lockfile
+               ? content.replace(/<lockfile>/g, opts.lockfile)
+               : content
+                    .replace(/,?\s*'<lockfile>'/g, '')
+                    .replace(/'<lockfile>',?\s*/g, '')
+                    .replace(/<lockfile>\n?/g, '');
+            writeFile(destPath, resolved);
+            (exists ? result.overwritten : result.created).push(filename);
+         } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logger.error(`Failed to write ${filename}: ${message}`);
+         }
       }
    }
 
@@ -428,10 +431,11 @@ export function filterScripts(scripts: Record<string, string>, flags: FilterScri
    const filtered: Record<string, string> = {};
 
    for (const [key, value] of Object.entries(scripts)) {
-      if (!flags.stylelint && key.includes('stylelint')) continue;
-      if (!flags.editorconfig && key.includes('editorconfig')) continue;
-      if (!flags.cspell && key.includes('cspell')) continue;
-      if (!flags.lintStaged && key.includes('lint-staged')) continue;
+      const segments = key.split(':');
+      if (!flags.stylelint && segments.some(s => s === 'stylelint')) continue;
+      if (!flags.editorconfig && segments.some(s => s === 'editorconfig')) continue;
+      if (!flags.cspell && segments.some(s => s === 'cspell')) continue;
+      if (!flags.lintStaged && segments.some(s => s === 'lint-staged')) continue;
 
       filtered[key] = value;
    }
@@ -452,6 +456,7 @@ export function detectPresetCapabilities(presetName: string): {
    const hasStylelintFile = entries.some(f => STYLELINT_FILES.has(f));
    const hasEditorconfigFile = entries.includes(EDITORCONFIG_FILE);
    const hasCspellFile = entries.includes(CSPELL_FILE);
+   const hasLintStagedFile = entries.includes('.lintstagedrc.json');
 
    let hasStylelintDep = false;
    let hasEditorconfigDep = false;
@@ -483,7 +488,7 @@ export function detectPresetCapabilities(presetName: string): {
       hasStylelint: hasStylelintFile || hasStylelintDep,
       hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
       hasCspell: hasCspellFile || hasCspellDep,
-      hasLintStaged: hasLintStagedDep,
+      hasLintStaged: hasLintStagedFile || hasLintStagedDep,
       hasHusky: hasHuskyDep,
    };
 }
