@@ -656,11 +656,16 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       logger.success('Husky support files initialized successfully');
    }
 
-   // 3. Overwrite .husky/pre-commit with correct content (replaces husky's default)
-   //    Always write — husky init creates default content that must be replaced.
+   // 3. Write .husky/pre-commit — respect --force like other files
    ensureDir(huskyDir);
-   writeFile(preCommitPath, resolvedHook);
-   fs.chmodSync(preCommitPath, 0o755);
+   if (fileExists(preCommitPath) && !opts.force) {
+      logger.log('Skipped .husky/pre-commit (already exists)');
+   } else {
+      const isOverwrite = fileExists(preCommitPath);
+      writeFile(preCommitPath, resolvedHook);
+      fs.chmodSync(preCommitPath, 0o755);
+      logger.log(isOverwrite ? 'Overwrote .husky/pre-commit' : 'Created .husky/pre-commit');
+   }
 }
 
 async function ensureHuskyBootstrap(cwd: string, huskyDir: string): Promise<boolean> {

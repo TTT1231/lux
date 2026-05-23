@@ -7,7 +7,7 @@
 
 ## 2. Husky --force Consistency (P1)
 
-- [ ] 2.1 Make `.husky/pre-commit` respect `--force` in `initHusky` (`fmt.ts:643-645`) — check if `preCommitPath` exists before writing. If exists and `!opts.force`, log skip message and skip write. If exists and `opts.force`, overwrite and log. If not exists, create as before. Add unit test.
+- [x] 2.1 Make `.husky/pre-commit` respect `--force` in `initHusky` (`fmt.ts:643-645`) — check if `preCommitPath` exists before writing. If exists and `!opts.force`, log skip message and skip write. If exists and `opts.force`, overwrite and log. If not exists, create as before. Add unit test.
 
 ## 3. Dep Version Pinning (P1)
 
