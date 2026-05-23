@@ -1,179 +1,91 @@
 # fmt-command
 
-## ADDED Requirements
-
-### Requirement: --reset flag for fmt command
-The `lux fmt` command SHALL accept a `--reset` flag that deletes the local preset directory before execution, forcing re-materialization from the built-in preset.
-
-#### Scenario: Reset with existing local preset
-- **WHEN** user runs `lux fmt web-vue --reset` and `.lux/preset/fmt/web-vue/` exists
-- **THEN** the system SHALL delete `.lux/preset/fmt/web-vue/` and proceed with built-in generation + materialization
-
-#### Scenario: Reset without local preset
-- **WHEN** user runs `lux fmt web-vue --reset` and no local preset exists
-- **THEN** the system SHALL proceed normally with built-in generation + materialization (no error)
-
-### Requirement: Local preset detection in fmt command
-The `lux fmt` command SHALL check for an existing local preset directory before executing the built-in generation pipeline. If a local preset exists, the command SHALL use the local preset path instead.
-
-#### Scenario: Local preset exists — skip built-in generation
-- **WHEN** `.lux/preset/fmt/<preset>/` exists
-- **THEN** `generateAllFmt` SHALL NOT be called
-- **AND** files SHALL be copied from local preset directory to project root
-
-#### Scenario: No local preset — built-in generation + materialization
-- **WHEN** `.lux/preset/fmt/<preset>/` does not exist
-- **THEN** the existing `generateAllFmt` pipeline SHALL execute unchanged
-- **AND** after completion, generated files SHALL be materialized to `.lux/preset/fmt/<preset>/`
-
-### Requirement: Custom preset execution
-The `lux fmt` command SHALL accept any preset name that matches a valid directory under `~/.lux/preset/fmt/<name>/` containing a `package.json` file, even if the name is not in the built-in `FMT_PRESETS` array.
-
-#### Scenario: Custom preset applied via local path
-- **WHEN** user runs `lux fmt my-custom` and `~/.lux/preset/fmt/my-custom/` exists with a `package.json`
-- **AND** `my-custom` is NOT in `FMT_PRESETS`
-- **THEN** the system SHALL execute the local preset path (`applyLocalFmtPreset`)
-- **AND** output SHALL indicate "Using local custom preset"
-
-#### Scenario: Custom preset not found
-- **WHEN** user runs `lux fmt unknown-preset` and neither `FMT_PRESETS` nor `~/.lux/preset/fmt/unknown-preset/` exists
-- **THEN** the system SHALL display an error with fuzzy matching against ALL available preset names (builtin + custom combined)
-
-#### Scenario: Custom preset directory exists without package.json
-- **WHEN** user runs `lux fmt my-custom` and `~/.lux/preset/fmt/my-custom/` exists but has no `package.json`
-- **THEN** the system SHALL treat it as not found and display error with fuzzy matching
-
-### Requirement: fmt list shows custom presets
-`lux fmt list` SHALL display both built-in and custom presets. Built-in presets SHALL be listed first, followed by custom presets. Custom presets SHALL be marked with `(custom)` in a distinct color.
-
-#### Scenario: List with custom presets
-- **WHEN** `~/.lux/preset/fmt/` contains directories `web-vue` (builtin name), `my-custom`, and `team-libs`
-- **AND** `my-custom` and `team-libs` each contain a `package.json`
-- **THEN** output SHALL list all built-in presets first, then `my-custom` and `team-libs` with `(custom)` marker
-
-#### Scenario: Custom preset directory without package.json
-- **WHEN** `~/.lux/preset/fmt/` contains a directory `incomplete` without a `package.json`
-- **THEN** `incomplete` SHALL NOT appear in the list
-
-### Requirement: --reset aborts for custom presets
-When `--reset` is used with a preset name that is NOT in `FMT_PRESETS`, the system SHALL warn and abort the entire command without applying the preset.
-
-#### Scenario: --reset with custom preset
-- **WHEN** user runs `lux fmt my-custom --reset` and `my-custom` is NOT in `FMT_PRESETS`
-- **THEN** the system SHALL output a warning message indicating the preset is custom and has no builtin to restore
-- **AND** the system SHALL NOT apply the preset or perform any file operations
-
 ## MODIFIED Requirements
 
 ### Requirement: Stylelint script filtering enhancement
-When `--stylelint` is NOT specified, the system SHALL filter stylelint-related scripts by both:
-1. Stripping inline `&& stylelint "..."` segments from script values (existing behavior)
-2. Removing entire script entries whose key contains the string `stylelint` (case-sensitive)
+When `--stylelint` is NOT specified, the system SHALL filter stylelint-related scripts by removing entire script entries whose key contains the string `stylelint` (case-sensitive). Regex-based inline stripping of `&& stylelint "..."` segments SHALL NOT be used.
 
 #### Scenario: Standalone stylelint script filtered
-- **WHEN** preset has `"stylelint:check": "stylelint \"src/**\""` and `--stylelint` is NOT specified
-- **THEN** the `stylelint:check` script SHALL be completely removed (not injected into project)
+- **WHEN** preset has `"stylelint": "stylelint \"src/**/*.{css,scss,vue}\""` and `--stylelint` is NOT specified
+- **THEN** the `stylelint` script SHALL NOT be injected into the project
 
-#### Scenario: Mixed lint script with inline stylelint
-- **WHEN** preset has `"lint": "eslint . && stylelint \"src/**\""` and `--stylelint` is NOT specified
-- **THEN** the script SHALL be injected as `"lint": "eslint ."` (inline segment stripped, entry preserved)
+#### Scenario: Stylelint fix script filtered
+- **WHEN** preset has `"stylelint:fix": "stylelint \"src/**/*.{css,scss,vue}\" --fix"` and `--stylelint` is NOT specified
+- **THEN** the `stylelint:fix` script SHALL NOT be injected into the project
 
-### Requirement: Editorconfig script filtering
-When `--editorconfig` is NOT specified, the system SHALL remove entire script entries whose key contains the string `editorconfig` (case-sensitive).
+#### Scenario: Non-stylelint scripts preserved
+- **WHEN** preset has `"eslint": "eslint \"src/**/*.{ts,js,vue}\""` and `--stylelint` is NOT specified
+- **THEN** the `eslint` script SHALL be injected normally
 
-#### Scenario: Editorconfig script filtered
-- **WHEN** preset has `"editorconfig:check": "editorconfig-checker"` and `--editorconfig` is NOT specified
-- **THEN** the `editorconfig:check` script SHALL be completely removed
+## ADDED Requirements
 
-### Requirement: --cspell flag for fmt command
-The `lux fmt` command SHALL accept a `--cspell` flag that includes CSpell configuration generation, dependency installation, and script injection. When `--cspell` is NOT specified, all CSpell-related files, dependencies, and script segments SHALL be excluded.
+### Requirement: Individual tool scripts
+Each preset SHALL define individual scripts per tool instead of aggregated `lint`/`lint:fix` scripts. The standard script names SHALL be: `eslint`, `eslint:fix`, `stylelint`, `stylelint:fix`, `cspell`, `type:check`, `format`, `lint-staged`.
 
-#### Scenario: --cspell flag includes CSpell
-- **WHEN** user runs `lux fmt web-vue --cspell`
-- **THEN** cspell.json SHALL be generated
-- **AND** cspell dependency SHALL be installed
-- **AND** lint script SHALL include the cspell check segment
+#### Scenario: Web-vue preset scripts
+- **WHEN** `lux fmt web-vue` is run with all flags active
+- **THEN** package.json SHALL receive scripts: `eslint`, `eslint:fix`, `stylelint`, `stylelint:fix`, `cspell`, `type:check`, `format`, `lint-staged`
+- **AND** SHALL NOT receive aggregated `lint` or `lint:fix` scripts
 
-#### Scenario: No --cspell flag excludes CSpell
-- **WHEN** user runs `lux fmt web-vue` without `--cspell`
-- **THEN** cspell.json SHALL NOT be generated
-- **AND** cspell dependency SHALL NOT be installed
-- **AND** lint script SHALL NOT include the cspell check segment
+#### Scenario: Each preset has its own eslint glob
+- **WHEN** `web-vue` preset is applied
+- **THEN** `eslint` script SHALL contain glob `*.{ts,js,vue}`
+- **WHEN** `web-react` preset is applied
+- **THEN** `eslint` script SHALL contain glob `*.{ts,js,jsx,tsx}`
 
-### Requirement: CSpell script filtering enhancement
-When `--cspell` is NOT specified, the system SHALL filter cspell-related scripts by both:
-1. Stripping inline `&& cspell ...` segments from script values
-2. Removing entire script entries whose key contains the string `cspell` (case-sensitive)
+### Requirement: User's existing lint/lint:fix scripts are not touched
+The system SHALL NOT modify or remove existing `lint` or `lint:fix` scripts in the user's `package.json`. The injectScripts function SHALL only add new individual tool scripts.
 
-#### Scenario: Standalone cspell script filtered
-- **WHEN** preset has `"cspell:check": "cspell --gitignore \"src/**/*\""` and `--cspell` is NOT specified
-- **THEN** the `cspell:check` script SHALL be completely removed (not injected into project)
+#### Scenario: User has existing lint script
+- **WHEN** the user's package.json already has `"lint": "npm run eslint && npm run cspell"` and `--force` is NOT specified
+- **THEN** the existing `lint` script SHALL remain unchanged
 
-#### Scenario: Mixed lint script with inline cspell
-- **WHEN** preset has `"lint": "eslint . && cspell --gitignore \"src/**/*\" && vue-tsc --noEmit"` and `--cspell` is NOT specified
-- **THEN** the script SHALL be injected as `"lint": "eslint . && vue-tsc --noEmit"` (inline segment stripped, entry preserved)
+### Requirement: GenerateOptions uses positive flag semantics
+The `GenerateOptions` interface SHALL use positive boolean flags: `stylelint`, `cspell`, `editorconfig`, `husky`, `lintStaged` (default `false`). The `noStylelint`, `noCspell`, etc. fields SHALL be removed.
 
-### Requirement: CSpell dependency filtering
-When `--cspell` is NOT specified, the system SHALL NOT install the `cspell` package. Filtering SHALL match by exact package name `cspell` only.
+#### Scenario: Flag defaults to false
+- **WHEN** user runs `lux fmt web-vue` without any tool flags
+- **THEN** `GenerateOptions.stylelint` SHALL be `false`
+- **AND** `GenerateOptions.cspell` SHALL be `false`
 
-#### Scenario: cspell dependency excluded
-- **WHEN** preset devDependencies include `['eslint', 'prettier', 'cspell']` and `--cspell` is NOT specified
-- **THEN** only `eslint` and `prettier` SHALL be installed
+#### Scenario: Flag set to true
+- **WHEN** user runs `lux fmt web-vue --stylelint`
+- **THEN** `GenerateOptions.stylelint` SHALL be `true`
 
-#### Scenario: cspell dependency included
-- **WHEN** preset devDependencies include `['eslint', 'prettier', 'cspell']` and `--cspell` IS specified
-- **THEN** all three packages including `cspell` SHALL be installed
+### Requirement: filterScripts uses key-based deletion
+The `filterScripts` function SHALL filter scripts by checking if the script key matches a tool name. It SHALL NOT use regex to modify script values.
 
-## MODIFIED Requirements
+#### Scenario: filterScripts removes stylelint by key
+- **WHEN** scripts contain `{ "eslint": "...", "stylelint": "...", "stylelint:fix": "...", "cspell": "..." }` and `stylelint` flag is `false`
+- **THEN** the result SHALL contain `{ "eslint": "...", "cspell": "..." }`
+- **AND** no regex modification of script values SHALL occur
 
-### Requirement: --husky and --lint-staged flag registration
-The `lux fmt` command SHALL accept `--husky` and `--lint-staged` opt-in flags. These flags follow the same opt-in pattern as `--stylelint` and `--editorconfig`.
+#### Scenario: filterScripts removes cspell by key
+- **WHEN** `cspell` flag is `false`
+- **THEN** any script with key `cspell` SHALL be removed
 
-#### Scenario: --husky flag parsed
-- **WHEN** user runs `lux fmt web-vue --husky`
-- **THEN** `options.husky` SHALL be `true`
-- **AND** `GenerateOptions.noHusky` SHALL be `false`
+### Requirement: Dependency filtering reads from deps.json
+When determining which dependencies to install, the system SHALL read the tool's entry from `deps.json` when the corresponding flag is active. The `isNotStylelintDep`, `isNotEditorconfigDep`, `isNotCspellDep`, `isNotHuskyDep`, `isNotLintStagedDep` functions and `STYLELINT_DEPS`, `HUSKY_DEPS`, `LINTSTAGED_DEPS` Sets SHALL be removed.
 
-#### Scenario: --lint-staged flag parsed
-- **WHEN** user runs `lux fmt web-vue --lint-staged`
-- **THEN** `options.lintStaged` SHALL be `true`
-- **AND** `GenerateOptions.noLintStaged` SHALL be `false`
+#### Scenario: Active flag reads deps.json
+- **WHEN** `--stylelint` is active and `deps.json["stylelint"].devDependencies` is `{"stylelint": "^16.0.0", "postcss-html": "^1.0.0"}`
+- **THEN** the system SHALL install `stylelint` and `postcss-html` (if not already present)
 
-#### Scenario: --lint-staged implicitly enables husky
-- **WHEN** user runs `lux fmt web-vue --lint-staged` without `--husky`
-- **THEN** `GenerateOptions.noHusky` SHALL be `false` (husky auto-enabled)
+#### Scenario: Inactive flag skips deps.json entry
+- **WHEN** `--stylelint` is NOT active
+- **THEN** the system SHALL NOT read `deps.json["stylelint"]` or install any stylelint deps
 
-#### Scenario: Neither flag specified
-- **WHEN** user runs `lux fmt web-vue` without `--husky` or `--lint-staged`
-- **THEN** `GenerateOptions.noHusky` SHALL be `true`
-- **AND** `GenerateOptions.noLintStaged` SHALL be `true`
+### Requirement: injectScripts only adds, never deletes
+The `injectScripts` function SHALL only add new scripts. It SHALL NOT delete existing scripts from the user's package.json, even if the corresponding flag is inactive.
 
-### Requirement: GenerateOptions extended for husky and lint-staged
-The `GenerateOptions` interface SHALL include `noHusky: boolean` and `noLintStaged: boolean` fields. These follow the same negative-logic pattern as `noStylelint` and `noEditorconfig`.
+#### Scenario: Inactive flag does not remove existing script
+- **WHEN** user's package.json has `"stylelint": "stylelint \"src/**\""` but `--stylelint` is NOT specified
+- **THEN** the existing `stylelint` script SHALL remain in package.json
 
-#### Scenario: GenerateOptions populated from flags
-- **WHEN** `--husky` is specified and `--lint-staged` is not
-- **THEN** `opts.noHusky` SHALL be `false`
-- **AND** `opts.noLintStaged` SHALL be `true`
+#### Scenario: Active flag adds script if not present
+- **WHEN** `--stylelint` is active and user's package.json does not have a `stylelint` key
+- **THEN** `stylelint` script SHALL be added
 
-### Requirement: Husky initialization in builtin path
-After the builtin generation pipeline completes and before/after dependency installation, the system SHALL perform husky initialization when `--husky` is active.
-
-#### Scenario: Husky setup after generation
-- **WHEN** builtin path executes with `--husky`
-- **THEN** the system SHALL create `.husky/` directory, write `pre-commit` hook, inject init script, and execute it
-
-#### Scenario: Husky skipped when flag not active
-- **WHEN** builtin path executes without `--husky` or `--lint-staged`
-- **THEN** no husky-related operations SHALL occur
-
-### Requirement: Husky initialization in local preset path
-When applying from local preset with `--husky` active, the system SHALL perform husky initialization using the same logic as the builtin path.
-
-#### Scenario: Local preset with --husky
-- **WHEN** local preset path executes with `--husky`
-- **THEN** husky SHALL be initialized identically to the builtin path
-
-#### Scenario: Local preset without --husky
-- **WHEN** local preset path executes without `--husky` or `--lint-staged`
-- **THEN** no husky-related operations SHALL occur
+#### Scenario: Active flag skips if already present without --force
+- **WHEN** `--stylelint` is active and user's package.json already has a `stylelint` key and `--force` is NOT specified
+- **THEN** the existing script SHALL be preserved (not overwritten)
