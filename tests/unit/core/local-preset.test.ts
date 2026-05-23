@@ -141,6 +141,23 @@ describe('resetLocalPreset', () => {
       tmpDir = createTempDir();
       expect(() => resetLocalPreset('fmt', 'nonexistent')).not.toThrow();
    });
+
+   it('does not delete directory when dryRun is true', () => {
+      tmpDir = createTempDir();
+      const presetDir = getLocalPresetDir('fmt', 'web-vue');
+      fs.mkdirSync(presetDir, { recursive: true });
+      fs.writeFileSync(path.join(presetDir, 'test.txt'), 'hello');
+
+      resetLocalPreset('fmt', 'web-vue', { dryRun: true });
+
+      expect(fs.existsSync(presetDir)).toBe(true);
+      expect(fs.existsSync(path.join(presetDir, 'test.txt'))).toBe(true);
+   });
+
+   it('does not throw when dryRun and directory does not exist', () => {
+      tmpDir = createTempDir();
+      expect(() => resetLocalPreset('fmt', 'nonexistent', { dryRun: true })).not.toThrow();
+   });
 });
 
 describe('materializeFmtPreset', () => {
@@ -852,6 +869,70 @@ describe('applyLocalFmtPreset', () => {
    });
 });
 
+describe('applyLocalFmtPreset — scripts type validation', () => {
+   let tmpDir: string;
+
+   afterEach(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+   });
+
+   function setupLocalPreset(files: Record<string, string>): void {
+      const presetDir = getLocalPresetDir('fmt', 'test-preset');
+      fs.mkdirSync(presetDir, { recursive: true });
+      for (const [name, content] of Object.entries(files)) {
+         fs.writeFileSync(path.join(presetDir, name), content);
+      }
+   }
+
+   it('handles string scripts field safely', () => {
+      tmpDir = createTempDir();
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test', scripts: 'echo hello' }));
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         'package.json': JSON.stringify({ scripts: { eslint: 'eslint .' } }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', { ...baseOpts, cwd: tmpDir });
+
+      expect(result.scriptsAdded).toBe(1);
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.scripts['eslint']).toBe('eslint .');
+   });
+
+   it('handles array scripts field safely', () => {
+      tmpDir = createTempDir();
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test', scripts: ['echo hello'] }));
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         'package.json': JSON.stringify({ scripts: { eslint: 'eslint .' } }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', { ...baseOpts, cwd: tmpDir });
+
+      expect(result.scriptsAdded).toBe(1);
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.scripts['eslint']).toBe('eslint .');
+   });
+
+   it('handles null scripts field safely', () => {
+      tmpDir = createTempDir();
+      fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'test', scripts: null }));
+      setupLocalPreset({
+         'eslint.config.mjs': 'export default []',
+         'package.json': JSON.stringify({ scripts: { eslint: 'eslint .' } }),
+         'deps.json': '{}',
+      });
+
+      const result = applyLocalFmtPreset(tmpDir, 'test-preset', { ...baseOpts, cwd: tmpDir });
+
+      expect(result.scriptsAdded).toBe(1);
+      const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf-8'));
+      expect(pkg.scripts['eslint']).toBe('eslint .');
+   });
+});
+
 describe('applyLocalVscodePreset', () => {
    let tmpDir: string;
 
@@ -1199,6 +1280,65 @@ describe('filterScripts', () => {
          lintStaged: true,
       });
       expect(result).toEqual(scripts);
+   });
+
+   it('does not filter lint:css when stylelint flag is false (segment matching)', () => {
+      const scripts = {
+         eslint: 'eslint .',
+         'lint:css': 'stylelint "src/**"',
+      };
+      const result = filterScripts(scripts, {
+         stylelint: false,
+         editorconfig: true,
+         cspell: true,
+         lintStaged: true,
+      });
+      // "lint:css" splits to ["lint", "css"] — neither equals "stylelint"
+      expect(result['lint:css']).toBe('stylelint "src/**"');
+   });
+
+   it('does not filter lint:staged when lintStaged flag is false (segment matching)', () => {
+      const scripts = {
+         eslint: 'eslint .',
+         'lint:staged': 'lint-staged',
+      };
+      const result = filterScripts(scripts, {
+         stylelint: true,
+         editorconfig: true,
+         cspell: true,
+         lintStaged: false,
+      });
+      // "lint:staged" splits to ["lint", "staged"] — neither equals "lint-staged"
+      expect(result['lint:staged']).toBe('lint-staged');
+   });
+
+   it('filters stylelint:check by segment matching', () => {
+      const scripts = {
+         eslint: 'eslint .',
+         'stylelint:check': 'stylelint "src/**"',
+      };
+      const result = filterScripts(scripts, {
+         stylelint: false,
+         editorconfig: true,
+         cspell: true,
+         lintStaged: true,
+      });
+      expect(result['stylelint:check']).toBeUndefined();
+   });
+
+   it('does not filter spellcheck when cspell flag is false', () => {
+      const scripts = {
+         eslint: 'eslint .',
+         spellcheck: 'cspell "src/**"',
+      };
+      const result = filterScripts(scripts, {
+         stylelint: true,
+         editorconfig: true,
+         cspell: false,
+         lintStaged: true,
+      });
+      // "spellcheck" is a single segment — does not equal "cspell"
+      expect(result['spellcheck']).toBe('cspell "src/**"');
    });
 });
 

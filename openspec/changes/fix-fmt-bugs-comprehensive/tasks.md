@@ -34,12 +34,12 @@
 
 ## 6. Unit Tests
 
-- [ ] 6.1 Add unit tests for `resetLocalPreset` dry-run guard
-- [ ] 6.2 Add unit tests for exitCode on error conditions
-- [ ] 6.3 Add unit tests for scripts type validation (string, array, null)
-- [ ] 6.4 Add unit tests for husky pre-commit --force behavior
-- [ ] 6.5 Add unit tests for `filterScripts` segment matching
-- [ ] 6.6 Add unit tests for dep version pinning in `addDepsToManifest`
+- [x] 6.1 Add unit tests for `resetLocalPreset` dry-run guard
+- [x] 6.2 Add unit tests for exitCode on error conditions
+- [x] 6.3 Add unit tests for scripts type validation (string, array, null)
+- [x] 6.4 Add unit tests for husky pre-commit --force behavior
+- [x] 6.5 Add unit tests for `filterScripts` segment matching
+- [x] 6.6 Add unit tests for dep version pinning in `addDepsToManifest`
 
 ## 7. E2E Acceptance Tests
 
