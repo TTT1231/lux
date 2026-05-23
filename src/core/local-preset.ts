@@ -72,8 +72,14 @@ export function localPresetExists(type: PresetType, presetName: string): boolean
    return fileExists(dir);
 }
 
-export function resetLocalPreset(type: PresetType, presetName: string): void {
+export function resetLocalPreset(type: PresetType, presetName: string, options?: { dryRun?: boolean }): void {
    const dir = getLocalPresetDir(type, presetName);
+   if (options?.dryRun) {
+      if (fileExists(dir)) {
+         logger.log(`[dry-run] Would reset local preset: ${dir}`);
+      }
+      return;
+   }
    if (fileExists(dir)) {
       fs.rmSync(dir, { recursive: true, force: true });
       logger.log(`Reset local preset: ${dir}`);
@@ -373,6 +379,13 @@ function mergeTemplateIntoProject(
    // and skip resolution.
 
    if (templatePkg.scripts) {
+      const rawScripts = merged.scripts ?? {};
+      if (typeof rawScripts !== 'object' || Array.isArray(rawScripts)) {
+         logger.warn(
+            `package.json "scripts" is ${Array.isArray(rawScripts) ? 'an array' : typeof rawScripts}, expected an object — treating as empty`,
+         );
+         merged.scripts = {};
+      }
       const existingScripts = (merged.scripts ?? {}) as Record<string, string>;
       const newScripts = { ...existingScripts };
 

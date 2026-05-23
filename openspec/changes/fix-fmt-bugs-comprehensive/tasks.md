@@ -1,9 +1,9 @@
 ## 1. Safety Guards (P1 — data loss, corruption, silent failures)
 
-- [ ] 1.1 Guard `resetLocalPreset` behind `--dry-run` check in `fmt.ts:131` — wrap the `resetLocalPreset` call with `if (!options.dryRun)`, and add `[dry-run] Would reset local preset` log. Also add a `dryRun` parameter to `resetLocalPreset` in `local-preset.ts:75` for defense-in-depth.
-- [ ] 1.2 Set `process.exitCode = 1` on all error returns in `fmt.ts`: bad package.json (line 126), `--reset` on custom preset (line 118), bad deps.json in local path (line 249). Add unit tests verifying exitCode is set.
-- [ ] 1.3 Validate `package.json` scripts type before merge — in both `injectScripts` (`fmt.ts:556`) and `mergeTemplateIntoProject` (`local-preset.ts:376`), check `typeof scripts === 'object' && !Array.isArray(scripts)` before casting. Log warning and use empty object fallback if invalid. Add unit tests with string/array/null scripts.
-- [ ] 1.4 Fix `logApplyResult` to accept `dryRun` parameter — update signature to `logApplyResult(result, dryRun)`. When `dryRun=true`, use "Would create"/"Would overwrite" instead of "Created"/"Overwritten". Update call site in `executeLocalPath`.
+- [x] 1.1 Guard `resetLocalPreset` behind `--dry-run` check in `fmt.ts:131` — wrap the `resetLocalPreset` call with `if (!options.dryRun)`, and add `[dry-run] Would reset local preset` log. Also add a `dryRun` parameter to `resetLocalPreset` in `local-preset.ts:75` for defense-in-depth.
+- [x] 1.2 Set `process.exitCode = 1` on all error returns in `fmt.ts`: bad package.json (line 126), `--reset` on custom preset (line 118), bad deps.json in local path (line 249). Add unit tests verifying exitCode is set.
+- [x] 1.3 Validate `package.json` scripts type before merge — in both `injectScripts` (`fmt.ts:556`) and `mergeTemplateIntoProject` (`local-preset.ts:376`), check `typeof scripts === 'object' && !Array.isArray(scripts)` before casting. Log warning and use empty object fallback if invalid. Add unit tests with string/array/null scripts.
+- [x] 1.4 Fix `logApplyResult` to accept `dryRun` parameter — update signature to `logApplyResult(result, dryRun)`. When `dryRun=true`, use "Would create"/"Would overwrite" instead of "Created"/"Overwritten". Update call site in `executeLocalPath`.
 
 ## 2. Husky --force Consistency (P1)
 

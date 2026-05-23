@@ -115,6 +115,7 @@ export function registerFmtCommand(program: Command) {
          // --reset + custom preset: warn and abort
          if (options.reset && !isBuiltin) {
             logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
+            process.exitCode = 1;
             return;
          }
 
@@ -123,13 +124,19 @@ export function registerFmtCommand(program: Command) {
          const pkgPath = path.join(cwd, 'package.json');
          if (fileExists(pkgPath) && readJson(pkgPath) === null) {
             logger.error('package.json exists but is not valid JSON. Fix it first, then re-run this command.');
+            process.exitCode = 1;
             return;
          }
 
          if (isBuiltin) {
             // Builtin path
             if (options.reset) {
-               resetLocalPreset('fmt', presetName);
+               if (options.dryRun) {
+                  const dir = getLocalPresetDir('fmt', presetName);
+                  logger.log(`[dry-run] Would reset local preset: ${dir}`);
+               } else {
+                  resetLocalPreset('fmt', presetName);
+               }
             }
 
             const useLocal = localPresetExists('fmt', presetName);
@@ -219,6 +226,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    } catch (error) {
       if (error instanceof InvalidPackageJsonError) {
          logger.error('package.json exists but is not valid JSON. Fix it first, then re-run this command.');
+         process.exitCode = 1;
          return;
       }
       throw error;
@@ -226,7 +234,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    const allFiles = [...result.created, ...result.overwritten];
 
    if (allFiles.length > 0 || result.skipped.length > 0) {
-      logApplyResult(result);
+      logApplyResult(result, opts.dryRun);
    }
 
    if (result.scriptsAdded > 0 || result.scriptsSkipped > 0) {
@@ -247,6 +255,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.error(message);
+      process.exitCode = 1;
       return;
    }
 
@@ -468,15 +477,17 @@ function logGenerationResult(
 }
 
 /** Log apply local preset results */
-function logApplyResult(result: { created: string[]; overwritten: string[]; skipped: string[] }): void {
+function logApplyResult(result: { created: string[]; overwritten: string[]; skipped: string[] }, dryRun = false): void {
+   const createVerb = dryRun ? 'Would create' : 'Created';
+   const overwriteVerb = dryRun ? 'Would overwrite' : 'Overwritten';
    if (result.created.length > 0) {
       logger.log(
-         `Created ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''} from local preset`,
+         `${createVerb} ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''} from local preset`,
       );
    }
    if (result.overwritten.length > 0) {
       logger.log(
-         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length > 1 ? 's' : ''} from local preset`,
+         `${overwriteVerb} ${summarizeFiles(result.overwritten)} config ${result.overwritten.length > 1 ? 's' : ''} from local preset`,
       );
    }
    if (result.skipped.length > 0) {
@@ -553,6 +564,13 @@ async function injectScripts(
       return;
    }
 
+   const rawScripts = pkg.scripts ?? {};
+   if (typeof rawScripts !== 'object' || Array.isArray(rawScripts)) {
+      logger.warn(
+         `package.json "scripts" is ${Array.isArray(rawScripts) ? 'an array' : typeof rawScripts}, expected an object — treating as empty`,
+      );
+      pkg.scripts = {};
+   }
    const existingScripts = (pkg.scripts ?? {}) as Record<string, string>;
    const prefix = getRunPrefix(pm);
 
