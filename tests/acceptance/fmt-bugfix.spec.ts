@@ -104,10 +104,12 @@ describe('Acceptance: fmt bug fixes', () => {
 
       // Modify deps.json in local preset to pin a version
       const depsPath = 'preset/fmt/web-vue/deps.json';
-      const deps = ctx.luxReadJsonFile<Record<string, Record<string, Record<string, string>>>>(depsPath)!;
+      const deps = ctx.luxReadJsonFile<Record<string, unknown>>(depsPath)!;
+      const topLevelDeps = deps.devDependencies as Record<string, string> | undefined;
       // Pin typescript (top-level dep) to a specific version
-      if (deps.devDependencies) {
-         deps.devDependencies.typescript = '^5.5.0';
+      if (topLevelDeps) {
+         topLevelDeps.typescript = '^5.5.0';
+         deps.devDependencies = topLevelDeps;
       }
       ctx.luxWriteJsonFile(depsPath, deps);
 
