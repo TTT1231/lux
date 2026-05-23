@@ -222,4 +222,42 @@ describe('addDepsToManifest', () => {
          'Failed to fetch version for "nonexistent-pkg"',
       );
    });
+
+   it('uses pinned versions when provided', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+      createPkgJson(tmpDir);
+
+      vi.spyOn(globalThis, 'fetch');
+
+      const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir, {
+         eslint: '^9.25.0',
+         prettier: '^3.3.0',
+      });
+
+      expect(added).toEqual(['eslint', 'prettier']);
+      const deps = readDevDeps(tmpDir);
+      expect(deps['eslint']).toBe('^9.25.0');
+      expect(deps['prettier']).toBe('^3.3.0');
+      // Should NOT have fetched from registry
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+   });
+
+   it('resolves <latest> placeholder from registry', async () => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'deps-manifest-'));
+      createPkgJson(tmpDir);
+
+      vi.spyOn(globalThis, 'fetch').mockImplementation(mockFetchVersion({ prettier: '3.3.0' }));
+
+      const added = await addDepsToManifest(['eslint', 'prettier'], tmpDir, {
+         eslint: '^9.25.0',
+         prettier: '<latest>',
+      });
+
+      expect(added).toEqual(['eslint', 'prettier']);
+      const deps = readDevDeps(tmpDir);
+      expect(deps['eslint']).toBe('^9.25.0');
+      expect(deps['prettier']).toBe('^3.3.0');
+      // Only prettier should have been fetched (eslint was pinned)
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+   });
 });

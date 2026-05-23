@@ -19,6 +19,7 @@ import {
    hasTsconfigFile,
    isTsconfigFile,
    loadDepsJson,
+   composeLintStaged,
 } from './shared';
 
 type PresetType = 'fmt' | 'vscode';
@@ -73,8 +74,14 @@ export function localPresetExists(type: PresetType, presetName: string): boolean
    return fileExists(dir);
 }
 
-export function resetLocalPreset(type: PresetType, presetName: string): void {
+export function resetLocalPreset(type: PresetType, presetName: string, options?: { dryRun?: boolean }): void {
    const dir = getLocalPresetDir(type, presetName);
+   if (options?.dryRun) {
+      if (fileExists(dir)) {
+         logger.log(`[dry-run] Would reset local preset: ${dir}`);
+      }
+      return;
+   }
    if (fileExists(dir)) {
       fs.rmSync(dir, { recursive: true, force: true });
       logger.log(`Reset local preset: ${dir}`);
@@ -94,14 +101,8 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
       const content = getContent(preset);
       if (content === undefined) continue;
 
-      const resolved = opts.lockfile
-         ? content.replace(/<lockfile>/g, opts.lockfile)
-         : content
-              .replace(/,?\s*'<lockfile>'/g, '')
-              .replace(/'<lockfile>',?\s*/g, '')
-              .replace(/<lockfile>\n?/g, '');
-
-      writeFile(path.join(presetDir, filename), resolved);
+      // Materialize with placeholder as-is — resolve at apply time
+      writeFile(path.join(presetDir, filename), content);
    }
 
    for (const [filename, content] of getPresetTsconfigEntries(preset)) {
@@ -120,6 +121,9 @@ export function materializeFmtPreset(presetName: string, preset: FmtPreset, opts
    if (preset.lintStaged) {
       const lintStagedContent = preset.lintStaged({ stylelint: true });
       writeFile(path.join(presetDir, '.lintstagedrc.json'), lintStagedContent);
+   } else if (preset.lintStagedFragments) {
+      const composed = composeLintStaged(preset.lintStagedFragments, { stylelint: true });
+      writeFile(path.join(presetDir, '.lintstagedrc.json'), JSON.stringify(composed, null, 2) + '\n');
    }
 
    // Materialize husky hook (full version with lint-staged)
@@ -251,14 +255,19 @@ export function applyLocalFmtPreset(cwd: string, presetName: string, opts: Gener
 
       const content = readFile(path.join(presetDir, filename));
       if (content !== null) {
-         const resolved = opts.lockfile
-            ? content.replace(/<lockfile>/g, opts.lockfile)
-            : content
-                 .replace(/,?\s*'<lockfile>'/g, '')
-                 .replace(/'<lockfile>',?\s*/g, '')
-                 .replace(/<lockfile>\n?/g, '');
-         writeFile(destPath, resolved);
-         (exists ? result.overwritten : result.created).push(filename);
+         try {
+            const resolved = opts.lockfile
+               ? content.replace(/<lockfile>/g, opts.lockfile)
+               : content
+                    .replace(/,?\s*'<lockfile>'/g, '')
+                    .replace(/'<lockfile>',?\s*/g, '')
+                    .replace(/<lockfile>\n?/g, '');
+            writeFile(destPath, resolved);
+            (exists ? result.overwritten : result.created).push(filename);
+         } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            logger.error(`Failed to write ${filename}: ${message}`);
+         }
       }
    }
 
@@ -384,6 +393,13 @@ function mergeTemplateIntoProject(
    // and skip resolution.
 
    if (templatePkg.scripts) {
+      const rawScripts = merged.scripts ?? {};
+      if (typeof rawScripts !== 'object' || Array.isArray(rawScripts)) {
+         logger.warn(
+            `package.json "scripts" is ${Array.isArray(rawScripts) ? 'an array' : typeof rawScripts}, expected an object — treating as empty`,
+         );
+         merged.scripts = {};
+      }
       const existingScripts = (merged.scripts ?? {}) as Record<string, string>;
       const newScripts = { ...existingScripts };
 
@@ -426,10 +442,11 @@ export function filterScripts(scripts: Record<string, string>, flags: FilterScri
    const filtered: Record<string, string> = {};
 
    for (const [key, value] of Object.entries(scripts)) {
-      if (!flags.stylelint && key.includes('stylelint')) continue;
-      if (!flags.editorconfig && key.includes('editorconfig')) continue;
-      if (!flags.cspell && key.includes('cspell')) continue;
-      if (!flags.lintStaged && key.includes('lint-staged')) continue;
+      const segments = key.split(':');
+      if (!flags.stylelint && segments.some(s => s === 'stylelint')) continue;
+      if (!flags.editorconfig && segments.some(s => s === 'editorconfig')) continue;
+      if (!flags.cspell && segments.some(s => s === 'cspell')) continue;
+      if (!flags.lintStaged && segments.some(s => s === 'lint-staged')) continue;
 
       filtered[key] = value;
    }
@@ -442,6 +459,7 @@ export function detectPresetCapabilities(presetName: string): {
    hasEditorconfig: boolean;
    hasCspell: boolean;
    hasLintStaged: boolean;
+   hasHusky: boolean;
 } {
    const presetDir = path.join(getLuxDir(), 'preset', 'fmt', presetName);
    const entries = fs.readdirSync(presetDir);
@@ -449,11 +467,13 @@ export function detectPresetCapabilities(presetName: string): {
    const hasStylelintFile = entries.some(f => STYLELINT_FILES.has(f));
    const hasEditorconfigFile = entries.includes(EDITORCONFIG_FILE);
    const hasCspellFile = entries.includes(CSPELL_FILE);
+   const hasLintStagedFile = entries.includes('.lintstagedrc.json');
 
    let hasStylelintDep = false;
    let hasEditorconfigDep = false;
    let hasCspellDep = false;
    let hasLintStagedDep = false;
+   let hasHuskyDep = false;
 
    try {
       const registry = loadDepsJson(presetDir);
@@ -461,6 +481,7 @@ export function detectPresetCapabilities(presetName: string): {
       hasEditorconfigDep = 'editorconfig' in registry;
       hasCspellDep = 'cspell' in registry;
       hasLintStagedDep = 'lint-staged' in registry;
+      hasHuskyDep = 'husky' in registry;
    } catch {
       // Fallback: check package.json for old format
       const pkg = readJson<{ devDependencies?: Record<string, string> }>(path.join(presetDir, 'package.json'));
@@ -470,6 +491,7 @@ export function detectPresetCapabilities(presetName: string): {
          hasEditorconfigDep = depNames.some(d => d.includes('editorconfig'));
          hasCspellDep = depNames.includes('cspell');
          hasLintStagedDep = depNames.includes('lint-staged');
+         hasHuskyDep = depNames.includes('husky');
       }
    }
 
@@ -477,6 +499,7 @@ export function detectPresetCapabilities(presetName: string): {
       hasStylelint: hasStylelintFile || hasStylelintDep,
       hasEditorconfig: hasEditorconfigFile || hasEditorconfigDep,
       hasCspell: hasCspellFile || hasCspellDep,
-      hasLintStaged: hasLintStagedDep,
+      hasLintStaged: hasLintStagedFile || hasLintStagedDep,
+      hasHusky: hasHuskyDep,
    };
 }

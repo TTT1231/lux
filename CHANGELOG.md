@@ -5,6 +5,18 @@
 - `lux fmt` now detects existing flat config siblings (e.g. `eslint.config.js` when generating `eslint.config.mjs`) and skips generation with a warning instead of creating duplicate config files
 - Same sibling detection applies to `stylelint.config.*` when using `--stylelint`
 - Use `--force` to override sibling detection and generate the config file anyway
+- `--dry-run --reset` no longer deletes the local preset directory — dry-run is now a true preview only
+- Invalid `package.json` now returns exit code 1 (previously exited 0), fixing CI/CD pipelines that rely on exit codes
+- Non-object `scripts` field (string, array, null) no longer crashes — warns and treats as empty
+- `--force` now controls `.husky/pre-commit` overwrite: without it, existing hooks are skipped; with it, they are overwritten
+- Dep versions pinned in `deps.json` (e.g. `typescript: "^5.5.0"`) are now preserved when writing to `package.json` instead of being refetched from registry
+- `--force` suggestion shown when all files are skipped on repeat runs
+- Dry-run output now distinguishes "Would create" vs "Would overwrite" instead of a single "Would create" for both
+- `--husky` warns when preset has no husky dependencies; `--stylelint`/`--cspell`/`--editorconfig`/`--lint-staged` warn in builtin path when preset lacks the corresponding config
+- Presets with `lintStagedFragments` (but not `lintStaged`) now correctly materialize `.lintstagedrc.json`
+- `filterScripts` no longer false-positives on keys like `lint:css` or `spellcheck` — uses exact segment matching
+- `detectPresetCapabilities` now checks `.lintstagedrc.json` file presence and reports `hasHusky`
+- Per-file write errors in local preset apply no longer abort the entire operation — logs error and continues
 
 ## 1.1.51
 

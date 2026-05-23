@@ -115,6 +115,7 @@ export function registerFmtCommand(program: Command) {
          // --reset + custom preset: warn and abort
          if (options.reset && !isBuiltin) {
             logger.warn(`"${presetName}" is a custom preset, --reset has no builtin to restore`);
+            process.exitCode = 1;
             return;
          }
 
@@ -123,13 +124,19 @@ export function registerFmtCommand(program: Command) {
          const pkgPath = path.join(cwd, 'package.json');
          if (fileExists(pkgPath) && readJson(pkgPath) === null) {
             logger.error('package.json exists but is not valid JSON. Fix it first, then re-run this command.');
+            process.exitCode = 1;
             return;
          }
 
          if (isBuiltin) {
             // Builtin path
             if (options.reset) {
-               resetLocalPreset('fmt', presetName);
+               if (options.dryRun) {
+                  const dir = getLocalPresetDir('fmt', presetName);
+                  logger.log(`[dry-run] Would reset local preset: ${dir}`);
+               } else {
+                  resetLocalPreset('fmt', presetName);
+               }
             }
 
             const useLocal = localPresetExists('fmt', presetName);
@@ -186,6 +193,9 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    }
 
    const husky = options.husky === true || options.lintStaged === true;
+   if (husky && !caps.hasHusky) {
+      logger.warn('--husky has no effect: this preset has no husky dependencies');
+   }
    const lintStaged = options.lintStaged === true;
 
    const pm = fileExists(path.join(cwd, 'package.json')) ? detectPackageManager(cwd) : undefined;
@@ -219,6 +229,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    } catch (error) {
       if (error instanceof InvalidPackageJsonError) {
          logger.error('package.json exists but is not valid JSON. Fix it first, then re-run this command.');
+         process.exitCode = 1;
          return;
       }
       throw error;
@@ -226,7 +237,11 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    const allFiles = [...result.created, ...result.overwritten];
 
    if (allFiles.length > 0 || result.skipped.length > 0) {
-      logApplyResult(result);
+      logApplyResult(result, opts.dryRun);
+   }
+
+   if (allFiles.length === 0 && result.skipped.length > 0) {
+      logger.log('Use --force to overwrite existing files');
    }
 
    if (result.scriptsAdded > 0 || result.scriptsSkipped > 0) {
@@ -247,6 +262,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
    } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.error(message);
+      process.exitCode = 1;
       return;
    }
 
@@ -283,7 +299,7 @@ async function executeLocalPath(cwd: string, presetName: string, options: FmtCom
 
    if (options.install === false) {
       try {
-         const added = await addDepsToManifest(missing, cwd);
+         const added = await addDepsToManifest(missing, cwd, depsToInstall);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
          } else {
@@ -338,12 +354,30 @@ async function executeBuiltinPath(
    const result = generateAllFmt(preset, opts);
    const allFiles = [...result.created, ...result.overwritten];
 
+   // Warn when flags have no effect on builtin preset
+   if (opts.stylelint && !preset.stylelint) {
+      logger.warn('--stylelint has no effect: this preset has no stylelint config');
+   }
+   if (opts.editorconfig && !preset.editorconfig) {
+      logger.warn('--editorconfig has no effect: this preset has no editorconfig config');
+   }
+   if (opts.cspell && !preset.cspell) {
+      logger.warn('--cspell has no effect: this preset has no cspell config');
+   }
+   if (opts.lintStaged && !preset.lintStaged && !preset.lintStagedFragments) {
+      logger.warn('--lint-staged has no effect: this preset has no lint-staged config');
+   }
+
    if (allFiles.length === 0 && result.skipped.length === 0) {
       logger.warn('No files to generate for this preset');
       return;
    }
 
    logGenerationResult(result, opts.dryRun);
+
+   if (allFiles.length === 0 && result.skipped.length > 0) {
+      logger.log('Use --force to overwrite existing files');
+   }
 
    if (!opts.dryRun) {
       materializeFmtPreset(presetName, preset, opts);
@@ -404,7 +438,7 @@ async function executeBuiltinPath(
 
    if (options.install === false) {
       try {
-         const added = await addDepsToManifest(missing, cwd);
+         const added = await addDepsToManifest(missing, cwd, depsToInstall);
          if (added.length > 0) {
             logger.success(`Added to package.json (skipped install): ${added.join(', ')}`);
          } else {
@@ -443,8 +477,11 @@ function logGenerationResult(
    const files = [...result.created, ...result.overwritten];
 
    if (dryRun) {
-      if (files.length > 0) {
-         logger.log(`[dry-run] Would create ${files.join(', ')}`);
+      if (result.created.length > 0) {
+         logger.log(`[dry-run] Would create ${result.created.join(', ')}`);
+      }
+      if (result.overwritten.length > 0) {
+         logger.log(`[dry-run] Would overwrite ${result.overwritten.join(', ')}`);
       }
       if (result.skipped.length > 0) {
          logger.log(`[dry-run] Skipped ${result.skipped.join(', ')} (already exists)`);
@@ -468,15 +505,17 @@ function logGenerationResult(
 }
 
 /** Log apply local preset results */
-function logApplyResult(result: { created: string[]; overwritten: string[]; skipped: string[] }): void {
+function logApplyResult(result: { created: string[]; overwritten: string[]; skipped: string[] }, dryRun = false): void {
+   const createVerb = dryRun ? 'Would create' : 'Created';
+   const overwriteVerb = dryRun ? 'Would overwrite' : 'Overwritten';
    if (result.created.length > 0) {
       logger.log(
-         `Created ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''} from local preset`,
+         `${createVerb} ${summarizeFiles(result.created)} config ${result.created.length} file${result.created.length > 1 ? 's' : ''} from local preset`,
       );
    }
    if (result.overwritten.length > 0) {
       logger.log(
-         `Overwritten ${summarizeFiles(result.overwritten)} config ${result.overwritten.length > 1 ? 's' : ''} from local preset`,
+         `${overwriteVerb} ${summarizeFiles(result.overwritten)} config ${result.overwritten.length > 1 ? 's' : ''} from local preset`,
       );
    }
    if (result.skipped.length > 0) {
@@ -553,6 +592,13 @@ async function injectScripts(
       return;
    }
 
+   const rawScripts = pkg.scripts ?? {};
+   if (typeof rawScripts !== 'object' || Array.isArray(rawScripts)) {
+      logger.warn(
+         `package.json "scripts" is ${Array.isArray(rawScripts) ? 'an array' : typeof rawScripts}, expected an object — treating as empty`,
+      );
+      pkg.scripts = {};
+   }
    const existingScripts = (pkg.scripts ?? {}) as Record<string, string>;
    const prefix = getRunPrefix(pm);
 
@@ -571,12 +617,17 @@ async function injectScripts(
       }
 
       if (opts.dryRun) {
+         logger.log(`[dry-run] Would add script "${key}"`);
          added++;
          continue;
       }
 
       existingScripts[key] = value;
       added++;
+   }
+
+   if (opts.dryRun && added > 0) {
+      logger.log(`[dry-run] Would add ${added} script${added > 1 ? 's' : ''} to package.json`);
    }
 
    if (added > 0 && !opts.dryRun) {
@@ -621,6 +672,12 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       return;
    }
 
+   // Warn if husky dep is missing from project
+   const devDeps = (pkg.devDependencies ?? {}) as Record<string, string>;
+   if (!devDeps['husky']) {
+      logger.warn('Husky hook is configured but "husky" is not in devDependencies. Run install or add it manually.');
+   }
+
    // 1. Inject init script into package.json
    const scripts = (pkg.scripts ?? {}) as Record<string, string>;
    if (scripts[initScriptName] !== undefined && !opts.force) {
@@ -638,11 +695,16 @@ async function initHusky(cwd: string, pm: PackageManager, opts: GenerateOptions,
       logger.success('Husky support files initialized successfully');
    }
 
-   // 3. Overwrite .husky/pre-commit with correct content (replaces husky's default)
-   //    Always write — husky init creates default content that must be replaced.
+   // 3. Write .husky/pre-commit — respect --force like other files
    ensureDir(huskyDir);
-   writeFile(preCommitPath, resolvedHook);
-   fs.chmodSync(preCommitPath, 0o755);
+   if (fileExists(preCommitPath) && !opts.force) {
+      logger.log('Skipped .husky/pre-commit (already exists)');
+   } else {
+      const isOverwrite = fileExists(preCommitPath);
+      writeFile(preCommitPath, resolvedHook);
+      fs.chmodSync(preCommitPath, 0o755);
+      logger.log(isOverwrite ? 'Overwrote .husky/pre-commit' : 'Created .husky/pre-commit');
+   }
 }
 
 async function ensureHuskyBootstrap(cwd: string, huskyDir: string): Promise<boolean> {
