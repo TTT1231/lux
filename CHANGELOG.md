@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.52
+
+- `lux fmt` now detects existing flat config siblings (e.g. `eslint.config.js` when generating `eslint.config.mjs`) and skips generation with a warning instead of creating duplicate config files
+- Same sibling detection applies to `stylelint.config.*` when using `--stylelint`
+- Use `--force` to override sibling detection and generate the config file anyway
+
 ## 1.1.51
 
 - Added fallback TypeScript configs for `lux fmt`: web presets create `tsconfig.json`, `tsconfig.app.json`, and `tsconfig.node.json` only when the target project has no `tsconfig*.json`; existing user tsconfig files are preserved even with `--force`
